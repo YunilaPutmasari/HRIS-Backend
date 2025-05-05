@@ -3,27 +3,29 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Employee;
+use App\Models\Department;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Company extends Model
+class Position extends Model
 {
 
-    protected $table = "tb_company";
+    protected $table = 'tb_position';
     protected $primaryKey = 'id';
     public $incrementing = false;
 
-    use HasFactory, Notifiable, HasUuids, SoftDeletes;
-
+    use HasFactory, Notifiable, SoftDeletes;
     /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
      */
     protected $fillable = [
-        'name'
+        'name',
+        'level',
     ];
 
     /**
@@ -32,20 +34,16 @@ class Company extends Model
      * @var list<string>
      */
     protected $hidden = [
-        'id_manager',
-        'id_subscription',
-        'effective_date',
-        'created_at',
-        'updated_at',
+        'id_department',
     ];
-
-    public function manager()
-    {
-        return $this->belongsTo(User::class, 'id_manager');
-    }
 
     public function employees()
     {
-        return $this->hasMany(User::class, 'id_company');
+        return $this->hasMany(Employee::class, 'id_position');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'id_department');
     }
 }

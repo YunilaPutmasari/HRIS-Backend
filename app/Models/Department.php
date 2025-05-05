@@ -8,22 +8,22 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Company extends Model
+class Department extends Model
 {
 
-    protected $table = "tb_company";
+    protected $table = 'tb_department';
     protected $primaryKey = 'id';
     public $incrementing = false;
 
     use HasFactory, Notifiable, HasUuids, SoftDeletes;
-
     /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
      */
     protected $fillable = [
-        'name'
+        'name',
+        'location',
     ];
 
     /**
@@ -32,20 +32,12 @@ class Company extends Model
      * @var list<string>
      */
     protected $hidden = [
-        'id_manager',
-        'id_subscription',
-        'effective_date',
         'created_at',
         'updated_at',
     ];
 
-    public function manager()
+    public function positions()
     {
-        return $this->belongsTo(User::class, 'id_manager');
-    }
-
-    public function employees()
-    {
-        return $this->hasMany(User::class, 'id_company');
+        return $this->hasMany(Position::class, 'id_department');
     }
 }
