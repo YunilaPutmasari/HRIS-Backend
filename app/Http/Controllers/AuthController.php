@@ -4,20 +4,23 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\SignInRequest;
 use App\Http\Requests\SignUpRequest;
+use App\Http\Responses\BaseResponse;
 use App\Models\User;
+use App\Models\Employee;
+use Faker\Provider\Base;
 use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
     public function signup(SignUpRequest $request)
     {
-        $user = new \App\Models\User();
+        $user = new User();
         $user->email = request()->email;
         $user->phone_number = request()->phone_number;
         $user->password = bcrypt(request()->password);
         $user->save();
 
-        $employee = new \App\Models\Employee();
+        $employee = new Employee();
         $employee->id_user = $user->id;
         $employee->first_name = request()->first_name;
         $employee->last_name = request()->last_name;
@@ -26,12 +29,11 @@ class AuthController extends Controller
 
         $user = User::where('id', $user->id)->first();
 
-        $response = new \App\Http\Resources\UserResource($user);
-
-        return response()->json([
-            'message' => 'User created successfully',
-            'data' => $user
-        ], 201);
+        return BaseResponse::success(
+            data: $user,
+            message: 'User created successfully',
+            code: 201
+        );
     }
 
     public function signin(SignInRequest $request)
@@ -46,13 +48,14 @@ class AuthController extends Controller
 
         $token = $user->createToken('access_token')->plainTextToken;
 
-        return response()->json([
-            'message' => 'User signed in successfully',
-            'data' => [
+        return BaseResponse::success(
+            data: [
                 'user' => $user,
                 'token' => $token
-            ]
-        ], 200);
+            ],
+            message: 'User signed in successfully',
+            code: 200
+        );
     }
 
     public function me()
@@ -60,14 +63,16 @@ class AuthController extends Controller
         $user = auth()->user();
 
         if (!$user) {
-            return response()->json([
-                'message' => 'User not found'
-            ], 404);
+            return BaseResponse::error(
+                message: 'User not found',
+                code: 404
+            );
         }
 
-        return response()->json([
-            'message' => 'User retrieved successfully',
-            'data' => $user
-        ], 200);
+        return BaseResponse::success(
+            data: $user,
+            message: 'User retrieved successfully',
+            code: 200
+        );
     }
 }
