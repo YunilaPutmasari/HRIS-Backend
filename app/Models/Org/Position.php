@@ -1,17 +1,18 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Org;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Org\Employee;
+use App\Models\Oeg\Department;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Employee extends Model
+class Position extends Model
 {
 
-    protected $table = 'tb_employee';
+    protected $table = 'tb_position';
     protected $primaryKey = 'id';
     public $incrementing = false;
 
@@ -22,9 +23,8 @@ class Employee extends Model
      * @var list<string>
      */
     protected $fillable = [
-        'first_name',
-        'last_name',
-        'address',
+        'name',
+        'level',
     ];
 
     /**
@@ -33,18 +33,16 @@ class Employee extends Model
      * @var list<string>
      */
     protected $hidden = [
-        'id_position',
-        'created_at',
-        'updated_at',
+        'id_department',
     ];
 
-    public function company()
+    public function employees()
     {
-        return $this->belongsTo(Company::class, 'id_company');
+        return $this->hasMany(Employee::class, 'id_position');
     }
 
-    public function user()
+    public function department()
     {
-        return $this->belongsTo(User::class, 'id_user');
+        return $this->belongsTo(Department::class, 'id_department');
     }
 }
