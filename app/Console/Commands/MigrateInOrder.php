@@ -42,6 +42,28 @@ class MigrateInOrder extends Command
             'org/2025_05_05_113257_tb_position.php',
             'org/2025_05_05_113254_tb_employee.php',
             'org/2025_05_05_133704_create_personal_access_tokens_table.php',
+            'org/2025_05_13_064342_tb_salary.php',
+            'org/2025_05_13_064351_tb_payroll.php',
+
+            // attendance migrations
+            'attendance/2025_05_13_071748_tb_check_clock_setting.php',
+            'attendance/2025_05_13_071739_tb_check_clock_setting_time.php',
+            'attendance/2025_05_13_071757_tb_check_clock.php',
+
+            // overtime migrations
+            'overtime/2025_05_13_072537_tb_overtime_setting.php',
+            'overtime/2025_05_13_072548_tb_overtime_setting_rule.php',
+            'overtime/2025_05_13_072540_tb_overtime.php',
+
+            // lettering migrations
+            'lettering/2025_05_13_074517_tb_letter_format.php',
+            'lettering/2025_05_13_074514_tb_letter.php',
+            'lettering/2025_05_13_074521_tb_documents.php',
+            'lettering/2025_05_13_074529_tb_employee_request.php',
+
+            // payment migrations
+            'payment/2025_05_13_081942_tb_invoice.php',
+            'payment/2025_05_13_081938_tb_payment.php',
         ];
 
         // set foreign key check to 0

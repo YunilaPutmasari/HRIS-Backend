@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Org;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -8,22 +8,23 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Department extends Model
+class Employee extends Model
 {
 
-    protected $table = 'tb_department';
+    protected $table = 'tb_employee';
     protected $primaryKey = 'id';
     public $incrementing = false;
 
-    use HasFactory, Notifiable, HasUuids, SoftDeletes;
+    use HasFactory, Notifiable, SoftDeletes;
     /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
      */
     protected $fillable = [
-        'name',
-        'location',
+        'first_name',
+        'last_name',
+        'address',
     ];
 
     /**
@@ -32,12 +33,18 @@ class Department extends Model
      * @var list<string>
      */
     protected $hidden = [
+        'id_position',
         'created_at',
         'updated_at',
     ];
 
-    public function positions()
+    public function company()
     {
-        return $this->hasMany(Position::class, 'id_department');
+        return $this->belongsTo(Company::class, 'id_company');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'id_user');
     }
 }
