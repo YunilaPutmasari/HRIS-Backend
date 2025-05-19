@@ -20,7 +20,7 @@ class CheckClockSettingTime extends Model
     use HasFactory, HasUuids, SoftDeletes;
 
     protected $fillable = [
-        'id_check_clock_setting',
+        'id_ck_setting',
         'day',
         'clock_in',
         'clock_out',
@@ -30,6 +30,6 @@ class CheckClockSettingTime extends Model
 
     public function checkClockSetting()
     {
-        return $this->hasMany(CheckClockSetting::class, 'id_check_clock_setting');
+        return $this->hasMany(CheckClockSetting::class, 'id');
     }
 }

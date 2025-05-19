@@ -54,7 +54,7 @@ class CheckClockSettingController extends Controller
         );
     }
 
-    public function update(CheckClockSettingUpdateRequest $request, $id)
+    public function update(CheckClockSettingUpdateRequest $request, $id_ck_setting)
     {
         $data = $request->validated();
 
@@ -64,7 +64,7 @@ class CheckClockSettingController extends Controller
         $companiesIds = $companies->pluck('id')->toArray();
 
         $checkClockSetting = CheckClockSetting::whereIn('id_company', $companiesIds)
-            ->where('id', $id)
+            ->where('id', $id_ck_setting)
             ->first();
 
         if (!$checkClockSetting) {
@@ -83,7 +83,7 @@ class CheckClockSettingController extends Controller
         );
     }
 
-    public function delete(Request $request, $id)
+    public function delete(Request $request, $id_ck_setting)
     {
         // user should own and be the admin of issued company id
         $user = $request->user();
@@ -91,7 +91,7 @@ class CheckClockSettingController extends Controller
         $companiesIds = $companies->pluck('id')->toArray();
 
         $checkClockSetting = CheckClockSetting::whereIn('id_company', $companiesIds)
-            ->where('id', $id)
+            ->where('id', $id_ck_setting)
             ->first();
 
         if (!$checkClockSetting) {
