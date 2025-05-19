@@ -22,4 +22,6 @@ Route::get('/employee', function () {
     $employees = Employee::with('position', 'user')->get();  // eager load relasi position dan user
     return EmployeeResource::collection($employees);
 });
+
 require __DIR__ . '/auth.route.php';
+require __DIR__ . '/admin.route.php';

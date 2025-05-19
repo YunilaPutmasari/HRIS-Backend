@@ -27,7 +27,7 @@ class CheckClockSetting extends Model
 
     public function checkClockSettingTime()
     {
-        return $this->hasMany(CheckClockSettingTime::class, 'id_check_clock_setting');
+        return $this->hasMany(CheckClockSettingTime::class, 'id_ck_setting');
     }
 
     public function company()
