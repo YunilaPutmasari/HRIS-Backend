@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Employee extends Model
 {
-
     protected $table = 'tb_employee';
     protected $primaryKey = 'id';
     public $incrementing = false;
@@ -21,11 +20,15 @@ class Employee extends Model
      *
      * @var list<string>
      */
+
+
     protected $fillable = [
         'first_name',
         'last_name',
         'address',
+        'id_position',  // tambah ini
     ];
+
 
     /**
      * The attributes that should be hidden for serialization.
@@ -47,4 +50,9 @@ class Employee extends Model
     {
         return $this->belongsTo(User::class, 'id_user');
     }
+    public function position()
+    {
+        return $this->belongsTo(Position::class, 'id_position');
+    }
+
 }
