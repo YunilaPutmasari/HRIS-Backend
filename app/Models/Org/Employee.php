@@ -34,6 +34,8 @@ class Employee extends Model
      */
     protected $hidden = [
         'id_position',
+        'sign_in_code',
+        'id_user',
         'created_at',
         'updated_at',
     ];

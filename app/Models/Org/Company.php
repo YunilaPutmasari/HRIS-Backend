@@ -48,4 +48,9 @@ class Company extends Model
     {
         return $this->hasMany(User::class, 'id_company');
     }
+
+    public function departments()
+    {
+        return $this->hasMany(Department::class, 'id_company');
+    }
 }
