@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Models\Org\User;
 use App\Models\Org\Employee;
 use App\Http\Resources\EmployeeResource;
+use App\Http\Controllers\Payment\XenditWebhookController;
 
 
 Route::get('/user', function (Request $request) {
@@ -23,5 +24,10 @@ Route::get('/employee', function () {
     return EmployeeResource::collection($employees);
 });
 
+Route::post('/xendit/webhook/invoice', [XenditWebhookController::class, 'handle']);
+
 require __DIR__ . '/auth.route.php';
 require __DIR__ . '/admin.route.php';
+//Payment
+require __DIR__ . '/invoice.route.php';
+require __DIR__ . '/payment.route.php';
