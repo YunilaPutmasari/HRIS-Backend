@@ -15,7 +15,12 @@ class PaymentController extends Controller
     // get semua payment
     public function index()
     {
-        $payment = Payment::with(['invoice'])->paginate(10); //('invoice.user')
+        $payment = Payment::with(['invoice'])
+        ->whereHas('invoice', function ($query) {
+            $query->where('id_user', auth()->id());
+        })
+        ->latest()
+        ->paginate(10); //('invoice.user')
         return BaseResponse::success(
             data: $payment,
             message: 'Payments retrieved successfully',
@@ -38,8 +43,15 @@ class PaymentController extends Controller
 
     //Show
     public function show($id){
+
+        $userId = auth()->id();
+
         try{
-            $payment = Payment::with(['invoice'])->findOrFail($id);
+            $payment = Payment::where('id',$id)
+            ->whereHas('invoice', function ($query) use ($userId) {
+                $query->where('id_user', $userId);
+            })
+            ->firstOrFail();
             return BaseResponse::success(
                 data: $payment,
                 message: 'Payment berhasil didapatkan',
@@ -55,7 +67,13 @@ class PaymentController extends Controller
 
     //Update payment
     public function update(PaymentUpdateRequest $request, $id){
-        $payment = Payment::find($id);
+        $userId = auth()->id();
+        
+        $payment = Payment::where('id', $id)
+        ->whereHas('invoice', function ($query) use ($userId){
+            $query->where('id_user',$userId);
+        })
+        ->first();
         if (!$payment){
             return BaseResponse::error(
                 message: 'Payment tidak ditemukan',
@@ -75,7 +93,14 @@ class PaymentController extends Controller
 
     //Delete payment (soft delete)
     public function destroy($id){
-        $payment = Payment::find($id);
+        $userId = auth()->id();
+
+        $payment = Payment::where('id',$id)
+            ->whereHas('invoice', function ($query) use ($userId){
+                $query->where('id_user', $userId);
+            })
+            ->first();
+
         if (!$payment) {
             return BaseResponse::error(
                 message: 'Payment tidak ditemukan',

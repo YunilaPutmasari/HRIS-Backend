@@ -15,14 +15,19 @@ class InvoiceController extends Controller
 {
     // Ambil semua invoice
     public function index(){
-        $invoice = Invoice::with(['user', 'payments'])->get();
+        $invoice = Invoice::with(['user', 'payments'])
+        ->where('id_user', auth()->id())
+        ->latest()
+        ->get();
         return BaseResponse::success($invoice);
     }
 
     // Tambah invoice baru
     public function store(InvoiceStoreRequest $request){
         $validated = $request->validated();
-        $invoice = Invoice::create($validated);
+        $invoice = Invoice::create(array_merge($validated, [
+            'id_user'  => auth()->id(),
+        ]));
 
         try {
             $xenditInvoice = \Xendit\Invoice::create([
@@ -58,7 +63,12 @@ class InvoiceController extends Controller
 //Show invoice
     public function show($id){
         try{
-            $invoice = Invoice::with(['user', 'payment'])->findOrFail($id);
+            $userId = auth()->id();
+
+            $invoice = Invoice::with(['user', 'payment'])
+            ->where('id', $id)
+            ->where('id_user', $userId)
+            ->findOrFail();
             return BaseResponse::success(
                 data: $invoice,
                 message: 'Invoice berhasil didapatkan',
@@ -74,7 +84,11 @@ class InvoiceController extends Controller
 
 //Update invoice
     public function update(InvoiceUpdateRequest $request, $id){
-        $invoice = Invoice::find($id);
+        $userId = auth()->id();
+        $invoice = Invoice::where('id', $id)
+            ->where('id_user', $userId)
+            ->first();
+            
         if (!$invoice){
             return BaseResponse::error(
                 data: $invoice,
@@ -83,7 +97,7 @@ class InvoiceController extends Controller
             );
         }
         $validated = $request->validated();
-        $invoice->update($request->$validated());
+        $invoice->update($validated);
         
         return BaseResponse::success(
             data:$invoice,
@@ -93,19 +107,25 @@ class InvoiceController extends Controller
     }
 
 //Delete invoice (soft delete)
-    public function destroy($id){
-        $invoice = Invoice::find($id);
-        if (!$invoice){
+    public function destroy($id)
+    {
+        $userId = auth()->id();
+
+        $invoice = Invoice::where('id', $id)
+            ->where('id_user', $userId)
+            ->first();
+
+        if (!$invoice) {
             return BaseResponse::error(
-                data: $invoice,
-                message: 'Invoice tidak ditemukan',
+                message: 'Invoice tidak ditemukan atau tidak berhak mengakses',
                 code: 404
             );
         }
 
-        $invoice->delete();
+        $invoice->delete(); // Soft delete
+
         return BaseResponse::success(
-            data:$invoice,
+            data: $invoice,
             message: 'Invoice berhasil dihapus',
             code: 200
         );
