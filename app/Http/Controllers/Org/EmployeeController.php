@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Org;
 use App\Http\Controllers\Controller;
 use App\Models\Org\Employee;
 use Illuminate\Http\Request;
