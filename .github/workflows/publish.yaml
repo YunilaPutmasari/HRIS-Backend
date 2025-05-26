@@ -28,7 +28,6 @@ jobs:
           context: .
           file: ./docker/production/nginx/Dockerfile
           push: true
-          target: production
           tags: hoshigakikisame/hris_backend-web_prod:latest
 
       - name: build and push hoshigakikisame/hris_backend-php-fpm_prod image
@@ -38,5 +37,4 @@ jobs:
           context: .
           file: ./docker/common/php-fpm/Dockerfile
           push: true
-          target: production
           tags: hoshigakikisame/hris_backend-php-fpm_prod:latest
