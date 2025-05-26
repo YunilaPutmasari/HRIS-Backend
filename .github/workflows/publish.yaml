@@ -22,7 +22,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       
       - name: build and push hoshigakikisame/hris_backend-web_prod image
-        id: build-push-api
+        id: build-push-web
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -32,7 +32,7 @@ jobs:
           tags: hoshigakikisame/hris_backend-web_prod:latest
 
       - name: build and push hoshigakikisame/hris_backend-php-fpm_prod image
-        id: build-push-api
+        id: build-push-php-fpm
         uses: docker/build-push-action@v6
         with:
           context: .
