@@ -1,6 +1,6 @@
 services:
   web:
-    image: nginx:latest # Using the default Nginx image with custom configuration.
+    image: hoshigakikisame/nginx:latest
     volumes:
       # Mount the application code for live updates
       - ./:/var/www
@@ -13,12 +13,17 @@ services:
       - NGINX_HOST=localhost
     networks:
       - laravel-development
+    deploy:
+      resources:
+        limits:
+          memory: 512m
     depends_on:
       php-fpm:
         condition: service_started  # Wait for php-fpm to start
 
   php-fpm:
     # For the php-fpm service, we will create a custom image to install the necessary PHP extensions and setup proper permissions.
+    image: hoshigakikisame/hris_backend-php-fpm:latest
     build:
       context: .
       dockerfile: ./docker/common/php-fpm/Dockerfile
@@ -41,9 +46,14 @@ services:
       - ./:/var/www
     networks:
       - laravel-development
+    deploy:
+      resources:
+        limits:
+          memory: 512m
 
   workspace:
    # For the workspace service, we will also create a custom image to install and setup all the necessary stuff.
+    image: hoshigakikisame/hris_backend-workspace:latest
     build:
       context: .
       dockerfile: ./docker/development/workspace/Dockerfile
@@ -66,6 +76,10 @@ services:
       - ./:/var/www
     networks:
       - laravel-development
+    deploy:
+      resources:
+        limits:
+          memory: 512m
 
 networks:
   laravel-development:
