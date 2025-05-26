@@ -59,6 +59,19 @@ services:
           memory: 512m
 
 
+watchtower:
+  image: containrrr/watchtower:latest
+  container_name: watchtower
+  restart: unless-stopped
+  command: --cleanup --interval 30 --include-stopped
+  environment:
+    - WATCHTOWER_CLEANUP=true
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+  networks:
+    - laravel-production
+
+
 networks:
   # Attach the service to the 'laravel' network.
   # -----------------------------------------------------------
