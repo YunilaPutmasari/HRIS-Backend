@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Attendance\CheckClockSettingController;
 use App\Http\Controllers\Attendance\CheckClockSettingTimeController;
+use App\Http\Controllers\Payment\InvoiceController;
+use App\HTTP\Controllers\Payment\PaymentController;
 
 Route::group([
     'prefix' => 'admin',
@@ -34,5 +36,28 @@ Route::group([
             'as' => 'check-clock-setting-time.',
         ], function () {
         });
+    });
+
+    //Bagian payment hanya bisa diakses admin atau HR
+    Route::group([
+        'prefix' => 'invoices',
+        'as' => 'invoices.',
+    ], function () {
+        Route::get('/', [InvoiceController::class, 'index'])->name('index');
+        Route::post('/', [InvoiceController::class, 'store'])->name('store');
+        Route::get('/{id}', [InvoiceController::class, 'show'])->name('show');
+        Route::put('/{id}', [InvoiceController::class, 'update'])->name('update');
+        Route::delete('/{id}', [InvoiceController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::group([
+        'prefix' => 'payments',
+        'as' => 'payments.',
+    ], function () {
+        Route::get('/', [PaymentController::class, 'index'])->name('index');
+        Route::post('/', [PaymentController::class, 'store'])->name('store');
+        Route::get('/{id}', [PaymentController::class, 'show'])->name('show');
+        Route::put('/{id}', [PaymentController::class, 'update'])->name('update');
+        Route::delete('/{id}', [PaymentController::class, 'destroy'])->name('destroy');
     });
 });
