@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Attendance\CheckClockSettingController;
 use App\Http\Controllers\Attendance\CheckClockSettingTimeController;
 use App\Http\Controllers\Payment\InvoiceController;
-use App\HTTP\Controllers\Payment\PaymentController;
+use App\Http\Controllers\Payment\PaymentController;
 
 Route::group([
     'prefix' => 'admin',
