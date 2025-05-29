@@ -13,7 +13,9 @@
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
-        "xendit/xendit-php": "2.10"
+        "xendit/xendit-php": "2.10",
+        "socialiteproviders/google": "^4.1",
+        "socialiteproviders/manager": "^4.8"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.5",
