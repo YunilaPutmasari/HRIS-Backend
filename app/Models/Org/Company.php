@@ -25,6 +25,7 @@ class Company extends Model
     protected $fillable = [
         'name',
         'address',
+        'id_manager',
     ];
 
     /**
@@ -33,7 +34,6 @@ class Company extends Model
      * @var list<string>
      */
     protected $hidden = [
-        'id_manager',
         'id_subscription',
         'effective_date',
         'created_at',

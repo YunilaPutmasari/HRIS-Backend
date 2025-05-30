@@ -10,11 +10,16 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Sanctum\PersonalAccessToken;
+use Str;
 
 class User extends Authenticatable
 {
     protected $table = 'tb_user';
+
+    protected $keyType = 'string';
+
     protected $primaryKey = 'id';
+
     public $incrementing = false;
 
     protected $with = [
@@ -88,5 +93,19 @@ class User extends Authenticatable
     public function isManagerOf(Company $company): bool
     {
         return $this->id === $company->id_manager && $this->isAdmin();
+    }
+
+    /**
+     * Override fungsi boot untuk otomatis generate UUID saat user dibuat.
+     */
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->{$model->getKeyName()})) {
+                $model->{$model->getKeyName()} = (string) Str::uuid();
+            }
+        });
     }
 }
