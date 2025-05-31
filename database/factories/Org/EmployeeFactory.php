@@ -1,7 +1,8 @@
 <?php
 
 
-namespace Database\factories\Org;
+namespace Database\Factories\Org;
+
 use App\Models\Org\Employee;
 use App\Models\Org\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -14,7 +15,9 @@ class EmployeeFactory extends Factory
     public function definition(): array
     {
         return [
-            'id_user' => User::factory(),
+
+            'id_user' => $this->faker->uuid,
+            'sign_in_code' => $this->faker->unique()->randomNumber(6, true),
             'first_name' => $this->faker->firstName(),
             'last_name' => $this->faker->lastName(),
             'address' => $this->faker->address(),
@@ -25,6 +28,8 @@ class EmployeeFactory extends Factory
             'notelp' => $this->faker->phoneNumber(),
             'cabang' => $this->faker->city(),
             'jabatan' => $this->faker->jobTitle(),
+            'id_position' => null,
+
         ];
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Xendit\Xendit;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +20,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        if (!app()->runningInConsole()) {
+            if (class_exists(\Xendit\Xendit::class)) {
+                \Xendit\Xendit::setApiKey(env('XENDIT_SECRET_KEY'));
+            }
+        }
     }
 }

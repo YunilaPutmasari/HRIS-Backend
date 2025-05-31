@@ -13,10 +13,13 @@ return new class extends Migration {
     {
         Schema::create($this->table, function (Blueprint $table) {
             $table->uuid('id')->primary()->default(DB::raw('public.uuid_generate_v4()'));
+            $table->uuid('id_company');
             $table->string('name');
             $table->enum('type', ['WFA', 'WFO', 'Hybrid'])->default('WFO');
             $table->timestamps();
             $table->softDeletes();
+
+            $table->foreign('id_company')->references('id')->on('tb_company')->onDelete('cascade');
         });
     }
 

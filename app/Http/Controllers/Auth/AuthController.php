@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Requests\SignInRequest;
 use App\Http\Requests\SignUpRequest;
 use App\Http\Responses\BaseResponse;
+use App\Models\Org\Company;
 use App\Models\Org\User;
 use App\Http\Controllers\Controller;
 use App\Models\Org\Employee;
@@ -18,6 +19,12 @@ class AuthController extends Controller
         $user->phone_number = request()->phone_number;
         $user->password = bcrypt(request()->password);
         $user->save();
+
+        $company = new Company();
+        $company->name = request()->company_name;
+        $company->address = request()->company_address;
+        $company->id_manager = $user->id;
+        $company->save();
 
         $employee = new Employee();
         $employee->id_user = $user->id;
