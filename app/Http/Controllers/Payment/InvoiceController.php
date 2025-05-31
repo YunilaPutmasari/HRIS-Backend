@@ -8,6 +8,7 @@ use App\Http\Requests\InvoiceUpdateRequest;
 use App\Models\Payment\Invoice;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Responses\BaseResponse;
+use App\Enums\InvoiceStatus;
 use Xendit\Xendit;
 // use Xendit\Invoice as XenditInvoice;
 
@@ -27,6 +28,7 @@ class InvoiceController extends Controller
         $validated = $request->validated();
         $invoice = Invoice::create(array_merge($validated, [
             'id_user'  => auth()->id(),
+            'status' => InvoiceStatus::UNPAID,
         ]));
 
         try {
