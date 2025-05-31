@@ -11,7 +11,7 @@ class ApprovalStoreRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -23,7 +23,7 @@ class ApprovalStoreRequest extends FormRequest
     {
         return [
             "id_user" => "required|exists:tb_user,id",
-            "request_type" => "required|in:cuti,izin,sakit",
+            "request_type" => "required|in:overtime,permit,leave,sick",
             "start_date" => "required|date_format:Y-m-d",
             "end_date" => "required|date_format:Y-m-d",
             "reason" => "required|string|max:255",

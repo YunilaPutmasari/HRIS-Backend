@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Lettering;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\ApprovalStoreRequest;
 use App\Http\Requests\ApprovalUpdateRequest;
 use App\Http\Responses\BaseResponse;
 use App\Models\Approval;
-use App\Models\Attendance\CheckClockSetting;
+use App\Models\Org\User;
 use Illuminate\Http\Request;
 
 class ApprovalController extends Controller
@@ -21,7 +22,14 @@ class ApprovalController extends Controller
         $companies = $user->companies()->get();
         $companyIds = $companies->pluck('id')->toArray();
 
-        $approval = Approval::whereIn('id_company', $companyIds)->get();
+        // Get users in the same companies
+        $userIds = User::whereIn('id_workplace', $companyIds)
+            ->pluck('id')
+            ->toArray();
+
+        // Retrieve approvals for those users
+        $approval = Approval::whereIn('id_user', $userIds)->get();
+
         return BaseResponse::success(
             data : $approval,
             message : 'Approval retrieved successfully',
@@ -35,17 +43,6 @@ class ApprovalController extends Controller
     public function store(ApprovalStoreRequest $request)
     {
         $data = $request->validated();
-
-        // user should own and be the admin of issued company id
-        $user = $request->user();
-        $company = $user->companies()->where('id', $data['id_company'])->first();
-
-        if (!$company) {
-            return BaseResponse::error(
-                message: "You don't have permission to access this company",
-                code: 404
-            );
-        }
 
         $approval = Approval::create($data);
 
