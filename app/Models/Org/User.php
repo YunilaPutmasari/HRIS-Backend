@@ -3,6 +3,8 @@
 namespace App\Models\Org;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -93,6 +95,11 @@ class User extends Authenticatable
     public function isManagerOf(Company $company): bool
     {
         return $this->id === $company->id_manager && $this->isAdmin();
+    }
+
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 
     /**

@@ -97,9 +97,11 @@ class AuthController extends Controller
             $user = User::where('email', $data['email'])->first();
         } elseif (!empty($data['phone_number'])) {
             $user = User::where('phone_number', $data['phone_number'])->first();
-        } else if (!empty($data['id_employee'])) {
+        } else if (!empty($data['id_employee']) && !empty($data['company_name'])) {
             $user = User::whereHas('employee', function ($query) use ($data) {
                 $query->where('id', $data['id_employee']);
+            })->whereHas('company', function ($query) use ($data) {
+                $query->where('name', $data['company_name']);
             })->first();
         }
 
