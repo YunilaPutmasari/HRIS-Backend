@@ -14,12 +14,17 @@ class EmployeeFactory extends Factory
     public function definition(): array
     {
         return [
-            'id_user' => User::factory(), // generate user otomatis
+            'id_user' => User::factory(),
             'first_name' => $this->faker->firstName(),
             'last_name' => $this->faker->lastName(),
             'address' => $this->faker->address(),
             'employment_status' => $this->faker->randomElement(['active', 'inactive', 'resign']),
-            'id_position' => null, // nanti bisa disesuaikan
+            'id_position' => null, // sesuaikan kalau perlu
+            // Kolom baru yang kamu tambahkan
+            'jenisKelamin' => $this->faker->randomElement(['Laki-laki', 'Perempuan']),
+            'notelp' => $this->faker->phoneNumber(),
+            'cabang' => $this->faker->city(),
+            'jabatan' => $this->faker->jobTitle(),
         ];
     }
 }
