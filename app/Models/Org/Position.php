@@ -4,7 +4,7 @@ namespace App\Models\Org;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Org\Employee;
-use App\Models\Oeg\Department;
+use App\Models\Org\Department;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
