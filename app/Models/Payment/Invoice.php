@@ -28,7 +28,6 @@ class Invoice extends Model
         'id_user',
         'total_amount',
         'due_datetime',
-        'status',
         'xendit_invoice_id', 
         'invoice_url',
     ];
