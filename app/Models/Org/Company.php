@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Subscription\Subscription;
 
 class Company extends Model
 {
@@ -52,5 +53,10 @@ class Company extends Model
     public function departments()
     {
         return $this->hasMany(Department::class, 'id_company');
+    }
+
+    public function subscription()
+    {
+        return $this->hasOne(Subscription::class, 'id_company');
     }
 }

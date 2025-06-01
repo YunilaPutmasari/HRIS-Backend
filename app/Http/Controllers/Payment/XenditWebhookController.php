@@ -32,7 +32,8 @@ class XenditWebhookController extends Controller
         // Gunakan enum untuk normalisasi status
         $normalizedStatus = InvoiceStatus::fromXendit($statusFromXendit);
 
-        $invoice->update(['status' => $normalizedStatus]);
+        $invoice->status = $normalizedStatus;
+        $invoice->save();
 
         if ($normalizedStatus === InvoiceStatus::PAID) {
             Payment::create([

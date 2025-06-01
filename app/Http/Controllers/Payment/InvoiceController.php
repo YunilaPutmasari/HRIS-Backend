@@ -37,6 +37,7 @@ class InvoiceController extends Controller
                 'payer_email' => $request->email ?? 'dummy@example.com',
                 'description' => 'Pembayaran Invoice #' . $invoice->id,
                 'amount' => $invoice->total_amount,
+                'status' => 'unpaid'
             ]);
 
             // Debug log (sementara untuk memastikan)
