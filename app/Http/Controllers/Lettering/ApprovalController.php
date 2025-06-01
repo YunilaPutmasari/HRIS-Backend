@@ -28,7 +28,9 @@ class ApprovalController extends Controller
             ->toArray();
 
         // Retrieve approvals for those users
-        $approval = Approval::whereIn('id_user', $userIds)->get();
+        $approval = Approval::whereIn('id_user', $userIds)
+            ->select('id', 'id_user', 'request_type', 'status', 'created_at')
+            ->with(['employee:id,id_user,first_name,last_name'])->get();
 
         return BaseResponse::success(
             data : $approval,

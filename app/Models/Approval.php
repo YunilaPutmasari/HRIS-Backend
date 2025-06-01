@@ -2,10 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Org\Employee;
+use App\Models\Org\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Approval extends Model
 {
+    use HasFactory;
+
     protected $table = "tb_employee_request";
 
     protected $fillable = [
@@ -17,4 +22,12 @@ class Approval extends Model
         'status',
         'approved_by',
     ];
+
+    public function user(){
+        return $this->belongsTo(User::class, 'id_user');
+    }
+
+    public function employee(){
+        return $this->hasOne(Employee::class, 'id_user', 'id_user');
+    }
 }
