@@ -37,7 +37,7 @@ class AuthController extends Controller
             }
         }
 
-        // DB::beginTransaction();
+        DB::beginTransaction();
 
         try {
             
@@ -70,14 +70,14 @@ class AuthController extends Controller
             ]);
 
 
-            // DB::commit();
+            DB::commit();
 
             return BaseResponse::success(
                 message: 'User created successfully',
                 code: 201
             );
         } catch (\Exception $e) {
-            // DB::rollBack();
+            DB::rollBack();
 
             return BaseResponse::error(
                 message: 'Failed to create user: ' . $e->getMessage(),
