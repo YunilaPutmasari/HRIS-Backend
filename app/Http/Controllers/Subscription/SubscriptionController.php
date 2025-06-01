@@ -7,11 +7,24 @@ use Illuminate\Http\Request;
 use App\Http\Requests\StoreSubscriptionRequest;
 use App\Http\Requests\UpdateSubscriptionRequest;
 use App\Models\Subscription\Subscription;
+use App\Http\Responses\BaseResponse;
 use App\Models\Org\Company;
+use App\Models\Org\User;
 use Carbon\Carbon;
 
 class SubscriptionController extends Controller
-{
+{   
+    public function index(Request $request){
+        $user = $request->user();
+        $companyId = $user->workplace->id;
+        
+        $subscription = Subscription::with('company')
+        ->where('id_company', $companyId)
+        ->latest()
+        ->get();
+        return BaseResponse::success($subscription);
+    }
+
     public function store(StoreSubscriptionRequest $request)
     {
         $company = Company::findOrFail($request->id_company);
