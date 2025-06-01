@@ -8,8 +8,8 @@ class SignInRequest extends BaseRequest
     {
         return [
             "email" => "nullable|email|max:255|exists:tb_user,email",
-            "id_employee" => "nullable|string|exists:tb_employee,id",
-            "company_name" => "nullable|string|exists:tb_employee,company_name",
+            "id_employee" => "nullable|string",
+            "company_name" => "nullable|string",
             "phone_number" => "nullable|string|max:15|exists:tb_user,phone_number",
             "password" => "required|min:8",
         ];

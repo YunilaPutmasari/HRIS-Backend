@@ -21,63 +21,63 @@ class AuthController extends Controller
     {
         $data = $request->validated();
 
-        DB::beginTransaction();
+        // Cek duplikasi user DULU sebelum masuk transaksi
+        $existingUser = User::where('email', $data['email'])
+            ->orWhere('phone_number', $data['phone_number'])
+            ->first();
+
+        if ($existingUser) {
+            $existingEmployee = Employee::where('id_user', $existingUser->id)->first();
+
+            if ($existingEmployee) {
+                return BaseResponse::error(
+                    message: 'User with this email or phone number already exists',
+                    code: 409
+                );
+            }
+        }
+
+        // DB::beginTransaction();
 
         try {
-            // Cek apakah user sudah ada
-            $existingUser = User::where('email', $data['email'])
-                ->orWhere('phone_number', $data['phone_number'])
-                ->first();
+            
+            $user = User::create([
+                'id' => Str::uuid()->toString(),
+                'email' => $data['email'],
+                'password' => Hash::make($data['password']),
+                'phone_number' => $data['phone_number'],
+                'is_admin' => true,
+                // 'id_workplace' => $company->id,
+            ]);
 
-            if ($existingUser) {
-                $existingEmployee = Employee::where('id_user', $existingUser->id)->first();
-
-                if ($existingEmployee) {
-                    return BaseResponse::error(
-                        message: 'User with this email or phone number already exists',
-                        code: 409
-                    );
-                }
-
-                $user = $existingUser;
-
-                $user->update([
-                    'password' => Hash::make($data['password']),
-                    'is_admin' => true,
-                ]);
-            } else {
-                $user = User::create([
-                    'id' => Str::uuid()->toString(),
-                    'email' => $data['email'],
-                    'password' => Hash::make($data['password']),
-                    'phone_number' => $data['phone_number'],
-                    'is_admin' => true,
-                    'id_workplace' => null,
-                ]);
-            }
+            // MENAMBAHKAN COMPANY SETELAH ADA USER
+            $company = Company::create([
+                'name' => $data['company_name'],
+                'address' => $data['company_address'],
+                'id_manager' => $user->id, // Akan diisi nanti setelah user dibuat
+            ]);
+            
+            // DIUPDATE AGAR ADA ID_WORKPLACE
+            $user->update([
+                'id_workplace' => $company->id
+            ]);
 
             Employee::create([
                 'id_user' => $user->id,
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
-                'address' => $data['address'],
+                'address' => $data['address'] ?? 'Not Provided', //AKU KOSONGI KARENA WAJIB DIISI TERNYATA
             ]);
 
-            Company::create([
-                'id' => Str::uuid()->toString(),
-                'name' => $data['company_name'],
-                'address' => $data['company_address'],
-                'id_manager' => $user->id,
-            ]);
 
-            DB::commit();
+            // DB::commit();
 
             return BaseResponse::success(
                 message: 'User created successfully',
                 code: 201
             );
         } catch (\Exception $e) {
-            DB::rollBack();
+            // DB::rollBack();
 
             return BaseResponse::error(
                 message: 'Failed to create user: ' . $e->getMessage(),
@@ -99,16 +99,24 @@ class AuthController extends Controller
             $user = User::where('phone_number', $data['phone_number'])->first();
         } else if (!empty($data['id_employee']) && !empty($data['company_name'])) {
             $user = User::whereHas('employee', function ($query) use ($data) {
-                $query->where('id', $data['id_employee']);
-            })->whereHas('company', function ($query) use ($data) {
-                $query->where('name', $data['company_name']);
-            })->first();
+                    $query->where('id', $data['id_employee']);
+                })->whereHas('workplace', function ($query) use ($data) {
+                    $query->where('name', $data['company_name']);
+                })
+                ->with(['employee','workplace'])
+                ->first();
         }
 
         if (!$user || !password_verify($data['password'], $user->password)) {
             return response()->json([
                 'message' => 'Invalid credentials'
             ], 401);
+        }
+
+        if (!$user->workplace) {
+            return response()->json([
+                'message' => 'User is not associated with a company'
+            ], 403);
         }
 
         $token = $user->createToken('access_token')->plainTextToken;
