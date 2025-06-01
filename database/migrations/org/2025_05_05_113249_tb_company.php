@@ -22,6 +22,7 @@ return new class extends Migration {
             $table->uuid("id_manager");
             $table->uuid("id_subscription")->nullable();
             $table->date("effective_date")->nullable();
+            $table->text("address")->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
