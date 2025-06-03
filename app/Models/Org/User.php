@@ -72,7 +72,7 @@ class User extends Authenticatable
 
     public function workplace()
     {
-        return $this->belongsTo(Company::class, 'id_workplace');
+        return $this->belongsTo(Company::class, 'id_workplace')->with('subscription');
     }
 
     public function employee()
