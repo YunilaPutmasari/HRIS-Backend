@@ -26,8 +26,16 @@ class SubscriptionController extends Controller
     }
 
     public function store(StoreSubscriptionRequest $request)
-    {
-        $company = Company::findOrFail($request->id_company);
+    {   
+        $user = $request->user();
+        if (!$user){
+            return response()->json(['messege' => 'user not authenticated'],401);
+        }
+        
+        $company = $user->workplace;
+        if (!$company){
+            return response()->json(['messege' => 'User has no workplace'],422);    
+        }
 
         $subscription = Subscription::create([
             'id_company' => $company->id,

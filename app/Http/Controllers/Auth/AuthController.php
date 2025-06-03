@@ -57,16 +57,18 @@ class AuthController extends Controller
         );
     }
 
-    public function me()
+    public function me(Request $request)
     {
         $user = auth()->user();
-
+        
         if (!$user) {
             return BaseResponse::error(
                 message: 'User not found',
                 code: 404
             );
         }
+        
+        $user -> load(['workplace', 'employee']);
 
         return BaseResponse::success(
             data: $user,
