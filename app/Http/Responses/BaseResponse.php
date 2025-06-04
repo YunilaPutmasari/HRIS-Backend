@@ -27,4 +27,9 @@ class BaseResponse
             'data' => $data
         ], $code);
     }
+
+    public static function redirect(string $url, int $status = 302)
+    {
+        return redirect()->away($url, $status);
+    }
 }
