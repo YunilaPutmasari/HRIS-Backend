@@ -6,6 +6,7 @@ use App\Http\Controllers\Attendance\CheckClockSettingController;
 use App\Http\Controllers\Attendance\CheckClockSettingTimeController;
 use App\Http\Controllers\Payment\InvoiceController;
 use App\Http\Controllers\Payment\PaymentController;
+use App\Http\Controllers\Subscription\SubscriptionController;
 
 Route::group([
     'prefix' => 'admin',
@@ -60,4 +61,14 @@ Route::group([
         Route::put('/{id}', [PaymentController::class, 'update'])->name('update');
         Route::delete('/{id}', [PaymentController::class, 'destroy'])->name('destroy');
     });
+});
+
+Route::group([
+    'prefix' => 'admin/subscription',
+    'as' => 'admin.subscription',
+    'middleware' => ['auth:sanctum', 'admin'],
+], function() {
+    Route::get('/', [SubscriptionController::class, 'index'])->name('index');
+    Route::post('/', [SubscriptionController::class, 'store'])->name('store');
+    Route::put('/{id}', [SubscriptionController::class, 'update'])->name('update');
 });

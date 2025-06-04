@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Subscription\Subscription;
 
 class Company extends Model
 {
@@ -25,6 +26,7 @@ class Company extends Model
     protected $fillable = [
         'name',
         'address',
+        'id_manager',
     ];
 
     /**
@@ -33,7 +35,6 @@ class Company extends Model
      * @var list<string>
      */
     protected $hidden = [
-        'id_manager',
         'id_subscription',
         'effective_date',
         'created_at',
@@ -53,5 +54,10 @@ class Company extends Model
     public function departments()
     {
         return $this->hasMany(Department::class, 'id_company');
+    }
+
+    public function subscription()
+    {
+        return $this->hasOne(Subscription::class, 'id_company');
     }
 }
