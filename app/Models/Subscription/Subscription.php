@@ -43,7 +43,7 @@ class Subscription extends Model
 
     public function isActive(): bool
     {
-        return $this->status === 'active' && now()->lt($this->ends_at);
+        return !$this->trashed() && $this->status === 'active' && now()->lt($this->ends_at);
     }
 
     public function isInTrial(): bool

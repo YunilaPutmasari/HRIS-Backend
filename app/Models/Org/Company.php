@@ -60,4 +60,9 @@ class Company extends Model
     {
         return $this->hasOne(Subscription::class, 'id_company');
     }
+    
+    public function getSubscriptionIdAttribute()
+    {
+        return $this->id_subscription;
+    }
 }

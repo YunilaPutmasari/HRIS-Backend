@@ -37,6 +37,33 @@ class SubscriptionController extends Controller
             return response()->json(['messege' => 'User has no workplace'],422);    
         }
 
+        $existingSubscription = Subscription::where('id_company', $company->id)
+        ->where(function ($query){
+            $query->where('status','trial')
+                ->orWhere(function ($q) {
+                    $q->where('status','active')->where('ends_at','>',now());
+                });
+        })
+        ->first();
+
+        if($existingSubscription){
+            return response()->json([
+                'message'=>'Company sudah ada subscription aktif atau trial berjalan.',
+            ], 422);
+        }
+
+        // Disable expired subs=========================
+        Subscription::where('id_company', $company->id)
+        ->where('ends_at', '<', now())
+        ->update(['status' => 'expired']);
+
+        // Prevent reuse of trial=======================
+        if ($company->has_used_trial) {
+            return response()->json([
+                'message' => 'This company has already used its free trial.'
+            ], 422);
+        }
+
         $subscription = Subscription::create([
             'id_company' => $company->id,
             'package_type' => $request->package_type,
@@ -45,11 +72,12 @@ class SubscriptionController extends Controller
             'is_trial' => true,
             'trial_ends_at' => now()->addDays(14),
             'starts_at' => now(),
-            'ends_at' => now()->addMonth(),
+            'ends_at' => now()->day(28)->endOfDay(),
             'status' => 'trial'
         ]);
 
         $company->id_subscription = $subscription->id;
+        $company->has_used_trial = true;
         $company->save();
 
         return response()->json([

@@ -48,7 +48,7 @@ class Invoice extends Model
      * @var list<string>
      */
     protected $casts = [
-        'total_amount' => 'double',
+        'total_amount' => 'float',
         'due_datetime' => 'datetime',
     ];
 
@@ -63,7 +63,7 @@ class Invoice extends Model
     }
 
     public function subscription(){
-        return $this->belongsTo(Invoice::class, 'id_subscription');
+        return $this->belongsTo(Subscription::class, 'id_subscription');
     }
     
 }
