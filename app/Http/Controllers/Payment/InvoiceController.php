@@ -68,15 +68,38 @@ class InvoiceController extends Controller
         try{
             $userId = auth()->id();
 
-            $invoice = Invoice::with(['user', 'payment'])
+            // $invoice = Invoice::with(['user', 'payments'])
+            // ->where('id', $id)
+            // ->where('id_user', $userId)
+            // ->findOrFail($id);
+            // return BaseResponse::success(
+            //     data: $invoice,
+            //     message: 'Invoice berhasil didapatkan',
+            //     code: 200
+            // );
+
+            $invoice = Invoice::with([
+                'user.workplace.subscription',
+                'payments'
+            ])
             ->where('id', $id)
             ->where('id_user', $userId)
-            ->findOrFail();
+            ->first();
+
+            if (!$invoice) {
+                return BaseResponse::error(
+                    message: 'Invoice tidak ditemukan atau tidak berhak mengakses',
+                    code: 404
+                );
+            }
             return BaseResponse::success(
-                data: $invoice,
-                message: 'Invoice berhasil didapatkan',
+                data: [
+                    'data' => $invoice
+                ],
+                message: 'Invoice berhasil ditemukan',
                 code: 200
             );
+
         } catch (\Exception $e) {
             return BaseResponse::error(
                 message: 'Invoice tidak ditemukan',
