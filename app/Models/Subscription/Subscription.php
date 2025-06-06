@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use App\Models\Org\Company;
+use App\Models\Payment\Invoice;
 
 class Subscription extends Model
 {
@@ -14,6 +15,7 @@ class Subscription extends Model
 
     protected $table = 'tb_subscription';
     protected $primaryKey = 'id';
+    protected $keyType = 'string';
     public $incrementing = false;
 
     protected $fillable = [ //Sementara karena sek tidak aman price & active di fillable
@@ -39,6 +41,11 @@ class Subscription extends Model
     public function company()
     {
         return $this->belongsTo(Company::class, 'id_company');
+    }
+    
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class, 'id_subscription');
     }
 
     public function isActive(): bool

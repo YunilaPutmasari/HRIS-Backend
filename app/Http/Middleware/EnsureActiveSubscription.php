@@ -20,6 +20,10 @@ class EnsureActiveSubscription
             return BaseResponse::error('Company subscription not found.', 403);
         }
 
+        if (!$company->subscription->isActive()) {
+            return BaseResponse::error('Langganan company tidak aktif', 403);
+        }
+
         $subscription = $company->subscription;
 
         if (!in_array($subscription->status, ['active', 'trial'])) {

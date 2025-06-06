@@ -68,16 +68,6 @@ class InvoiceController extends Controller
         try{
             $userId = auth()->id();
 
-            // $invoice = Invoice::with(['user', 'payments'])
-            // ->where('id', $id)
-            // ->where('id_user', $userId)
-            // ->findOrFail($id);
-            // return BaseResponse::success(
-            //     data: $invoice,
-            //     message: 'Invoice berhasil didapatkan',
-            //     code: 200
-            // );
-
             $invoice = Invoice::with([
                 'user.workplace.subscription',
                 'payments'
