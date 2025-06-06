@@ -70,7 +70,7 @@ class InvoiceController extends Controller
             $userId = auth()->id();
 
             $invoice = Invoice::with([
-                'user.workplace.subscription',
+                'subscription',  // Use direct relationship
                 'payments'
             ])
             ->where('id', $id)

@@ -16,15 +16,15 @@ Artisan::command('inspire', function () {
 // ini cuma untuk ditampilkan di php artisan schedule:list
 if (!defined('APP_SCHEDULE')) {
     define('APP_SCHEDULE', [
-        'subscription:check-trial' => 'everyMinute',
-        'subscription:expire' => 'everyMinute',
-        'subscription:renew' => 'everyMinute',
-        'invoice:check-overdue' => 'everyMinute',
+        'subscription:check-trial' => 'daily',
+        'subscription:expire' => 'daily',
+        'subscription:renew' => 'daily',
+        'invoice:check-overdue' => 'daily',
     ]);
 }
 
 // Schedule commands
-Schedule::command('subscription:check-trial')->everyMinute();
-Schedule::command('subscription:expire')->everyMinute();
-Schedule::command('subscription:renew')->everyMinute();
-Schedule::command('invoice:check-overdue')->everyMinute();
+Schedule::command('subscription:check-trial')->daily();
+Schedule::command('subscription:expire')->daily();
+Schedule::command('subscription:renew')->daily();
+Schedule::command('invoice:check-overdue')->daily();

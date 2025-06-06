@@ -71,4 +71,5 @@ Route::group([
     Route::get('/', [SubscriptionController::class, 'index'])->name('index');
     Route::post('/', [SubscriptionController::class, 'store'])->name('store');
     Route::put('/{id}', [SubscriptionController::class, 'update'])->name('update');
+    Route::post('/{id}/cancel', [SubscriptionController::class, 'cancel'])->name('cancel');
 });

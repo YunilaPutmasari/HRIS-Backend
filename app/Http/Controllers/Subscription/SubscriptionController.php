@@ -57,22 +57,30 @@ class SubscriptionController extends Controller
             ->where('status','active')
             ->exists();
 
-        $isTrial = !$hasActiveSub;
-
-        $trialEndsAt = $isTrial ? now()->addDays(14) : null;
-
-        // Disable expired subs=========================
-        Subscription::where('id_company', $company->id)
-            ->where('ends_at', '<', now())
-            ->update(['status' => 'expired']);
-
-        // Prevent reuse of trial=======================
+        // If company has used trial, create non-trial subscription
         if ($company->has_used_trial) {
+            $subscription = Subscription::create([
+                'id_company' => $company->id,
+                'package_type' => $request->package_type,
+                'seats' => $request->seats,
+                'price_per_seat' => $this->getPricePerSeat($request->package_type),
+                'is_trial' => false,
+                'trial_ends_at' => null,
+                'starts_at' => now(),
+                'ends_at' => now()->day(28)->endOfDay(),
+                'status' => 'active'
+            ]);
+
+            $company->id_subscription = $subscription->id;
+            $company->save();
+
             return response()->json([
-                'message' => 'This company has already used its free trial.'
-            ], 422);
+                'message' => 'Subscription started.',
+                'data' => $subscription
+            ]);
         }
 
+        // Create trial subscription for new companies
         $subscription = Subscription::create([
             'id_company' => $company->id,
             'package_type' => $request->package_type,
@@ -123,5 +131,22 @@ class SubscriptionController extends Controller
             'premium' => 25000,
             default => 0
         };
+    }
+
+    public function cancel(Request $request, string $id)
+    {
+        $subscription = Subscription::findOrFail($id);
+    
+        // Hanya bisa dibatalkan jika masih aktif
+        if ($subscription->status !== 'active') {
+            return BaseResponse::error('Langganan tidak aktif', 400);
+        }
+
+        $subscription->update([
+            'ends_at' => now(),
+            'status' => 'expired'
+        ]);
+
+        return BaseResponse::success('Langganan berhasil dibatalkan');
     }
 }

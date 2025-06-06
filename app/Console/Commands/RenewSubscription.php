@@ -25,7 +25,6 @@ class RenewSubscription extends Command
 
     public function handle()
     {
-
         $now = Carbon::now();
 
         // Ambil semua subscription expired
@@ -34,6 +33,12 @@ class RenewSubscription extends Command
             ->get();
 
         foreach ($subscriptions as $oldSubscription) {
+            // Skip if subscription was cancelled
+            if ($oldSubscription->ends_at && $oldSubscription->ends_at->isPast()) {
+                $this->info("Subscription {$oldSubscription->id} was cancelled, skipping renewal.");
+                continue;
+            }
+
             // Validasi semua invoice dari subscription lama sudah dibayar
             $activeSubscriptionExists = Subscription::where('id_company', $oldSubscription->id_company)
                 ->where('status', 'active')
