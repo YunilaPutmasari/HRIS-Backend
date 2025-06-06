@@ -52,10 +52,19 @@ class SubscriptionController extends Controller
             ], 422);
         }
 
+        $hasActiveSub = Subscription::where('id_company', $company->id)
+            ->where('is_trial',false)
+            ->where('status','active')
+            ->exists();
+
+        $isTrial = !$hasActiveSub;
+
+        $trialEndsAt = $isTrial ? now()->addDays(14) : null;
+
         // Disable expired subs=========================
         Subscription::where('id_company', $company->id)
-        ->where('ends_at', '<', now())
-        ->update(['status' => 'expired']);
+            ->where('ends_at', '<', now())
+            ->update(['status' => 'expired']);
 
         // Prevent reuse of trial=======================
         if ($company->has_used_trial) {

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Responses\BaseResponse;
+use App\Models\Payment\Invoice;
 
 class EnsureActiveSubscription
 {
@@ -32,6 +33,12 @@ class EnsureActiveSubscription
 
         if ($company->employees()->count() > $subscription->seat_count) {
             return BaseResponse::error('Exceeded seat count limit.', 403);
+        }
+
+        $invoice = $company->subscription->invoices()->latest()->first();
+
+        if ($invoice && $invoice->status === InvoiceStatus::UNPAID && $invoice->due_datetime < now()) {
+            return BaseResponse::error("Tagihan Anda lewat jatuh tempo", 403);
         }
 
         return $next($request);

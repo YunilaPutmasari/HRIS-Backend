@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Http\Responses\BaseResponse;
 use App\Enums\InvoiceStatus;
 use Xendit\Xendit;
+use Carbon\Carbon;
 // use Xendit\Invoice as XenditInvoice;
 
 class InvoiceController extends Controller
@@ -82,9 +83,16 @@ class InvoiceController extends Controller
                     code: 404
                 );
             }
+            
+            $displayStatus = $invoice->status;
+            if ($invoice->status === InvoiceStatus::UNPAID && $invoice->due_datetime < now()) {
+                $displayStatus = 'overdue';
+            }
+
             return BaseResponse::success(
                 data: [
-                    'data' => $invoice
+                    'data' => $invoice,
+                    'display_status' => $displayStatus,
                 ],
                 message: 'Invoice berhasil ditemukan',
                 code: 200
