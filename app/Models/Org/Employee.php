@@ -41,7 +41,6 @@ class Employee extends Model
      * @var list<string>
      */
     protected $hidden = [
-        'id_position',
         'sign_in_code',
         'created_at',
         'updated_at',
@@ -58,7 +57,7 @@ class Employee extends Model
     }
     public function position()
     {
-        return $this->belongsTo(Position::class, 'id_position');
+        return $this->belongsTo(Position::class, 'id_position', 'id');
     }
 
     /**
