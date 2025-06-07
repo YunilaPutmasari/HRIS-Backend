@@ -6,6 +6,7 @@ use App\Http\Controllers\Attendance\CheckClockSettingController;
 use App\Http\Controllers\Attendance\CheckClockSettingTimeController;
 use App\Http\Controllers\Payment\InvoiceController;
 use App\Http\Controllers\Payment\PaymentController;
+use App\Http\Controllers\Org\EmployeeController;
 use App\Http\Controllers\Subscription\SubscriptionController;
 
 Route::group([
@@ -60,6 +61,18 @@ Route::group([
         Route::get('/{id}', [PaymentController::class, 'show'])->name('show');
         Route::put('/{id}', [PaymentController::class, 'update'])->name('update');
         Route::delete('/{id}', [PaymentController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::group([
+        'prefix'=>'employees',
+        'as' => 'employees.',
+    ], function(){
+        Route::group([
+            'prefix'=>'dashboard',
+            'as'=>'dashboard.',
+        ], function () {
+            Route::get('/getEmployee',[EmployeeController::class, 'getEmployee'])->name('getEmployee');
+        });
     });
 });
 
