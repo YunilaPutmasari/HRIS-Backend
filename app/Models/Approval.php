@@ -4,12 +4,13 @@ namespace App\Models;
 
 use App\Models\Org\Employee;
 use App\Models\Org\User;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Approval extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     protected $table = "tb_employee_request";
 

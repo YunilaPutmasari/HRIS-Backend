@@ -28,9 +28,19 @@ class ApprovalController extends Controller
             ->toArray();
 
         // Retrieve approvals for those users
-        $approval = Approval::whereIn('id_user', $userIds)
-            ->select('id', 'id_user', 'request_type', 'status', 'created_at')
-            ->with(['employee:id,id_user,first_name,last_name'])->get();
+        try {
+            $approval = Approval::whereIn('id_user', $userIds)
+                ->with([
+                    'employee',
+                    'employee.position'
+                ])->get();
+        } catch (\Throwable $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'trace' => $e->getTrace(),
+            ], 500);
+        }
+
 
         return BaseResponse::success(
             data : $approval,
@@ -39,12 +49,60 @@ class ApprovalController extends Controller
         );
     }
 
+    public function create(Request $request)
+    {
+        $search = $request->input('search', '');
+        // user should own and be the admin of issued company id
+        $user = $request->user();
+        $companies = $user->companies()->get();
+        $companyIds = $companies->pluck('id')->toArray();
+
+        try {
+            $query = User::whereIn('id_workplace', $companyIds)
+                ->with([
+                    'employee:id,id_user,first_name,last_name',
+                ]);
+
+            if (!empty($search)) {
+                $query->whereHas('employee', function ($subQuery) use ($search){
+                    $subQuery->whereRaw('LOWER(first_name) LIKE ?', ["%".strtolower($search)."%"])
+                        ->orWhereRaw('LOWER(last_name) LIKE ?', ["%".strtolower($search)."%"]);
+                });
+            }
+
+            $users = $query->paginate(10, ['id']);
+
+            return BaseResponse::success(
+                data: $users,
+                message: 'Users retrieved successfully',
+                code: 200
+            );
+        } catch (\Throwable $e) {
+            return BaseResponse::error(
+                message: 'Error retrieving users: ' . $e->getMessage(),
+                code: 500
+            );
+        }
+    }
+
     /**
      * Store a newly created resource in storage.
      */
     public function store(ApprovalStoreRequest $request)
-    {
+    {   // user should own and be the admin of issued company id
+        $user = $request->user();
+        $companies = $user->companies()->get();
+        $companyIds = $companies->pluck('id')->toArray();
+
         $data = $request->validated();
+        if ($user->isAdmin()) {
+            $data['id_user'] = $request->input('id_user');
+            $data['status'] = 'approved';
+            $data['approved_by'] = $user->id;
+        } else {
+            $data['id_user'] = $user->id;
+            $data['status'] = 'pending';
+        }
 
         $approval = Approval::create($data);
 
