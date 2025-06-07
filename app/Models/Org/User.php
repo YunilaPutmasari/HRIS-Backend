@@ -3,6 +3,8 @@
 namespace App\Models\Org;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -10,15 +12,20 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Sanctum\PersonalAccessToken;
+use Str;
 
 class User extends Authenticatable
 {
     protected $table = 'tb_user';
+
+    protected $keyType = 'string';
+
     protected $primaryKey = 'id';
+
     public $incrementing = false;
 
     protected $with = [
-        'employee',
+        'employee', 'workplace'
     ];
 
 
@@ -33,6 +40,8 @@ class User extends Authenticatable
         'email',
         'phone_number',
         'password',
+        'is_admin',
+        'id_workplace' // TAK TAMBAHKAN INI UNTUK NANTI HRD MENAMBAHKAN EMPLOYEE
     ];
 
     /**
@@ -60,19 +69,24 @@ class User extends Authenticatable
         ];
     }
 
+    public function setIsAdminAttribute($value){
+        $this->attributes['is_admin']=$value?'1':'0';
+    }
+
     public function isAdmin(): bool
     {
         return $this->is_admin;
     }
-
+    // INI JIKA MANAGER BISA LEBIH DARI 1 COMPANY
     public function companies()
     {
         return $this->hasMany(Company::class, 'id_manager');
     }
 
+    // INI JIKA INGIN DIGANTI DARI WORKPLACE MENJADI COMPANY BIAR LEBIH MUDAH
     public function workplace()
     {
-        return $this->belongsTo(Company::class, 'id_workplace');
+        return $this->belongsTo(Company::class, 'id_workplace')->with('subscription');
     }
 
     public function employee()
@@ -88,5 +102,24 @@ class User extends Authenticatable
     public function isManagerOf(Company $company): bool
     {
         return $this->id === $company->id_manager && $this->isAdmin();
+    }
+
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new ResetPasswordNotification($token));
+    }
+
+    /**
+     * Override fungsi boot untuk otomatis generate UUID saat user dibuat.
+     */
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->{$model->getKeyName()})) {
+                $model->{$model->getKeyName()} = (string) Str::uuid();
+            }
+        });
     }
 }

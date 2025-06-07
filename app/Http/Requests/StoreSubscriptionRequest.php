@@ -22,7 +22,7 @@ class StoreSubscriptionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id_company' => 'required|uuid|exists:tb_company,id',
+            // 'id_company' => 'required|uuid|exists:tb_company,id',
             'package_type' => 'required|in:standard,premium',
             'seats' => 'required|integer|min:1|max:1000',
         ];

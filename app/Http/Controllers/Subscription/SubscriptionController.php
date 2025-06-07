@@ -26,9 +26,61 @@ class SubscriptionController extends Controller
     }
 
     public function store(StoreSubscriptionRequest $request)
-    {
-        $company = Company::findOrFail($request->id_company);
+    {   
+        $user = $request->user();
+        if (!$user){
+            return response()->json(['messege' => 'user not authenticated'],401);
+        }
+        
+        $company = $user->workplace;
+        if (!$company){
+            return response()->json(['messege' => 'User has no workplace'],422);    
+        }
 
+        $existingSubscription = Subscription::where('id_company', $company->id)
+        ->where(function ($query){
+            $query->where('status','trial')
+                ->orWhere(function ($q) {
+                    $q->where('status','active')->where('ends_at','>',now());
+                });
+        })
+        ->first();
+
+        if($existingSubscription){
+            return response()->json([
+                'message'=>'Company sudah ada subscription aktif atau trial berjalan.',
+            ], 422);
+        }
+
+        $hasActiveSub = Subscription::where('id_company', $company->id)
+            ->where('is_trial',false)
+            ->where('status','active')
+            ->exists();
+
+        // If company has used trial, create non-trial subscription
+        if ($company->has_used_trial) {
+            $subscription = Subscription::create([
+                'id_company' => $company->id,
+                'package_type' => $request->package_type,
+                'seats' => $request->seats,
+                'price_per_seat' => $this->getPricePerSeat($request->package_type),
+                'is_trial' => false,
+                'trial_ends_at' => null,
+                'starts_at' => now(),
+                'ends_at' => now()->day(28)->endOfDay(),
+                'status' => 'active'
+            ]);
+
+            $company->id_subscription = $subscription->id;
+            $company->save();
+
+            return response()->json([
+                'message' => 'Subscription started.',
+                'data' => $subscription
+            ]);
+        }
+
+        // Create trial subscription for new companies
         $subscription = Subscription::create([
             'id_company' => $company->id,
             'package_type' => $request->package_type,
@@ -37,11 +89,12 @@ class SubscriptionController extends Controller
             'is_trial' => true,
             'trial_ends_at' => now()->addDays(14),
             'starts_at' => now(),
-            'ends_at' => now()->addMonth(),
+            'ends_at' => now()->day(28)->endOfDay(),
             'status' => 'trial'
         ]);
 
         $company->id_subscription = $subscription->id;
+        $company->has_used_trial = true;
         $company->save();
 
         return response()->json([
@@ -78,5 +131,22 @@ class SubscriptionController extends Controller
             'premium' => 25000,
             default => 0
         };
+    }
+
+    public function cancel(Request $request, string $id)
+    {
+        $subscription = Subscription::findOrFail($id);
+    
+        // Hanya bisa dibatalkan jika masih aktif
+        if ($subscription->status !== 'active') {
+            return BaseResponse::error('Langganan tidak aktif', 400);
+        }
+
+        $subscription->update([
+            'ends_at' => now(),
+            'status' => 'expired'
+        ]);
+
+        return BaseResponse::success('Langganan berhasil dibatalkan');
     }
 }
