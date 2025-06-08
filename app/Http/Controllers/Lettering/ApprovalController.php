@@ -165,4 +165,46 @@ class ApprovalController extends Controller
     {
         //
     }
+
+    public function getRecentApprovals(Request $request)
+    {
+        $user = $request->user();
+        $companies = $user->companies()->get();
+        $companyIds = $companies->pluck('id')->toArray();
+
+        // Get users in the same companies
+        $userIds = User::whereIn('id_workplace', $companyIds)
+            ->pluck('id')
+            ->toArray();
+
+        try {
+            $approvals = Approval::whereIn('id_user', $userIds)
+                ->with([
+                    'employee',
+                    'employee.position'
+                ])
+                ->latest()
+                ->take(5)
+                ->get()
+                ->map(function ($approval) {
+                    return [
+                        'id' => $approval->id,
+                        'employee_name' => $approval->employee->first_name . ' ' . $approval->employee->last_name,
+                        'type' => $approval->request_type,
+                        'status' => $approval->status,
+                        'created_at' => $approval->created_at
+                    ];
+                });
+
+            return response()->json([
+                'data' => $approvals,
+                'message' => 'Recent approvals retrieved successfully'
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'trace' => $e->getTrace(),
+            ], 500);
+        }
+    }
 }
