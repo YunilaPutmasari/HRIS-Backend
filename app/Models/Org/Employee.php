@@ -31,9 +31,11 @@ class Employee extends Model
         'first_name',
         'last_name',
         'address',
+        'id_position',  // tambah ini
+        'sign_in_code',
         'id_position',
         'employment_status',
-        'tipe_kontrak',
+        'tipeKontrak',
     ];
 
 
