@@ -43,7 +43,7 @@ class Employee extends Model
      * @var list<string>
      */
     protected $hidden = [
-        'sign_in_code',
+        // 'sign_in_code', //untuk ditampilkan di Profile
         'created_at',
         'updated_at',
     ];
