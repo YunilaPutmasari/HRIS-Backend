@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use Illuminate\Http\Request;
 use App\Http\Requests\SignInRequest;
 use App\Http\Requests\SignUpRequest;
 use App\Http\Responses\BaseResponse;
@@ -165,16 +166,18 @@ class AuthController extends Controller
         );
     }
 
-    public function me()
+    public function me(Request $request)
     {
-        $user = auth()->user();
-
+        $user = auth()->user()->load('employee', 'workplace.subscription');
+        
         if (!$user) {
             return BaseResponse::error(
                 message: 'User not found',
                 code: 404
             );
         }
+        
+        $user -> load(['workplace', 'employee']);
 
         return BaseResponse::success(
             data: $user,

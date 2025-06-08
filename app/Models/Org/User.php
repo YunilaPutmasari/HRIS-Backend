@@ -86,7 +86,7 @@ class User extends Authenticatable
     // INI JIKA INGIN DIGANTI DARI WORKPLACE MENJADI COMPANY BIAR LEBIH MUDAH
     public function workplace()
     {
-        return $this->belongsTo(Company::class, 'id_workplace');
+        return $this->belongsTo(Company::class, 'id_workplace')->with('subscription');
     }
 
     public function employee()
