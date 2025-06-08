@@ -114,19 +114,6 @@ class ApprovalController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show($id)
-    {
-        $record = Approval::findOrFail($id);
-        return BaseResponse::success(
-            data: $record,
-            message: 'Approval retrieved successfully',
-            code: 200
-        );
-    }
-
-    /**
      * Update the specified resource in storage.
      */
     public function update(ApprovalUpdateRequest $request, $id)
@@ -154,6 +141,68 @@ class ApprovalController extends Controller
         return BaseResponse::success(
             data: $approval,
             message: 'Approval updated successfully',
+            code: 200
+        );
+    }
+
+    public function approve(Request $request, $id){
+        $user = $request->user();
+        $companies = $user->companies()->get();
+        $companyIds = $companies->pluck('id')->toArray();
+
+        $userIds = User::whereIn('id_workplace', $companyIds)
+            ->pluck('id')
+            ->toArray();
+
+        $approval = Approval::whereIn('id_user', $userIds)
+            ->where('id', $id)
+            ->first();
+
+        if (!$approval) {
+            return BaseResponse::error(
+                message: 'Approval not found',
+                code: 404
+            );
+        }
+
+        $approval->status = 'approved';
+        $approval->approved_by = $user->id;
+        $approval->save();
+
+        return BaseResponse::success(
+            data: $approval,
+            message: 'Approval approved successfully',
+            code: 200
+        );
+    }
+
+    public function reject(Request $request, $id){
+        $user = $request->user();
+        $companies = $user->companies()->get();
+        $companyIds = $companies->pluck('id')->toArray();
+
+        $userIds = User::whereIn('id_workplace', $companyIds)
+            ->pluck('id')
+            ->toArray();
+
+        $approval = Approval::whereIn('id_user', $userIds)
+            ->where('id', $id)
+            ->first();
+
+        if (!$approval) {
+            return BaseResponse::error(
+                message: 'Approval not found',
+                code: 404
+            );
+        }
+
+        $approval->status = 'rejected';
+        $approval->approved_by = $user->id;
+        $approval->save();
+
+        return BaseResponse::success(
+            data: $approval,
+            message: 'Approval rejected successfully',
             code: 200
         );
     }
