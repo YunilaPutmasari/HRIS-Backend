@@ -65,6 +65,10 @@ class User extends Authenticatable
         return $this->is_admin;
     }
 
+    public function companies()
+    {
+        return $this->hasMany(Company::class, 'id_manager');
+    }
 
     public function workplace()
     {
@@ -86,4 +90,8 @@ class User extends Authenticatable
         return $this->hasMany(Document::class, 'user_id');
     }
 
+    public function isManagerOf(Company $company): bool
+    {
+        return $this->id === $company->id_manager && $this->isAdmin();
+    }
 }

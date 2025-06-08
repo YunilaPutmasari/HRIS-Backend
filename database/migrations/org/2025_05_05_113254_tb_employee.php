@@ -14,6 +14,7 @@ return new class extends Migration {
     {
         Schema::create($this->table, function (Blueprint $table) {
             $table->uuid('id')->primary()->default(DB::raw('public.uuid_generate_v4()'));
+            $table->string('sign_in_code', 6)->default('');
             $table->uuid('id_user');
             $table->string('first_name');
             $table->string('last_name');

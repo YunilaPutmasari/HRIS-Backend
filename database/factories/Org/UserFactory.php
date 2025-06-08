@@ -26,11 +26,9 @@ class UserFactory extends Factory
         return [
             'id' => $this->faker->uuid(),
             'email' => $this->faker->unique()->safeEmail(),
-            'password' => bcrypt('password'), // contoh default password
-            'phone_number' => $this->faker->phoneNumber(),
-            'is_admin' => $this->faker->boolean(20), // 20% chance jadi admin
-
-
+            'password' => bcrypt('password'),
+            'phone_number' => $this->faker->e164PhoneNumber(),
+            'is_admin' => false,
         ];
     }
 
