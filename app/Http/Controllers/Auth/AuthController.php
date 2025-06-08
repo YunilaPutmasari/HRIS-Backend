@@ -62,11 +62,15 @@ class AuthController extends Controller
                 'id_workplace' => $company->id
             ]);
 
+            // Generate sign_in_code otomatis
+            $signInCode = $this->generateUniqueSignInCode();
+
             Employee::create([
                 'id_user' => $user->id,
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'address' => $data['address'] ?? 'Not Provided', //AKU KOSONGI KARENA WAJIB DIISI TERNYATA
+                'sign_in_code' => $signInCode,
             ]);
 
 
@@ -86,10 +90,22 @@ class AuthController extends Controller
         }
     }
 
+    private function generateUniqueSignInCode()
+{
+    do {
+        $code = 'MN' . str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+        $exists = Employee::where('sign_in_code', $code)->exists();
+    } while ($exists);
+
+    return $code;
+}
+
 
     public function signin(SignInRequest $request)
     {
         $data = $request->validated();
+
+        // dd($data); 
 
         $user = null;
 
@@ -97,14 +113,15 @@ class AuthController extends Controller
             $user = User::where('email', $data['email'])->first();
         } elseif (!empty($data['phone_number'])) {
             $user = User::where('phone_number', $data['phone_number'])->first();
-        } else if (!empty($data['id_employee']) && !empty($data['company_name'])) {
+        } else if (!empty($data['sign_in_code']) && !empty($data['company_name'])) {
             $user = User::whereHas('employee', function ($query) use ($data) {
-                    $query->where('id', $data['id_employee']);
+                    $query->where('sign_in_code', $data['sign_in_code']);
                 })->whereHas('workplace', function ($query) use ($data) {
                     $query->where('name', $data['company_name']);
                 })
                 ->with(['employee','workplace'])
                 ->first();
+       
         }
 
         if (!$user || !password_verify($data['password'], $user->password)) {
@@ -163,6 +180,8 @@ class AuthController extends Controller
 
             $isNewUser = false;
 
+            DB::beginTransaction();
+
             if (!$user) {
                 $user = User::create([
                     'id' => Str::uuid(),
@@ -173,7 +192,22 @@ class AuthController extends Controller
                     'id_workplace' => null,
                 ]);
 
+                // Buat sign_in_code otomatis
+            $signInCode = $this->generateUniqueSignInCode();
+
+            Employee::create([
+                'id_user' => $user->id,
+                'first_name' => $googleUser->getName(), // atau split ke first/last
+                'last_name' => '',
+                'address' => 'Not Provided',
+                'sign_in_code' => $signInCode,
+            ]);
+
                 $isNewUser = true;
+
+            //     // Buat sign_in_code otomatis
+            // $signInCode = $this->generateUniqueSignInCode();
+
             } else {
                 $employee = Employee::where('id_user', $user->id)->first();
 
@@ -181,6 +215,9 @@ class AuthController extends Controller
                     $isNewUser = true;
                 }
             }
+
+            //tambahan
+            DB::commit();
 
             Auth::login($user);
 
