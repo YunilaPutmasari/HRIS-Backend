@@ -127,15 +127,15 @@ class EmployeeController extends Controller
         $stats = [
             [
                 'label' => 'Tetap',
-                'total' => $employees->where('employment_status', 'active')->count(),
+                'total' => $employees->where('tipeKontrak', 'Tetap')->count(),
             ],
             [
                 'label' => 'Kontrak',
-                'total' => $employees->where('tipeKontrak', 'contract')->count(), // asumsi kolom tipeKontrak ada
+                'total' => $employees->where('tipeKontrak', 'Kontrak')->count(), // asumsi kolom tipeKontrak ada
             ],
             [
                 'label' => 'Lepas',
-                'total' => $employees->where('tipeKontrak', 'freelance')->count(), // nanti menyesuaikan 
+                'total' => $employees->where('tipeKontrak', 'Lepas')->count(), // nanti menyesuaikan 
             ],
         ];
 
@@ -168,21 +168,25 @@ class EmployeeController extends Controller
         ->whereYear('created_at', $year)
         ->get();
 
-        // Hitung jumlah berdasarkan status
-        $active = $employees->where('employment_status', 'active')->count();
-        $resigned = $employees->where('employment_status', 'resign')->count();
-
-        // Karyawan baru dalam 30 hari terakhir
-        $newEmployees = $employees->filter(function ($employee) {
-            return $employee->created_at >= Carbon::now()->subDays(30);
-        })->count();
+        $statusStat = [
+            [
+                'label' => 'Aktif', 
+                'total' => $employees->where('employment_status', 'active')->count(),
+            ],
+            [
+                'label' => 'Baru', 
+                'total' => $employees->filter(function ($employee) {
+                    return $employee->created_at >= Carbon::now()->subDays(30);
+                })->count(),
+            ],
+            [
+                'label' => 'Tidak Aktif', 
+                'total' => $employees->where('employment_status', 'inactive')->count(),
+            ],
+        ];
 
         return response()->json([
-            'data' => [
-                ['label' => 'Aktif', 'total' => $active],
-                ['label' => 'Baru', 'total' => $newEmployees],
-                ['label' => 'Resign', 'total' => $resigned],
-            ],
+            'data' => $statusStat,
             'selected_month' => "$year-$month",
             'last_updated' => now()->format('d F Y H:i'),
         ]);
