@@ -22,13 +22,42 @@ class UpdateEmployeeRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'avatar' => 'sometimes|nullable|file|image|mimes:jpeg,png,jpg,gif|max:2048', // max 2MB
             'id_user' => 'sometimes|uuid',
-            'first_name' => 'sometimes|string',
-            'last_name' => 'sometimes|string',
-            'address' => 'sometimes|string',
-            'id_position' => 'sometimes|nullable|uuid',
-            'employment_status' => 'sometimes|in:active,inactive,resign',
+            'first_name' => 'sometimes|string|max:255',
+            'last_name' => 'sometimes|nullable|string|max:255',
+            'nik' => 'sometimes|nullable|string|max:100',
+            'address' => 'sometimes|nullable|string|max:500',
+            'tempatLahir' => 'sometimes|nullable|string|max:255',
+            'tanggalLahir' => 'sometimes|nullable|date|before:today',
+            'jenisKelamin' => 'sometimes|string|in:Laki-laki,Perempuan',
+            'pendidikan' => 'sometimes|string|in:SMA/SMK,D3,S1,S2,S3',
+            'email' => 'sometimes|email|max:255',
+            'notelp' => 'sometimes|string|max:20',
+            'startDate' => 'sometimes|date',
+            'endDate' => 'sometimes|nullable|date|after_or_equal:startDate',
+            'tenure' => 'sometimes|string|max:50',
+            'jadwal' => 'sometimes|string|in:Shift,Non-Shift',
+            'tipeKontrak' => 'sometimes|string|in:Kontrak,Tetap,Magang',
+            'cabang' => 'sometimes|string|max:255',
+            'employment_status' => 'sometimes|string|in:active,inactive,resign',
+            'id_position' => 'sometimes|string|max:255',
+            'jabatan' => 'sometimes|string|max:255',
+            'tanggalEfektif' => 'sometimes|date',
+            'bank' => 'sometimes|string|max:50',
+            'norek' => 'sometimes|string|max:50',
+            'gaji' => 'sometimes|numeric|min:0',
+            'uangLembur' => 'sometimes|numeric|min:0',
+            'dendaTerlambat' => 'sometimes|numeric|min:0',
+            'TotalGaji' => 'sometimes|numeric|min:0',
+            'dokumen' => 'sometimes|array',
+            'dokumen.*' => 'file|mimes:pdf,doc,docx|max:2048',
+            'documents.*.id' => 'sometimes|uuid',
+            'documents.*.title' => 'sometimes|string|max:255',
+            'documents.*.fileUrl' => 'sometimes|url',
+            'documents.*.uploadDate' => 'sometimes|date',
         ];
+
     }
 
 }

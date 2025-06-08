@@ -11,23 +11,30 @@ class EmployeeResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'id_user' => $this->id_user,
             'nama' => $this->first_name . ' ' . $this->last_name,
-            'address' => $this->address,
+            'first_name' => $this->first_name,
+            'last_name' => $this->last_name,
             'nik' => $this->nik ?? '',
-            'email' => $this->user?->email ?? '',
-            'jenisKelamin' => $this->jenisKelamin ?? '',
-            'notelp' => $this->notelp ?? '',
-            'cabang' => $this->cabang ?? '',
-            'jabatan' => $this->jabatan ?? '',
-            'grade' => $this->grade ?? '',
-            'bank' => $this->bank ?? '',
-            'norek' => $this->norek ?? '',
-            'pendidikan' => $this->pendidikan ?? '',
-            'jadwal' => $this->jadwal ?? '',
-            'tipeKontrak' => $this->tipeKontrak ?? '',
+            'address' => $this->address,
             'tempatLahir' => $this->tempatLahir ?? '',
             'tanggalLahir' => $this->tanggalLahir ?? '',
-            'status' => $this->employment_status,
+            'jenisKelamin' => $this->jenisKelamin ?? '',
+            'pendidikan' => $this->pendidikan ?? '',
+            'email' => $this->user?->email ?? '',
+            'notelp' => $this->notelp ?? '',
+            'startDate' => $this->startDate,
+            'endDate' => $this->endDate,
+            'tenure' => $this->tenure,
+            'jadwal' => $this->jadwal ?? '',
+            'tipeKontrak' => $this->tipeKontrak ?? '',
+            'cabang' => $this->cabang ?? '',
+            'employment_status' => $this->employment_status ?? '',
+            'jabatan' => $this->position ? $this->position->name : null,
+            'id_position' => $this->id_position,
+            'tanggalEfektif' => $this->tanggalEfektif,
+            'bank' => $this->bank ?? '',
+            'norek' => $this->norek ?? '',
             'avatar' => $this->avatar ? asset('storage/' . $this->avatar) : null,
             // 'dokumen' => $this->dokumen ? asset('storage/' . $this->dokumen) : null,
             'dokumen' => $this->documents?->map(function ($dok) {
@@ -38,9 +45,13 @@ class EmployeeResource extends JsonResource
 
                 ];
             }) ?? [],
-            'gajiPokok' => $this->payroll?->total_salary ? 'Rp ' . number_format($this->payroll->total_salary, 0, ',', '.') : 'Rp 0',
-            'uangLembur' => $this->payroll?->overtime_wage ? 'Rp ' . number_format($this->payroll->overtime_wage, 0, ',', '.') : 'Rp 0',
-            'total' => $this->payroll?->total_wage ? 'Rp ' . number_format($this->payroll->total_wage, 0, ',', '.') : 'Rp 0',
+
+
+            'gaji' => $this->gaji ? 'Rp ' . number_format($this->gaji, 0, ',', '.') : 'Rp 0',
+            'uangLembur' => $this->uangLembur ? 'Rp ' . number_format($this->uangLembur, 0, ',', '.') : 'Rp 0',
+            'dendaTerlambat' => $this->dendaTerlambat ? 'Rp ' . number_format($this->dendaTerlambat, 0, ',', '.') : 'Rp 0',
+            'TotalGaji' => $this->TotalGaji ? 'Rp ' . number_format($this->TotalGaji, 0, ',', '.') : 'Rp 0',
+
 
 
 

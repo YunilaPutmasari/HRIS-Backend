@@ -10,4 +10,7 @@ Route::prefix('employee')->group(function () {
     Route::get('/{id}', [EmployeeController::class, 'show']);
     Route::put('/{id}', [EmployeeController::class, 'update']);
     Route::delete('/{id}', [EmployeeController::class, 'destroy']);
+    Route::post('/import', [EmployeeController::class, 'import']);
+    Route::post('/{id}/upload', [EmployeeController::class, 'upload']);
+
 });

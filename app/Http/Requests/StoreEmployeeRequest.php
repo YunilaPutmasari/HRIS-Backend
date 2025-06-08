@@ -22,28 +22,38 @@ class StoreEmployeeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id_user' => 'nullable|uuid',
-            'avatar' => 'required|image|mimes:jpg,jpeg,png|max:2048',
-            'first_name' => 'required|string',
-            'last_name' => 'required|string',
+            'id_user' => 'required|uuid',
+            'avatar' => 'nullable|image|mimes:jpg,jpeg,png|max:5000',
+            'first_name' => 'sometimes|nullable|string|max:255',
+            'last_name' => 'nullable|string',
             'nik' => 'required|string',
-            'email' => 'required|email|unique:tb_user,email',
+            // 'email' => 'required|string',
             'address' => 'required|string',
-            'jenisKelamin' => 'nullable|string',
-            'notelp' => 'nullable|string',
+            'jenisKelamin' => 'required|string',
+            'notelp' => 'required|string',
             'cabang' => 'nullable|string',
-            'jabatan' => 'nullable|string',
+            'id_position' => 'required|exists:tb_position,id',
             'grade' => 'nullable|string',
-            'bank' => 'nullable|string',
-            'norek' => 'nullable|string',
-            'pendidikan' => 'nullable|string',
-            'jadwal' => 'nullable|string',
-            'tipeKontrak' => 'nullable|string',
-            'tempatLahir' => 'nullable|string',
-            'tanggalLahir' => 'nullable|date',
-            'dokumen' => 'required|file|mimes:pdf,doc,docx|max:2048', // ✅ benar
+            'bank' => 'required|string',
+            'norek' => 'required|string',
+            'pendidikan' => 'required|string',
+            'jadwal' => 'required|string',
+            'tipeKontrak' => 'required|string',
+            'tempatLahir' => 'required|string',
+            'tanggalLahir' => 'required|date',
+            'tanggalEfektif' => 'nullable|date',
+            'dokumen' => 'nullable|array', // dokumen harus berupa array jika ada
+            'dokumen.*' => 'file|mimes:pdf,doc,docx|max:2048', // setiap elemen array harus file valid
 
-            'status' => 'in:active,inactive,resign',
+            'employment_status' => 'in:active,inactive,resign',
+            'gaji' => 'required|numeric|min:0',
+            'startDate' => 'required|date',
+            'endDate' => 'nullable|date|after_or_equal:start_date',
+            'tenure' => 'required|string',
+            'uangLembur' => 'required|numeric|min:0',
+            'dendaTerlambat' => 'required|numeric|min:0',
+            'TotalGaji' => 'required|numeric|min:0',
+
 
         ];
     }

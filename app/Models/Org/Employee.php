@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Org\Document;
+use App\Models\Org\Position;
 
 class Employee extends Model
 {
@@ -26,26 +27,35 @@ class Employee extends Model
 
 
     protected $fillable = [
-        'id_user',
         'avatar',
+        'id_user',
         'first_name',
         'last_name',
         'nik',
         'address',
-        'notelp',
-        'email',
         'tempatLahir',
         'tanggalLahir',
         'jenisKelamin',
         'pendidikan',
+        'email',
+        'notelp',
+        'id_position',
+        'startDate',
+        'endDate',
+        'tenure',
         'jadwal',
         'tipeKontrak',
-        'grade',
-        'jabatan',
         'cabang',
+        'employment_status',
+        'tanggalEfektif',
         'bank',
         'norek',
+        'gaji',
+        'uangLembur',
+        'dendaTerlambat',
+        'TotalGaji',
         'dokumen',
+
     ];
 
 

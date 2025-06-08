@@ -31,3 +31,5 @@ Route::get('', function (Request $request) {
 
 require __DIR__ . '/auth.route.php';
 require __DIR__ . '/employee.route.php';
+require __DIR__ . '/position.route.php';
+require __DIR__ . '/user.route.php';

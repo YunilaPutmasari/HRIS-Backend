@@ -5,13 +5,15 @@ namespace App\Models\Org;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Org\Employee;
+use App\Models\Org\User;
 
 class Document extends Model
 {
     use HasFactory;
 
     protected $table = 'tb_documents';
-
+    public $incrementing = false;
+    protected $keyType = 'string';
     protected $fillable = [
         'id_user',
         'type',
