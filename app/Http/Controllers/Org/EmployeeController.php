@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\org;
+
 use App\Http\Controllers\Controller;
 use App\Models\Org\Employee;
 use App\Models\Org\Document;
@@ -14,58 +15,57 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-
+use App\Helpers\BaseResponse;
 
 class EmployeeController extends Controller
 {
-    // ✅ READ - Ambil semua employee
     public function index(Request $request)
     {
         try {
-            $query = Employee::with('position', 'user');
+            $query = Employee::with(['position', 'user']); // eager load
 
             if ($request->has('id')) {
                 $id = $request->query('id');
-
-                // Validasi sederhana format UUID v4 (36 karakter termasuk strip)
                 if (!is_string($id) || !preg_match('/^[0-9a-fA-F\-]{36}$/', $id)) {
-                    return response()->json([
-                        'error' => true,
-                        'message' => 'Invalid UUID format for id parameter',
-                    ], 400);
+                    return BaseResponse::error('Invalid UUID format for id parameter', 400);
+                }
+                $query->where('id', $id);
+            }
+
+            if ($request->has('id_workplace')) {
+                $companyId = $request->query('id_workplace');
+                if (!is_string($companyId) || !preg_match('/^[0-9a-fA-F\-]{36}$/', $companyId)) {
+                    return BaseResponse::error('Invalid UUID format for id_workplace parameter', 400);
                 }
 
-                $query->where('id', $id);
+                // Filter Employee berdasarkan id_workplace lewat relasi user → id_workplace
+                $query->whereHas('user', function ($q) use ($companyId) {
+                    $q->where('id_workplace', $companyId);
+                });
             }
 
             $employees = $query->get();
 
-            return EmployeeResource::collection($employees);
+            return BaseResponse::success(EmployeeResource::collection($employees));
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => true,
-                'message' => $e->getMessage(),
-            ], 500);
+            return BaseResponse::error($e->getMessage(), 500);
         }
     }
+
 
     public function upload(Request $request, $id)
     {
         try {
             Log::info('Upload request diterima, id: ' . $id);
 
-            // Validasi file
             $request->validate([
                 'dokumen.*' => 'required|file|mimes:pdf,docx|max:5000',
-
             ]);
 
-            // Cek apakah employee ada
             $employee = Employee::with('documents')->findOrFail($id);
 
-            // Ambil file dari request
             $files = $request->file('dokumen');
-            $files = is_array($files) ? $files : [$files]; // pastikan array
+            $files = is_array($files) ? $files : [$files];
             $uploadedFiles = [];
 
             foreach ($files as $file) {
@@ -83,58 +83,39 @@ class EmployeeController extends Controller
                 $uploadedFiles[] = [
                     'id' => $docId,
                     'name' => $filename,
-                    'file' => Storage::url($filepath),  // pastikan kamu pakai Storage facade dan sudah `use Illuminate\Support\Facades\Storage;`
+                    'file' => Storage::url($filepath),
                 ];
             }
 
-            return response()->json([
+            return BaseResponse::success([
                 'message' => 'Upload berhasil',
                 'dokumen' => $uploadedFiles,
             ]);
-
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            Log::warning('Employee tidak ditemukan: ' . $id);
-            return response()->json(['message' => 'Data karyawan tidak ditemukan'], 404);
+            return BaseResponse::error('Data karyawan tidak ditemukan', 404);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json(['message' => 'Validasi gagal', 'errors' => $e->errors()], 422);
+            return BaseResponse::error('Validasi gagal', 422, $e->errors());
         } catch (\Exception $e) {
             Log::error('Upload dokumen gagal: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Error saat upload dokumen',
-                'error' => $e->getMessage(),
-            ], 500);
+            return BaseResponse::error('Error saat upload dokumen', 500, ['exception' => $e->getMessage()]);
         }
     }
 
-
-    // // ✅ CREATE - Tambah employee baru
-    // public function store(StoreEmployeeRequest $request)
-    // {
-    //     $employee = Employee::create($request->validated());
-    //     return response()->json($employee, 201);
-    // }
-    // Fungsi store untuk menyimpan employee baru
     public function store(StoreEmployeeRequest $request)
     {
         $data = $request->validated();
-
-        // Hapus dokumen dari $data supaya gak disimpan ke tabel employee
         unset($data['dokumen']);
 
-        // Log data yang akan dimasukkan
         \Log::info('Employee Data to Insert:', $data);
 
         if ($request->hasFile('avatar')) {
             $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
         }
 
-        // Simpan employee ke database
         $employee = Employee::create($data);
 
-        // Cek jika ada file dokumen
         if ($request->hasFile('dokumen')) {
             $files = $request->file('dokumen');
-
             if (!is_array($files)) {
                 $files = [$files];
             }
@@ -143,82 +124,69 @@ class EmployeeController extends Controller
                 $path = $file->store('documents', 'public');
 
                 Document::create([
-                    'id_user' => $employee->id_user, // hubungan ke tb_user
-                    'type' => 'other', // default, bisa disesuaikan
+                    'id_user' => $employee->id_user,
+                    'type' => 'other',
                     'name' => $file->getClientOriginalName(),
                     'file_path' => $path,
                 ]);
             }
         }
 
-        return new EmployeeResource($employee->load('position', 'documents'));
+        return BaseResponse::success(new EmployeeResource($employee->load('position', 'documents')), 201);
     }
 
-
-    // ✅ SHOW - Ambil 1 employee berdasarkan id
     public function show($id)
     {
         $employee = Employee::with(['user', 'position', 'documents'])->find($id);
         if (!$employee) {
-            return response()->json(['message' => 'Employee not found'], 404);
+            return BaseResponse::error('Employee not found', 404);
         }
-        return new EmployeeResource($employee->load('position', 'documents'));
-
+        return BaseResponse::success(new EmployeeResource($employee->load('position', 'documents')));
     }
 
-
-    // ✅ UPDATE - Ubah data employee
     public function update(UpdateEmployeeRequest $request, $id)
     {
         $employee = Employee::find($id);
         if (!$employee) {
-            return response()->json(['message' => 'Employee not found'], 404);
+            return BaseResponse::error('Employee not found', 404);
         }
 
-        // 🔍 Debug isi validasi
         Log::info('Validated data:', $request->validated());
 
-        // Ambil semua field valid kecuali file
         $data = $request->validated();
-        unset($data['avatar']); // avatar ditangani terpisah
+        unset($data['avatar']);
 
-        // Simpan field biasa
         $employee->fill($data);
 
-        // Simpan avatar jika ada file baru
         if ($request->hasFile('avatar')) {
             $employee->avatar = $request->file('avatar')->store('avatars', 'public');
         }
 
-        // Simpan ke database
         $employee->save();
 
-        return response()->json([
+        return BaseResponse::success([
             'message' => 'Data berhasil diperbarui.',
             'data' => $employee->load('position', 'documents')
         ]);
     }
 
-    // ✅ DELETE - Hapus (soft delete)
     public function destroy($id)
     {
         $employee = Employee::find($id);
         if (!$employee) {
-            return response()->json(['message' => 'Employee not found'], 404);
+            return BaseResponse::error('Employee not found', 404);
         }
 
         $employee->delete();
-        return response()->json(['message' => 'Employee deleted successfully']);
+        return BaseResponse::success(['message' => 'Employee deleted successfully']);
     }
 
-
-    //IMPORT EMPLOYEE
     public function import(ImportEmployeeRequest $request)
     {
         $employees = $request->input('id');
 
         if (empty($employees)) {
-            return response()->json(['message' => 'No data to import'], 400);
+            return BaseResponse::error('No data to import', 400);
         }
 
         \Log::info('Import employees:', $employees);
@@ -247,8 +215,8 @@ class EmployeeController extends Controller
                         'first_name' => $emp['first_name'],
                         'last_name' => $emp['last_name'],
                         'address' => $emp['address'],
-                        'jenisKelamin' => $emp['jenisKelamin'] ?? null,
-                        'notelp' => $emp['notelp'] ?? null,
+                        'jenis_kelamin' => $emp['jenis_kelamin'] ?? null,
+                        'no_telp' => $emp['no_telp'] ?? null,
                         'cabang' => $emp['cabang'] ?? null,
                         'jabatan' => $emp['jabatan'] ?? null,
                         'employment_status' => $emp['employment_status'] ?? 'active',
@@ -257,22 +225,17 @@ class EmployeeController extends Controller
                 );
             }
 
-            // Tambahan: Kembalikan seluruh data setelah import
             $allEmployees = Employee::with('user')->get();
 
-            return response()->json([
+            return BaseResponse::success([
                 'message' => 'Import berhasil',
                 'data' => $allEmployees
-            ], 200);
-
+            ]);
         } catch (\Exception $e) {
             \Log::error("Import Employee gagal: " . $e->getMessage());
-            return response()->json(['message' => 'Gagal import data', 'error' => $e->getMessage()], 500);
+            return BaseResponse::error('Gagal import data', 500, ['exception' => $e->getMessage()]);
         }
     }
-
-
-
 
     public function deleteEmployeeDocument($employeeId, $documentId)
     {
@@ -280,7 +243,6 @@ class EmployeeController extends Controller
 
         try {
             $employee = Employee::where('id', $employeeId)->firstOrFail();
-
             \Log::info("Employee found: " . $employee->id);
 
             $userId = $employee->id_user;
@@ -290,20 +252,16 @@ class EmployeeController extends Controller
 
             if (!$document) {
                 \Log::warning("Document not found or not belongs to userId: $userId");
-                return response()->json(['message' => 'Dokumen tidak ditemukan atau tidak milik employee ini.'], 404);
+                return BaseResponse::error('Dokumen tidak ditemukan atau tidak milik employee ini.', 404);
             }
 
             $document->delete();
             \Log::info("Document deleted successfully.");
 
-            return response()->json(['message' => 'Dokumen berhasil dihapus dari employee.']);
+            return BaseResponse::success(['message' => 'Dokumen berhasil dihapus dari employee.']);
         } catch (\Exception $e) {
             \Log::error('Error hapus dokumen: ' . $e->getMessage());
-            return response()->json(['message' => 'Terjadi kesalahan saat menghapus dokumen.'], 500);
+            return BaseResponse::error('Terjadi kesalahan saat menghapus dokumen.', 500);
         }
     }
-
-
-
-
 }
