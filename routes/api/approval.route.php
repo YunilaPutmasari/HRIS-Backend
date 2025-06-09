@@ -8,6 +8,7 @@ Route::group([
     'middleware' => 'auth:sanctum'
 ], function () {
     Route::get('/', [ApprovalController::class, 'index'])->name('index');
+    Route::get('/create', [ApprovalController::class, 'create'])->name('create');
     Route::post('/', [ApprovalController::class, 'store'])->name('store');
     Route::get('/{id}', [ApprovalController::class, 'show'])->name('show');
     Route::put('/{id}', [ApprovalController::class, 'update'])->name('update');

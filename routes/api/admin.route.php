@@ -8,6 +8,7 @@ use App\Http\Controllers\Payment\InvoiceController;
 use App\Http\Controllers\Payment\PaymentController;
 use App\Http\Controllers\Org\EmployeeController;
 use App\Http\Controllers\Subscription\SubscriptionController;
+use App\Http\Controllers\Lettering\ApprovalController;
 
 Route::group([
     'prefix' => 'admin',
@@ -72,6 +73,9 @@ Route::group([
             'as'=>'dashboard.',
         ], function () {
             Route::get('/getEmployee',[EmployeeController::class, 'getEmployee'])->name('getEmployee');
+            Route::get('/contract-stats',[EmployeeController::class, 'getEmployeeContractStats'])->name('getEmployeeContractStats'); //asumsiku tipeKontrak: Tetap,Kontrak,Lepas
+            Route::get('/status-stats',[EmployeeController::class, 'getEmployeeStatusStats'])->name('getEmployeeStatusStats'); //asumsiku tipeKontrak: Tetap,Kontrak,Lepas
+            Route::get('/recent-approvals',[ApprovalController::class, 'getRecentApprovals'])->name('getRecentApprovals');
         });
     });
 });

@@ -32,6 +32,10 @@ class Employee extends Model
         'last_name',
         'address',
         'id_position',  // tambah ini
+        'sign_in_code',
+        'id_position',
+        'employment_status',
+        'tipeKontrak',
     ];
 
 
@@ -41,8 +45,7 @@ class Employee extends Model
      * @var list<string>
      */
     protected $hidden = [
-        'id_position',
-        'sign_in_code',
+        // 'sign_in_code', //untuk ditampilkan di Profile
         'created_at',
         'updated_at',
     ];
@@ -58,7 +61,7 @@ class Employee extends Model
     }
     public function position()
     {
-        return $this->belongsTo(Position::class, 'id_position');
+        return $this->belongsTo(Position::class, 'id_position', 'id');
     }
 
     /**

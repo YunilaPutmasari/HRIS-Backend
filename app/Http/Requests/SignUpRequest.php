@@ -13,7 +13,7 @@ class SignUpRequest extends BaseRequest
             // 'address' => 'required|string',  //AKU KURANGI AGAR MEMPERSINGKAT FORM SIGN UP
             'company_name' => 'required|string|max:255|unique:tb_company,name',
             'company_address' => 'required|string',
-            'email' => 'required|email|max:255|unique:tb_user,email',
+            'email' => 'required|email|max:255',
             'phone_number' => 'required|string|max:15',
             'password' => 'required|min:8|confirmed',
         ];
