@@ -9,12 +9,14 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Org\Document;
 use App\Models\Org\Position;
+use Str;
 
 class Employee extends Model
 {
     public $incrementing = false;
     protected $keyType = 'string';
     protected $table = 'tb_employee';
+
     protected $primaryKey = 'id';
 
 
@@ -56,6 +58,11 @@ class Employee extends Model
         'total_gaji',
         'dokumen',
 
+        'id_position',  // tambah ini
+        'sign_in_code',
+        'id_position',
+        'employment_status',
+        'tipeKontrak',
     ];
 
 
@@ -66,9 +73,7 @@ class Employee extends Model
      * @var list<string>
      */
     protected $hidden = [
-        'id_position',
-        'sign_in_code',
-        'id_user',
+        // 'sign_in_code', //untuk ditampilkan di Profile
         'created_at',
         'updated_at',
     ];
@@ -84,7 +89,7 @@ class Employee extends Model
     // }
     public function position()
     {
-        return $this->belongsTo(Position::class, 'id_position');
+        return $this->belongsTo(Position::class, 'id_position', 'id');
     }
     public function documents()
     {
@@ -96,4 +101,17 @@ class Employee extends Model
     }
 
 
+    /**
+     * Override fungsi boot untuk otomatis generate UUID saat user dibuat.
+     */
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->{$model->getKeyName()})) {
+                $model->{$model->getKeyName()} = (string) Str::uuid();
+            }
+        });
+    }
 }

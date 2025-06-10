@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Xendit\Xendit;
+use App\Models\Subscription\Subscription;
+use App\Observers\SubscriptionObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,5 +27,7 @@ class AppServiceProvider extends ServiceProvider
                 \Xendit\Xendit::setApiKey(env('XENDIT_SECRET_KEY'));
             }
         }
+
+        Subscription::observe(SubscriptionObserver::class);
     }
 }

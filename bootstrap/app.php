@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Middleware\EnsureAdminRole;
+use App\Http\Middleware\EnsureActiveSubscription;
+use App\Http\Middleware\EnsureFeatureAccess;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -15,7 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'admin' => EnsureAdminRole::class
+            'admin' => EnsureAdminRole::class,
+            'active_subscription' => EnsureActiveSubscription::class,
+            'feature_access' => EnsureFeatureAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
