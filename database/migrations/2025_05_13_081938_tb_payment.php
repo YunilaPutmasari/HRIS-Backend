@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->string('payment_code')->unique();
             $table->double('amount_paid');
             $table->string('currency')->default('IDR');
-            $table->enum('payment_method', ['credit_card', 'bank_transfer', 'e_wallet'])->default('bank_transfer');
+            $table->string('payment_method');
             $table->enum('status', ['success', 'failed'])->default('failed');
             $table->datetime('payment_datetime');
             $table->timestamps();
