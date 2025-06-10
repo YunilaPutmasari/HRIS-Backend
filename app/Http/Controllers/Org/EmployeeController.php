@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use App\Helpers\BaseResponse;
+use App\Http\Responses\BaseResponse;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
@@ -269,121 +269,132 @@ class EmployeeController extends Controller
         }
     }
 
-    public function getEmployee()
+    public function getEmployeeBasedCompany()
     {
-        $user = Auth::user();
+        try {
+            $user = Auth::user();
 
-        if (!$user->workplace) {
-            return response()->json([
-                'message' => 'User tidak terkait dengan perusahaan manapun.'
-            ], 403);
+            if (!$user->workplace) {
+                return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
+            }
+
+            // Ambil semua employee yang terkait dengan perusahaan user saat ini
+            $employees = Employee::whereHas('user', function ($query) use ($user) {
+                $query->where('id_workplace', $user->workplace->id);
+            })->with(['user', 'position'])->get();
+
+            return BaseResponse::success($employees, 'Daftar karyawan berhasil diambil', 200);
+
+        } catch (\Exception $e) {
+            return BaseResponse::error(null, 'Gagal mengambil daftar karyawan', 500);
         }
+    }
 
-        $employees = Employee::whereHas('user', function ($query) use ($user) {
-            $query->where('id_workplace', $user->workplace->id);
-        })->with(['user', 'position'])->get();
+    public function getEmployee(){
+        try {
+            $user = Auth::user();
 
-        $total = $employees->count();
-        $active = $employees->where('employment_status', 'active')->count();
-        $inactive = $employees->where('employment_status', 'inactive')->count();
-        $newEmployees = $employees->filter(function ($employee) {
-            return $employee->created_at >= Carbon::now()->subDays(30);
-        })->count();
+            if (!$user->workplace) {
+                return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
+            }
 
-        return response()->json([
-            'total' => $total,
-            'active' => $active,
-            'inactive' => $inactive,
-            'new_employees' => $newEmployees,
-            'last_updated' => now()->format('d F Y H:i'),
-        ]);
+            $employees = Employee::whereHas('user', function ($query) use ($user) {
+                $query->where('id_workplace', $user->workplace->id);
+            })->with(['user', 'position'])->get();
+
+            $total = $employees->count();
+            $active = $employees->where('employment_status','active')->count();
+            $inactive = $employees->where('employment_status','inactive')->count();
+            $newEmployees = $employees->filter(fn($e) => $e->created_at >= now()->subDays(30))->count();
+
+            $data = [
+                'total' => $total,
+                'active' => $active,
+                'inactive' => $inactive,
+                'new_employees' => $newEmployees,
+                'last_updated' => now()->format('d F Y H:i'),
+            ];
+
+            return BaseResponse::success($data, 'Statistik karyawan berhasil diambil', 200);
+
+        } catch (\Exception $e) {
+            return BaseResponse::error(null, 'Gagal mengambil statistik karyawan',500);
+        }
     }
 
     public function getEmployeeContractStats(Request $request)
     {
-        $user = Auth::user();
+        try {
+            $user = Auth::user();
 
-        if (!$user->workplace) {
-            return response()->json([
-                'message' => 'User tidak terkait dengan perusahaan manapun.'
-            ], 403);
-        }
+            if (!$user->workplace) {
+                return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
+            }
 
-        $month = $request->query('month', date('m'));
-        $year = $request->query('year', date('Y'));
+            $month = $request->query('month', date('m'));
+            $year = $request->query('year', date('Y'));
 
-        $employees = Employee::whereHas('user', function ($query) use ($user) {
-            $query->where('id_workplace', $user->workplace->id);
-        })
+            $employees = Employee::whereHas('user', function ($query) use ($user) {
+                $query->where('id_workplace', $user->workplace->id);
+            })
             ->whereMonth('created_at', $month)
             ->whereYear('created_at', $year)
             ->get();
 
-        $stats = [
-            [
-                'label' => 'Tetap',
-                'total' => $employees->where('tipeKontrak', 'Tetap')->count(),
-            ],
-            [
-                'label' => 'Kontrak',
-                'total' => $employees->where('tipeKontrak', 'Kontrak')->count(), // asumsi kolom tipeKontrak ada
-            ],
-            [
-                'label' => 'Lepas',
-                'total' => $employees->where('tipeKontrak', 'Lepas')->count(), // nanti menyesuaikan 
-            ],
-        ];
+            $stats = [
+                ['label' => 'Tetap', 'total' => $employees->where('tipe_kontrak', 'Tetap')->count()],
+                ['label' => 'Kontrak', 'total' => $employees->where('tipe_kontrak', 'Kontrak')->count()],
+                ['label' => 'Lepas', 'total' => $employees->where('tipe_kontrak', 'Lepas')->count()],
+            ];
 
-        return response()->json([
-            'data' => $stats,
-            'selected_month' => "$year-$month",
-            'last_updated' => now()->format('d F Y H:i'),
-        ]);
+            $data = [
+                'data' => $stats,
+                'selected_month' => "$year-$month",
+                'last_updated' => now()->format('d F Y H:i'),
+            ];
+
+            return BaseResponse::success($data, 'Statistik kontrak karyawan berhasil diambil', 200);
+
+        } catch (\Exception $e) {
+            return BaseResponse::error(null, 'Gagal mengambil statistik kontrak karyawan', 500);
+        }
     }
 
     public function getEmployeeStatusStats(Request $request)
     {
-        $user = Auth::user();
+        try {
+            $user = Auth::user();
 
-        if (!$user->workplace) {
-            return response()->json([
-                'message' => 'User tidak terkait dengan perusahaan manapun.'
-            ], 403);
-        }
+            if (!$user->workplace) {
+                return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
+            }
 
-        // Ambil bulan dan tahun dari query param (default: bulan ini)
-        $month = $request->query('month', date('m'));
-        $year = $request->query('year', date('Y'));
+            $month = $request->query('month', date('m'));
+            $year = $request->query('year', date('Y'));
 
-        // Ambil semua employee berdasarkan company user saat ini
-        $employees = Employee::whereHas('user', function ($query) use ($user) {
-            $query->where('id_workplace', $user->workplace->id);
-        })
+            $employees = Employee::whereHas('user', function ($query) use ($user) {
+                $query->where('id_workplace', $user->workplace->id);
+            })
             ->whereMonth('created_at', $month)
             ->whereYear('created_at', $year)
             ->get();
 
-        $statusStat = [
-            [
-                'label' => 'Aktif',
-                'total' => $employees->where('employment_status', 'active')->count(),
-            ],
-            [
-                'label' => 'Baru',
-                'total' => $employees->filter(function ($employee) {
-                    return $employee->created_at >= Carbon::now()->subDays(30);
-                })->count(),
-            ],
-            [
-                'label' => 'Tidak Aktif',
-                'total' => $employees->where('employment_status', 'inactive')->count(),
-            ],
-        ];
+            $statusStat = [
+                ['label' => 'Aktif', 'total' => $employees->where('employment_status', 'active')->count()],
+                ['label' => 'Baru', 'total' => $employees->filter(fn($e) => $e->created_at >= now()->subDays(30))->count()],
+                ['label' => 'Tidak Aktif', 'total' => $employees->where('employment_status', 'inactive')->count()],
+            ];
 
-        return response()->json([
-            'data' => $statusStat,
-            'selected_month' => "$year-$month",
-            'last_updated' => now()->format('d F Y H:i'),
-        ]);
+            $data = [
+                'data' => $statusStat,
+                'selected_month' => "$year-$month",
+                'last_updated' => now()->format('d F Y H:i'),
+            ];
+
+            return BaseResponse::success($data, 'Statistik status karyawan berhasil diambil', 200);
+
+        } catch (\Exception $e) {
+            return BaseResponse::error(null, 'Gagal mengambil statistik status karyawan', 500);
+        }
     }
 }
