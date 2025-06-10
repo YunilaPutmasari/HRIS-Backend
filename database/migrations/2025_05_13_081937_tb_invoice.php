@@ -17,9 +17,13 @@ return new class extends Migration {
             $table->double('total_amount');
             $table->datetime('due_datetime');
             $table->enum('status', ['paid', 'unpaid', 'failed'])->default('unpaid');
+            $table->string('xendit_invoice_id')->nullable();
+            $table->string('invoice_url')->nullable();
+            $table->uuid('id_subscription');
             $table->timestamps();
             $table->softDeletes();
-
+            
+            $table->foreign('id_subscription')->references('id')->on('tb_subscription')->onDelete('set null');
             $table->foreign('id_user')->references('id')->on('tb_user')->onDelete('cascade');
         });
     }

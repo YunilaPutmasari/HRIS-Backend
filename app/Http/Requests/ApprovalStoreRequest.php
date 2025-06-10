@@ -24,11 +24,9 @@ class ApprovalStoreRequest extends FormRequest
         return [
             "id_user" => "required|exists:tb_user,id",
             "request_type" => "required|in:overtime,permit,leave,sick",
-            "start_date" => "required|date_format:Y-m-d",
-            "end_date" => "required|date_format:Y-m-d",
+            "start_date" => "required|date_format:Y-m-d H:i",
+            "end_date" => "required|date_format:Y-m-d H:i",
             "reason" => "required|string|max:255",
-            "status" => "required|in:pending,approved,rejected",
-            "approved_by" => "nullable|exists:tb_user,id",
         ];
     }
 }
