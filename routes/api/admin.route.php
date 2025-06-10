@@ -68,6 +68,8 @@ Route::group([
         'prefix'=>'employees',
         'as' => 'employees.',
     ], function(){
+        Route::get('/comp-employees',[EmployeeController::class, 'getEmployeeBasedCompany'])->name('getEmployeeBasedCompany');
+        
         Route::group([
             'prefix'=>'dashboard',
             'as'=>'dashboard.',
