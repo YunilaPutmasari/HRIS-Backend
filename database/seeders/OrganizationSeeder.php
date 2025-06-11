@@ -46,10 +46,11 @@ class OrganizationSeeder extends Seeder
             'last_name' => 'Cmlabs',
             'address' => 'Jakarta',
             'employment_status' => 'active',
-            'id_workplace' => $company->id,
         ]);
 
-
+        $supreme_manager_user->update([
+            'id_workplace' => $company->id,
+        ]);
 
         $departments = [
             'HR' => [
