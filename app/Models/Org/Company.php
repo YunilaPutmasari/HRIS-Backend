@@ -27,6 +27,7 @@ class Company extends Model
         'name',
         'address',
         'id_manager',
+        'id_subscription'
     ];
 
     /**
@@ -35,7 +36,6 @@ class Company extends Model
      * @var list<string>
      */
     protected $hidden = [
-        'id_subscription',
         'effective_date',
         'created_at',
         'updated_at',
@@ -60,4 +60,5 @@ class Company extends Model
     {
         return $this->hasOne(Subscription::class, 'id_company');
     }
+    
 }

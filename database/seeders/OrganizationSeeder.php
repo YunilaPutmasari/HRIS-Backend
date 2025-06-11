@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Approval;
 use App\Models\Org\Department;
 use App\Models\Org\Position;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -34,6 +35,11 @@ class OrganizationSeeder extends Seeder
             'is_admin' => true,
         ]);
 
+        $company = Company::factory()->create([
+            'name' => 'PT cmlabs Indonesia Digital',
+            'id_manager' => $supreme_manager_user->id,
+        ]);
+
         Employee::factory()->create([
             'id_user' => $supreme_manager_user->id,
             'sign_in_code' => '999999',
@@ -41,12 +47,10 @@ class OrganizationSeeder extends Seeder
             'last_name' => 'Cmlabs',
             'address' => 'Jakarta',
             'employment_status' => 'active',
+            'id_workplace' => $company->id,
         ]);
 
-        $company = Company::factory()->create([
-            'name' => 'PT cmlabs Indonesia Digital',
-            'id_manager' => $supreme_manager_user->id,
-        ]);
+
 
         $departments = [
             'HR' => [
@@ -100,6 +104,10 @@ class OrganizationSeeder extends Seeder
                     Employee::factory()->create([
                         'id_user' => $user_aux->id,
                         'employment_status' => 'active',
+                    ]);
+
+                    Approval::factory()->create([
+                        'id_user' => $user_aux->id_user,
                     ]);
                 }
             }

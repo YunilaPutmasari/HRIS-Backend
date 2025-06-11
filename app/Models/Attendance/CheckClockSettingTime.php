@@ -13,10 +13,6 @@ class CheckClockSettingTime extends Model
     protected $table = "tb_check_clock_setting_time";
     protected $primaryKey = 'id';
 
-    protected $with = [
-        'checkClockSetting',
-    ];
-
     use HasFactory, HasUuids, SoftDeletes;
 
     protected $fillable = [

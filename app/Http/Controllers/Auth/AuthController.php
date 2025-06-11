@@ -22,69 +22,100 @@ class AuthController extends Controller
     {
         $data = $request->validated();
 
-        // Cek duplikasi user DULU sebelum masuk transaksi
-        $existingUser = User::where('email', $data['email'])
-            ->orWhere('phone_number', $data['phone_number'])
-            ->first();
-
-        if ($existingUser) {
-            $existingEmployee = Employee::where('id_user', $existingUser->id)->first();
-
-            if ($existingEmployee) {
-                return BaseResponse::error(
-                    message: 'User with this email or phone number already exists',
-                    code: 409
-                );
-            }
-        }
-
         DB::beginTransaction();
 
         try {
-            
-            $user = User::create([
-                'id' => Str::uuid()->toString(),
-                'email' => $data['email'],
-                'password' => Hash::make($data['password']),
-                'phone_number' => $data['phone_number'],
-                'is_admin' => true,
-                // 'id_workplace' => $company->id,
-            ]);
+            // 1. Cek user berdasarkan email
+            $user = User::where('email', $data['email'])->first();
 
-            // MENAMBAHKAN COMPANY SETELAH ADA USER
-            $company = Company::create([
-                'name' => $data['company_name'],
-                'address' => $data['company_address'],
-                'id_manager' => $user->id, // Akan diisi nanti setelah user dibuat
-            ]);
-            
-            // DIUPDATE AGAR ADA ID_WORKPLACE
-            $user->update([
-                'id_workplace' => $company->id
-            ]);
+            if ($user) {
+                // 2. Cek apakah employee sudah dibuat
+                $existingEmployee = Employee::where('id_user', $user->id)->first();
+
+                if ($existingEmployee) {
+                    DB::rollBack();
+                    return BaseResponse::error(
+                        message: 'User with this email already exists and is fully registered.',
+                        code: 409
+                    );
+                }
+
+                // 3. User sudah ada tapi belum lengkap (dari Google)
+                $user->update([
+                    'phone_number' => $data['phone_number'], // update dari google_id ke nomor asli
+                    'password' => Hash::make($data['password']), // set password manual (boleh disimpan)
+                ]);
+            } else {
+                // 4. Jika belum ada, cek duplikasi phone_number
+                $dupePhone = User::where('phone_number', $data['phone_number'])->first();
+
+                if ($dupePhone) {
+                    DB::rollBack();
+                    return BaseResponse::error(
+                        message: 'Phone number already used by another user.',
+                        code: 409
+                    );
+                }
+
+                // 5. Buat user baru
+                $user = User::create([
+                    'id' => Str::uuid(),
+                    'email' => $data['email'],
+                    'password' => Hash::make($data['password']),
+                    'phone_number' => $data['phone_number'],
+                    'is_admin' => true,
+                ]);
+            }
+
+            // 6. Buat company jika belum ada tempat kerja
+            if (!$user->id_workplace) {
+                $company = Company::create([
+                    'name' => $data['company_name'],
+                    'address' => $data['company_address'],
+                    'id_manager' => $user->id,
+                ]);
+
+                $user->update([
+                    'id_workplace' => $company->id,
+                ]);
+            } else {
+                $company = Company::find($user->id_workplace);
+            }
+
+            // 7. Buat employee
+            $signInCode = $this->generateUniqueSignInCode();
 
             Employee::create([
                 'id_user' => $user->id,
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
-                'address' => $data['address'] ?? 'Not Provided', //AKU KOSONGI KARENA WAJIB DIISI TERNYATA
+                'address' => $data['address'] ?? 'Not Provided',
+                'sign_in_code' => $signInCode,
             ]);
-
 
             DB::commit();
 
             return BaseResponse::success(
-                message: 'User created successfully',
+                message: 'Signup completed successfully',
                 code: 201
             );
         } catch (\Exception $e) {
             DB::rollBack();
-
             return BaseResponse::error(
-                message: 'Failed to create user: ' . $e->getMessage(),
+                message: 'Failed to signup: ' . $e->getMessage(),
                 code: 500
             );
         }
+    }
+
+    private function generateUniqueSignInCode()
+    {
+        do {
+            $code = 'MN' . str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+            $exists = Employee::where('sign_in_code', $code)->exists();
+        } while ($exists);
+
+        return $code;
     }
 
 
@@ -92,20 +123,23 @@ class AuthController extends Controller
     {
         $data = $request->validated();
 
+        // dd($data); 
+
         $user = null;
 
         if (!empty($data['email'])) {
             $user = User::where('email', $data['email'])->first();
         } elseif (!empty($data['phone_number'])) {
             $user = User::where('phone_number', $data['phone_number'])->first();
-        } else if (!empty($data['id_employee']) && !empty($data['company_name'])) {
+        } else if (!empty($data['sign_in_code']) && !empty($data['company_name'])) {
             $user = User::whereHas('employee', function ($query) use ($data) {
-                    $query->where('id', $data['id_employee']);
-                })->whereHas('workplace', function ($query) use ($data) {
-                    $query->where('name', $data['company_name']);
-                })
-                ->with(['employee','workplace'])
+                $query->where('sign_in_code', $data['sign_in_code']);
+            })->whereHas('workplace', function ($query) use ($data) {
+                $query->where('name', $data['company_name']);
+            })
+                ->with(['employee', 'workplace'])
                 ->first();
+
         }
 
         if (!$user || !password_verify($data['password'], $user->password)) {
@@ -114,7 +148,7 @@ class AuthController extends Controller
             ], 401);
         }
 
-        if (!$user->workplace) {
+        if (!$user->workplace()) {
             return response()->json([
                 'message' => 'User is not associated with a company'
             ], 403);
@@ -135,15 +169,15 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         $user = auth()->user()->load('employee', 'workplace.subscription');
-        
+
         if (!$user) {
             return BaseResponse::error(
                 message: 'User not found',
                 code: 404
             );
         }
-        
-        $user -> load(['workplace', 'employee']);
+
+        $user->load(['workplace', 'employee']);
 
         return BaseResponse::success(
             data: $user,
@@ -162,33 +196,42 @@ class AuthController extends Controller
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
 
-            $user = User::where('email', $googleUser->getEmail())->first();
+            DB::beginTransaction();
 
+            $user = User::where('email', $googleUser->getEmail())->first();
             $isNewUser = false;
 
             if (!$user) {
+                // 1. USER BELUM ADA → REGISTER BARU
                 $user = User::create([
                     'id' => Str::uuid(),
                     'email' => $googleUser->getEmail(),
-                    'password' => Hash::make(Str::random(16)),
-                    'phone_number' => $googleUser->getId(),
-                    'is_admin' => '0',
+                    'password' => Hash::make(Str::random(16)), // default password acak
+                    'phone_number' => $googleUser->getId(), // sementara pakai Google ID
+                    'is_admin' => true,
                     'id_workplace' => null,
                 ]);
 
-                $isNewUser = true;
+                $isNewUser = true; // harus isi data tambahan via frontend
+
             } else {
+                // 2. USER SUDAH ADA
                 $employee = Employee::where('id_user', $user->id)->first();
 
                 if (!$employee) {
+                    // Kalau belum ada employee → anggap ini user Google yang perlu isi data
                     $isNewUser = true;
                 }
             }
 
+            DB::commit();
+
+            // 3. Login user
             Auth::login($user);
 
             $token = $user->createToken('auth_token')->plainTextToken;
 
+            // 4. Redirect ke FE
             return BaseResponse::redirect(config('app.frontend_url') . '/auth/google/callback?' . http_build_query([
                 'token' => $token,
                 'is_new_user' => $isNewUser ? 'true' : 'false',
@@ -196,12 +239,16 @@ class AuthController extends Controller
                 'email' => $googleUser->getEmail(),
             ]));
         } catch (\Exception $e) {
+            DB::rollBack();
+
             return BaseResponse::error(
                 data: $e->getMessage(),
                 message: 'Failed to authenticate with Google',
                 code: 500
             );
         } catch (\Throwable $th) {
+            DB::rollBack();
+
             return BaseResponse::error(
                 message: 'An unexpected error occurred',
                 code: 500
