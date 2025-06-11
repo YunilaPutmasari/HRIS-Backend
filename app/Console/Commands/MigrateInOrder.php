@@ -49,6 +49,7 @@ class MigrateInOrder extends Command
             'attendance/2025_05_13_071748_tb_check_clock_setting.php',
             'attendance/2025_05_13_071739_tb_check_clock_setting_time.php',
             'attendance/2025_05_13_071757_tb_check_clock.php',
+            'org/2025_05_05_121230_tb_user_to_tb_check_clock_setting_relation.php',
 
             // overtime migrations
             'overtime/2025_05_13_072537_tb_overtime_setting.php',

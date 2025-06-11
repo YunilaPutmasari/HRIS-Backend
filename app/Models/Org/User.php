@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Sanctum\PersonalAccessToken;
 use App\Models\Attendance\CheckClock;
+use App\Models\Attendance\CheckClockSetting;
 use Str;
 
 
@@ -44,6 +45,7 @@ class User extends Authenticatable
         'phone_number',
         'password',
         'is_admin',
+        'id_check_clock_setting',
         'id_workplace' // TAK TAMBAHKAN INI UNTUK NANTI HRD MENAMBAHKAN EMPLOYEE
     ];
 
@@ -110,6 +112,11 @@ class User extends Authenticatable
     public function checkClocks()
     {
         return $this->hasMany(CheckClock::class, 'id_user');
+    }
+
+    public function checkClockSetting()
+    {
+        return $this->belongsTo(CheckClockSetting::class, 'id_check_clock_setting');
     }
 
     public function isManagerOf(Company $company): bool

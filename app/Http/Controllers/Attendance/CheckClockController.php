@@ -11,6 +11,22 @@ use Illuminate\Http\Request;
 
 class CheckClockController extends Controller
 {
+
+    public function selfCheckClockSetting(Request $request)
+    {
+        // user should own and be the admin of issued company id
+        $user = $request->user();
+        $checkClockSetting = CheckClockSetting::where('id', $user->id_check_clock_setting)
+            ->with('checkClockSettingTime')
+            ->first();
+
+        return BaseResponse::success(
+            data: $checkClockSetting,
+            message: 'Self check clock setting retrieved successfully',
+            code: 200
+        );
+    }
+
     public function employeeCheckClocks(Request $request)
     {
         // all employees of user's managed company check clocks
