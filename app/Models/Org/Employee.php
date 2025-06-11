@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Org\Document;
 use App\Models\Org\Position;
+use App\Models\Org\Department;
 use Str;
 
 class Employee extends Model
@@ -75,6 +76,10 @@ class Employee extends Model
     public function position()
     {
         return $this->belongsTo(Position::class, 'id_position', 'id');
+    }
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'id_department', 'id');
     }
     public function documents()
     {

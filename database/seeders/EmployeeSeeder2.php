@@ -17,7 +17,7 @@ class EmployeeSeeder2 extends Seeder
      */
     public function run(): void
     {
-        $companyId = '01975990-f8ec-738c-9c4b-b4ae12b386eb';
+        $companyId = '01975e04-c019-70d8-abfa-e1f458eccc46';
         $password = Hash::make('password');
 
         for ($i=7; $i<=20; $i++){

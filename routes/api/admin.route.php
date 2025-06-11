@@ -7,7 +7,7 @@ use App\Http\Controllers\Attendance\CheckClockSettingTimeController;
 use App\Http\Controllers\Payment\InvoiceController;
 use App\Http\Controllers\Payment\PaymentController;
 use App\Http\Controllers\Org\EmployeeController;
-use App\Http\Controllers\Org\PositionsController;
+use App\Http\Controllers\Org\DeptPositionsController;
 use App\Http\Controllers\Org\DepartmentsController;
 use App\Http\Controllers\Subscription\SubscriptionController;
 use App\Http\Controllers\Lettering\ApprovalController;
@@ -90,7 +90,20 @@ Route::group([
         'prefix'=>'positions',
         'as' => 'positions.',
     ], function(){
-        Route::get('/',[PositionsController::class, 'index'])->name('index');
+        Route::get('/',[DeptPositionsController::class, 'index'])->name('index');
+        Route::post('/',[DeptPositionsController::class, 'store']);
+        Route::get('/{id_department}', [DeptPositionsController::class, 'getByDepartment'])->name('storeByDepartment');
+        Route::post('/{id_department}', [DeptPositionsController::class, 'storeByDepartment'])->name('storeByDepartment');
+        
+    });
+    
+    Route::group([
+        'prefix'=>'departments',
+        'as' => 'departments.',
+    ], function(){
+        Route::get('/',[DepartmentsController::class, 'index'])->name('index');
+        Route::get('/{id_department}',[DepartmentsController::class, 'getDepartment']);
+        Route::post('/',[DepartmentsController::class, 'store']);
         
     });
 });

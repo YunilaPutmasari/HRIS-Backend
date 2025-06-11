@@ -1,14 +1,16 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Org;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Responses\BaseResponse;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Org\Position;
 use App\Models\Org\Department;
 use App\Models\Org\Company;
 
-class PositionsController extends Controller
+class DeptPositionsController extends Controller
 {
     /**
      * Get all positions based on department and company of the logged-in user.
@@ -34,6 +36,39 @@ class PositionsController extends Controller
         } catch (\Exception $e) {
             return BaseResponse::error(null, 'Gagal mengambil daftar posisi.', 500);
         }
+    }
+
+    /**
+     * Get all positions under a specific department (and ensure it belongs to the user's company).
+     */
+    public function getByDepartment($idDepartment)
+    {
+        try {
+            $user = Auth::user();
+
+            if (!$user->workplace) {
+                return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
+            }
+
+            // Validasi bahwa department milik perusahaan user
+            $department = Department::where('id', $idDepartment)
+                ->whereHas('company', function ($q) use ($user) {
+                    $q->where('id', $user->workplace->id);
+                })
+                ->first();
+
+            if (!$department) {
+                return BaseResponse::error(null, 'Departemen tidak ditemukan atau bukan bagian dari perusahaan Anda.', 404);
+            }
+
+            // Ambil semua position yang terkait dengan department ini
+            $positions = Position::where('id_department', $idDepartment)->get();
+
+            return BaseResponse::success($positions, 'Daftar posisi berhasil diambil.', 200);
+
+        } catch (\Exception $e) {
+            return BaseResponse::error($e->getMessage(), 'Gagal mengambil daftar posisi.', 500);
+        }        
     }
 
     /**
@@ -72,6 +107,52 @@ class PositionsController extends Controller
                 'level' => $request->level,
                 'gaji' => $request->gaji,
                 'id_department' => $request->id_department,
+            ]);
+
+            return BaseResponse::success($position, 'Posisi berhasil dibuat.', 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return BaseResponse::error($e->errors(), 'Validasi gagal.', 422);
+        } catch (\Exception $e) {
+            return BaseResponse::error(null, 'Gagal membuat posisi.', 500);
+        }
+    }
+
+     /**
+     * Create new position under a specific department by ID in the URL.
+     */
+    public function storeByDepartment(Request $request, $idDepartment)
+    {
+        try {
+            $user = Auth::user();
+
+            if (!$user->workplace) {
+                return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
+            }
+
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'level' => 'required|integer',
+                'gaji' => 'required|numeric',
+            ]);
+
+            // Validasi bahwa department ini milik company user
+            $department = Department::where('id', $idDepartment)
+                ->whereHas('company', function ($q) use ($user) {
+                    $q->where('id', $user->workplace->id);
+                })
+                ->first();
+
+            if (!$department) {
+                return BaseResponse::error(null, 'Departemen tidak ditemukan atau bukan bagian dari perusahaan Anda.', 404);
+            }
+
+            $position = Position::create([
+                'id' => \Illuminate\Support\Str::uuid(),
+                'name' => $request->name,
+                'level' => $request->level,
+                'gaji' => $request->gaji,
+                'id_department' => $idDepartment,
             ]);
 
             return BaseResponse::success($position, 'Posisi berhasil dibuat.', 201);

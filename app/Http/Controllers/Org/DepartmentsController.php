@@ -1,11 +1,13 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Org;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Responses\BaseResponse;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Department;
-use App\Models\Company;
+use App\Models\Org\Department;
+use App\Models\Org\Company;
 
 class DepartmentsController extends Controller
 {
