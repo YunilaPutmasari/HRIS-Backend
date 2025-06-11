@@ -228,4 +228,132 @@ class EmployeeController extends Controller
             return BaseResponse::error(null, 'Gagal mengambil statistik status karyawan', 500);
         }
     }
+// ===================================================================================================
+// Break Points Untuk Controller Employee ============================================================
+// ===================================================================================================
+    public function getEmployeeDashboard()
+    {
+        try {
+            $user = Auth::user();
+            $employee = Employee::where('id_user', $user->id)
+                ->with(['user', 'position'])
+                ->first();
+
+            if (!$employee) {
+                return BaseResponse::error(null, 'Employee data not found', 404);
+            }
+
+            $data = [
+                'employee' => $employee,
+                'attendance_today' => $this->getTodayAttendance($employee->id),
+                'payroll_summary' => $this->getPayrollSummary($employee->id),
+                'last_updated' => now()->format('d F Y H:i'),
+            ];
+
+            return BaseResponse::success($data, 'Employee dashboard data retrieved successfully', 200);
+        } catch (\Exception $e) {
+            return BaseResponse::error(null, 'Failed to retrieve employee dashboard data', 500);
+        }
+    }
+
+    public function getEmployeeProfile()
+    {
+        try {
+            $user = Auth::user();
+            $employee = Employee::where('id_user', $user->id)
+                ->with(['user', 'position'])
+                ->first();
+
+            if (!$employee) {
+                return BaseResponse::error(null, 'Employee data not found', 404);
+            }
+
+            return BaseResponse::success($employee, 'Employee profile retrieved successfully', 200);
+        } catch (\Exception $e) {
+            return BaseResponse::error(null, 'Failed to retrieve employee profile', 500);
+        }
+    }
+
+    public function getEmployeeAttendance()
+    {
+        try {
+            $user = Auth::user();
+            $employee = Employee::where('id_user', $user->id)->first();
+
+            if (!$employee) {
+                return BaseResponse::error(null, 'Employee data not found', 404);
+            }
+
+            // TODO: Implement actual attendance data retrieval
+            $attendance = [
+                'today' => [
+                    'status' => 'present',
+                    'check_in' => '08:00',
+                    'check_out' => '17:00',
+                ],
+                'monthly_summary' => [
+                    'present' => 20,
+                    'absent' => 2,
+                    'late' => 1,
+                ],
+            ];
+
+            return BaseResponse::success($attendance, 'Employee attendance data retrieved successfully', 200);
+        } catch (\Exception $e) {
+            return BaseResponse::error(null, 'Failed to retrieve employee attendance data', 500);
+        }
+    }
+
+    public function getEmployeePayroll()
+    {
+        try {
+            $user = Auth::user();
+            $employee = Employee::where('id_user', $user->id)->first();
+
+            if (!$employee) {
+                return BaseResponse::error(null, 'Employee data not found', 404);
+            }
+
+            // TODO: Implement actual payroll data retrieval
+            $payroll = [
+                'current_month' => [
+                    'basic_salary' => 5000000,
+                    'allowances' => 1000000,
+                    'deductions' => 500000,
+                    'net_salary' => 5500000,
+                ],
+                'payment_history' => [
+                    [
+                        'month' => 'January 2024',
+                        'amount' => 5500000,
+                        'status' => 'paid',
+                    ],
+                ],
+            ];
+
+            return BaseResponse::success($payroll, 'Employee payroll data retrieved successfully', 200);
+        } catch (\Exception $e) {
+            return BaseResponse::error(null, 'Failed to retrieve employee payroll data', 500);
+        }
+    }
+
+    private function getTodayAttendance($employeeId)
+    {
+        // TODO: Implement actual attendance check
+        return [
+            'status' => 'present',
+            'check_in' => '08:00',
+            'check_out' => '17:00',
+        ];
+    }
+
+    private function getPayrollSummary($employeeId)
+    {
+        // TODO: Implement actual payroll summary
+        return [
+            'current_salary' => 5500000,
+            'last_payment' => '2024-01-31',
+            'payment_status' => 'paid',
+        ];
+    }
 }
