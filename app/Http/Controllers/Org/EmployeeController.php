@@ -343,6 +343,84 @@ class EmployeeController extends Controller
         }
     }
 
+    public function updateEmployee(Request $request, $employeeId)
+    {
+        try {
+            // Ambil user yang login
+            $user = Auth::user();
+    
+            // Pastikan user memiliki workplace
+            if (!$user->workplace) {
+                return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
+            }
+    
+            // Validasi input-panjang memang
+            $request->validate([
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
+                'address' => 'nullable|string',
+                'id_position' => 'nullable|uuid',
+                'employment_status' => 'in:active,inactive,resign',
+                'tipe_kontrak' => 'in:Tetap,Kontrak,Lepas',
+                'no_telp' => 'nullable|string',
+                'cabang' => 'nullable|string',
+                'nik' => 'nullable|string',
+                'tempat_lahir' => 'nullable|string',
+                'tanggal_lahir' => 'nullable|date',
+                'jenis_kelamin' => 'nullable|string',
+                'pendidikan' => 'nullable|string',
+                'start_date' => 'nullable|date',
+                'end_date' => 'nullable|date',
+                'tanggal_efektif' => 'nullable|date',
+                'bank' => 'nullable|string',
+                'no_rek' => 'nullable|string',
+                // tambahkan field lain sesuai kebutuhan
+            ]);
+    
+            // Cari employee yang berada di perusahaan yang sama
+            $employee = Employee::whereHas('user', function ($query) use ($user) {
+                    $query->where('id_workplace', $user->workplace->id);
+                })
+                ->where('id', $employeeId)
+                ->with('user')
+                ->first();
+    
+            if (!$employee) {
+                return BaseResponse::error(null, 'Karyawan tidak ditemukan atau tidak berada di perusahaan Anda.', 404);
+            }
+    
+            // Update data employee
+            $employee->update($request->only([
+                'first_name',
+                'last_name',
+                'address',
+                'id_position',
+                'employment_status',
+                'tipe_kontrak',
+                'no_telp',
+                'cabang',
+                'nik',
+                'tempat_lahir',
+                'tanggal_lahir',
+                'jenis_kelamin',
+                'pendidikan',
+                'start_date',
+                'end_date',
+                'tanggal_efektif',
+                'bank',
+                'no_rek',
+                // tambahkan field lain sesuai fillable
+            ]));
+    
+            return BaseResponse::success($employee, 'Data karyawan berhasil diperbarui', 200);
+    
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return BaseResponse::error($e->errors(), 'Validasi gagal', 422);
+        } catch (\Exception $e) {
+            return BaseResponse::error(null, 'Gagal memperbarui data karyawan', 500);
+        }
+    }
+
 // KEBAWAH ADALAH FUNSGI UNtK DASHBOARD
     public function getEmployee(){
         try {

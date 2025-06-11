@@ -43,7 +43,7 @@ Route::post('/xendit/webhook/invoice', [XenditWebhookController::class, 'handle'
 
 require __DIR__ . '/auth.route.php';
 require __DIR__ . '/admin.route.php';
-require __DIR__ . '/user.route.php';
-require __DIR__ . '/employee.route.php';
-require __DIR__ . '/position.route.php';
+// require __DIR__ . '/user.route.php';
+// require __DIR__ . '/employee.route.php';
+// require __DIR__ . '/position.route.php';
 require __DIR__ . '/approval.route.php';
