@@ -14,7 +14,7 @@ return new class extends Migration {
         Schema::create($this->table, function (Blueprint $table) {
             $table->uuid('id')->primary()->default(DB::raw('public.uuid_generate_v4()'));
             $table->uuid('id_overtime_setting');
-            $table->time('day_type');
+            $table->enum('day_type', ['weekday', 'weekend', 'holiday']);
             $table->time('start_hour');
             $table->time('end_hour');
             $table->float('rate_multiplier');

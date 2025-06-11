@@ -15,11 +15,12 @@ return new class extends Migration {
             $table->uuid('id')->primary()->default(DB::raw('public.uuid_generate_v4()'));
             $table->uuid('id_user');
             $table->enum('request_type', ['overtime', 'permit', 'sick', 'leave'])->default('overtime');
-            $table->date('start_date');
-            $table->date('end_date');
+            $table->dateTime('start_date');
+            $table->dateTime('end_date');
             $table->text('reason');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->uuid('approved_by')->nullable();
+            $table->dateTime('approval_date')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
