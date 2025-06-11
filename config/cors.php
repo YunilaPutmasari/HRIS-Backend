@@ -20,8 +20,7 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'http://localhost:3000',
-        'http://api.hriscmlabs.my.id'
+        '*'
     ],
 
     'allowed_origins_patterns' => [],
