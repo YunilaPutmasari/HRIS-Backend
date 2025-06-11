@@ -23,38 +23,49 @@ class StoreEmployeeRequest extends FormRequest
     {
         return [
             'id_user' => 'required|uuid',
-            'avatar' => 'nullable|image|mimes:jpg,jpeg,png|max:5000',
-            'first_name' => 'sometimes|nullable|string|max:255',
-            'last_name' => 'nullable|string',
-            'nik' => 'required|string',
-            'email' => 'required|string',
-            'address' => 'required|string',
-            'jenis_kelamin' => 'required|string',
-            'no_telp' => 'required|string',
-            'cabang' => 'nullable|string',
-            'id_position' => 'required|exists:tb_position,id',
-            'grade' => 'nullable|string',
-            'bank' => 'required|string',
-            'norek' => 'required|string',
-            'pendidikan' => 'required|string',
-            'jadwal' => 'required|string',
-            'tipe_kontrak' => 'required|string',
-            'tempat_lahir' => 'required|string',
-            'tanggal_lahir' => 'required|date',
+            'email' => 'required|email|unique:tb_user,email',
+            'password' => 'required|min:6',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+
+            // Optional fields
+            'nik' => 'nullable|string|max:255',
+            'address' => 'nullable|string',
+            'tempat_lahir' => 'nullable|string|max:255',
+            'tanggal_lahir' => 'nullable|date',
+            'jenis_kelamin' => 'nullable|string|in:Laki-laki,Perempuan',
+            'pendidikan' => 'nullable|string|in:SMA/SMK,D3,S1,S2,S3',
+            'no_telp' => 'nullable|string|max:20',
+            'id_position' => 'nullable|uuid',
+            'tipe_kontrak' => 'nullable|string|in:Tetap,Kontrak,Magang',
+            'cabang' => 'nullable|string|max:255',
+            'employment_status' => 'nullable|string|in:active,inactive,resign',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
             'tanggal_efektif' => 'nullable|date',
-            'dokumen' => 'nullable|array', // dokumen harus berupa array jika ada
-            'dokumen.*' => 'file|mimes:pdf,doc,docx|max:2048', // setiap elemen array harus file valid
+            'bank' => 'nullable|string|max:255',
+            'no_rek' => 'nullable|string|max:255',
+            'jadwal' => 'nullable|string|in:Shift,Non-Shift',
 
-            'employment_status' => 'in:active,inactive,resign',
-            'gaji' => 'required|numeric|min:0',
-            'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'tenure' => 'required|string',
-            'uang_lembur' => 'required|numeric|min:0',
-            'denda_terlambat' => 'required|numeric|min:0',
-            'total_gaji' => 'required|numeric|min:0',
+            // File uploads
+            'avatar' => 'nullable|image|max:2048', // 2MB max
+            'dokumen.*' => 'nullable|file|mimes:pdf,docx|max:5000', // 5MB max
+        ];
+    }
 
-
+    public function messages()
+    {
+        return [
+            'email.required' => 'Email is required',
+            'email.unique' => 'This email is already registered',
+            'password.required' => 'Password is required',
+            'password.min' => 'Password must be at least 6 characters',
+            'id_workplace.required' => 'Workplace/Company is required',
+            'id_workplace.exists' => 'Selected workplace/company is invalid',
+            'first_name.required' => 'First name is required',
+            'last_name.required' => 'Last name is required',
+            'id_position.exists' => 'Selected position is invalid',
+            'id_department.exists' => 'Selected department is invalid',
         ];
     }
 }
