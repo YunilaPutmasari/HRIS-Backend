@@ -12,8 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('tb_invoice', function (Blueprint $table) {
-            $table->string('xendit_invoice_id')->nullable()->after('id');
-            $table->string('invoice_url')->nullable()->after('xendit_invoice_id');
+            $table->string('xendit_invoice_id')->nullable();
+            $table->string('invoice_url')->nullable();
+            $table->uuid('id_subscription');
+            
+            $table->foreign('id_subscription')->references('id')->on('tb_subscription')->onDelete('set null');
         });
     }
 
@@ -23,7 +26,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('tb_invoice', function (Blueprint $table) {
-            $table->dropColumn(['xendit_invoice_id', 'invoice_url']);
+            //
         });
     }
 };
