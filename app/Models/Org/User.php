@@ -12,7 +12,9 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Sanctum\PersonalAccessToken;
+use App\Models\Attendance\CheckClock;
 use Str;
+
 
 class User extends Authenticatable
 {
@@ -103,6 +105,11 @@ class User extends Authenticatable
     public function dokumen()
     {
         return $this->hasMany(Document::class, 'user_id');
+    }
+
+    public function checkClocks()
+    {
+        return $this->hasMany(CheckClock::class, 'id_user');
     }
 
     public function isManagerOf(Company $company): bool

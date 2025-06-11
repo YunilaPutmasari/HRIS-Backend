@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Attendance\CheckClockSettingController;
 use App\Http\Controllers\Attendance\CheckClockSettingTimeController;
+use App\Http\Controllers\Attendance\CheckClockController;
 use App\Http\Controllers\Payment\InvoiceController;
 use App\Http\Controllers\Payment\PaymentController;
 use App\Http\Controllers\Org\EmployeeController;
@@ -38,6 +39,15 @@ Route::group([
             Route::delete('/delete/{id_ck_setting}', [CheckClockSettingController::class, 'delete'])->name('delete');
             Route::delete('/{id_ck_setting}/delete/{id_ck_setting_time}', [CheckClockSettingTimeController::class, 'delete'])->name('delete');
         });
+
+        Route::group([
+            'prefix' => 'check-clock',
+            'as' => 'check-clock.',
+        ], function () {
+            Route::get('/employee-check-clocks', [CheckClockController::class, 'employeeCheckClocks'])->name('employee-check-clocks');
+        });
+
+
         Route::group([
             'prefix' => 'check-clock-setting-time',
             'as' => 'check-clock-setting-time.',
@@ -73,11 +83,11 @@ Route::group([
     Route::group([
         'prefix' => 'employees',
         'as' => 'employees.',
-    ], function(){
-        Route::get('/comp-employees',[EmployeeController::class, 'getEmployeeBasedCompany'])->name('getEmployeeBasedCompany');
-        Route::post('/',[EmployeeController::class, 'store'])->name('store');
-        Route::get('/{id}',[EmployeeController::class, 'getEmployeeById']);
-        Route::put('/{id}',[EmployeeController::class, 'updateEmployee']);
+    ], function () {
+        Route::get('/comp-employees', [EmployeeController::class, 'getEmployeeBasedCompany'])->name('getEmployeeBasedCompany');
+        Route::post('/', [EmployeeController::class, 'store'])->name('store');
+        Route::get('/{id}', [EmployeeController::class, 'getEmployeeById']);
+        Route::put('/{id}', [EmployeeController::class, 'updateEmployee']);
         Route::group([
             'prefix' => 'dashboard',
             'as' => 'dashboard.',
@@ -90,25 +100,25 @@ Route::group([
     });
 
     Route::group([
-        'prefix'=>'positions',
+        'prefix' => 'positions',
         'as' => 'positions.',
-    ], function(){
-        Route::get('/',[DeptPositionsController::class, 'index'])->name('index');
-        Route::post('/',[DeptPositionsController::class, 'store']);
-        Route::get('/get/{id_position}',[DeptPositionsController::class, 'show']);
+    ], function () {
+        Route::get('/', [DeptPositionsController::class, 'index'])->name('index');
+        Route::post('/', [DeptPositionsController::class, 'store']);
+        Route::get('/get/{id_position}', [DeptPositionsController::class, 'show']);
         Route::get('/{id_department}', [DeptPositionsController::class, 'getByDepartment'])->name('storeByDepartment');
         Route::post('/{id_department}', [DeptPositionsController::class, 'storeByDepartment'])->name('storeByDepartment');
-        
+
     });
-    
+
     Route::group([
-        'prefix'=>'departments',
+        'prefix' => 'departments',
         'as' => 'departments.',
-    ], function(){
-        Route::get('/',[DepartmentsController::class, 'index'])->name('index');
-        Route::get('/{id_department}',[DepartmentsController::class, 'getDepartment']);
-        Route::post('/',[DepartmentsController::class, 'store']);
-        
+    ], function () {
+        Route::get('/', [DepartmentsController::class, 'index'])->name('index');
+        Route::get('/{id_department}', [DepartmentsController::class, 'getDepartment']);
+        Route::post('/', [DepartmentsController::class, 'store']);
+
     });
 });
 
