@@ -22,7 +22,7 @@ class StoreEmployeeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id_user' => 'required|uuid',
+            // 'id_user' => 'required|uuid',
             'email' => 'required|email|unique:tb_user,email',
             'password' => 'required|min:6',
             'first_name' => 'required|string|max:255',

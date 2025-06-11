@@ -109,8 +109,6 @@ class EmployeeController extends Controller
     public function store(StoreEmployeeRequest $request)
     {
         try {
-            DB::beginTransaction();
-            
             $user = Auth::user();
 
             if (!$user->workplace) {
@@ -158,29 +156,39 @@ class EmployeeController extends Controller
             $userId = (string) \Illuminate\Support\Str::uuid();
             $companyId = $user->workplace->id;
 
-            $newUser = User::create([
-                'id' => $userId,
-                'email' => $validated['email'],
-                'phone_number' => $validated['no_telp'] ?? null,
-                'password' => bcrypt($validated['password']),
-                'is_admin' => false,
-                'id_workplace' => $companyId,
-            ]);
+            $newUser = new User();
+            $newUser->id = $userId;
+            $newUser->email = $validated['email'];
+            $newUser->phone_number = $validated['no_telp'] ?? null;
+            $newUser->password = bcrypt($validated['password']);
+            $newUser->is_admin = false;
+            $newUser->id_workplace = $companyId;
+            $newUser->save();
 
-            // Buat employee
+            // Verify user was created
+            $createdUser = User::find($userId);
+            if (!$createdUser) {
+                throw new \Exception('Failed to create user');
+            }
+
+            \Log::info('User created:', ['user' => $createdUser->toArray()]);
+
+            // Buat employee dengan data yang sudah divalidasi
             $employeeId = (string) \Illuminate\Support\Str::uuid();
-
-            $employee = Employee::create(array_merge($validated, [
+            
+            $employeeData = [
                 'id' => $employeeId,
                 'id_user' => $userId,
-                'id_position' => $validated['id_position'] ?? null,
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
                 'nik' => $validated['nik'] ?? null,
                 'address' => $validated['address'] ?? null,
                 'tempat_lahir' => $validated['tempat_lahir'] ?? null,
                 'tanggal_lahir' => $validated['tanggal_lahir'] ?? null,
                 'jenis_kelamin' => $validated['jenis_kelamin'] ?? null,
                 'pendidikan' => $validated['pendidikan'] ?? null,
-                'no_telp' => $validated['no_telp'] ?? null,
+                'phone_number' => $validated['phone_number'] ?? null,
+                'id_position' => $validated['id_position'] ?? null,
                 'tipe_kontrak' => $validated['tipe_kontrak'] ?? null,
                 'cabang' => $validated['cabang'] ?? null,
                 'bank' => $validated['bank'] ?? null,
@@ -189,7 +197,16 @@ class EmployeeController extends Controller
                 'start_date' => $validated['start_date'] ?? null,
                 'end_date' => $validated['end_date'] ?? null,
                 'tanggal_efektif' => $validated['tanggal_efektif'] ?? null,
-            ]));
+                'jadwal' => $validated['jadwal'] ?? null,
+            ];
+
+            \Log::info('Creating employee with data:', $employeeData);
+
+            $employee = new Employee();
+            $employee->fill($employeeData);
+            $employee->save();
+
+            \Log::info('Employee created:', ['employee' => $employee->toArray()]);
 
             // Upload avatar jika ada
             if ($request->hasFile('avatar')) {
@@ -218,19 +235,17 @@ class EmployeeController extends Controller
                 }
             }
 
-            DB::commit();
-
             return BaseResponse::success([
                 'employee' => $employee->load(['position', 'documents']),
-                'user' => $newUser,
+                'user' => $createdUser,
             ], 'Karyawan berhasil ditambahkan', 201);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            DB::rollBack();
+            \Log::error('Validation error:', ['errors' => $e->errors()]);
             return BaseResponse::error($e->errors(), 'Validasi gagal', 422);
         } catch (\Exception $e) {
-            DB::rollBack();
             \Log::error("Gagal menambahkan karyawan: " . $e->getMessage());
+            \Log::error("Stack trace: " . $e->getTraceAsString());
             return BaseResponse::error(null, 'Gagal menambahkan karyawan: ' . $e->getMessage(), 500);
         }
     }
