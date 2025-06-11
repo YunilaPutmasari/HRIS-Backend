@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Approval;
 use App\Models\Org\Department;
 use App\Models\Org\Position;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -103,6 +104,10 @@ class OrganizationSeeder extends Seeder
                     Employee::factory()->create([
                         'id_user' => $user_aux->id,
                         'employment_status' => 'active',
+                    ]);
+
+                    Approval::factory()->create([
+                        'id_user' => $user_aux->id_user,
                     ]);
                 }
             }
