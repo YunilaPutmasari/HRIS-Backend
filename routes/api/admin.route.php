@@ -7,6 +7,8 @@ use App\Http\Controllers\Attendance\CheckClockSettingTimeController;
 use App\Http\Controllers\Payment\InvoiceController;
 use App\Http\Controllers\Payment\PaymentController;
 use App\Http\Controllers\Org\EmployeeController;
+use App\Http\Controllers\Org\PositionsController;
+use App\Http\Controllers\Org\DepartmentsController;
 use App\Http\Controllers\Subscription\SubscriptionController;
 use App\Http\Controllers\Lettering\ApprovalController;
 
@@ -72,7 +74,7 @@ Route::group([
     ], function(){
         Route::get('/comp-employees',[EmployeeController::class, 'getEmployeeBasedCompany'])->name('getEmployeeBasedCompany');
         Route::get('/{id}',[EmployeeController::class, 'getEmployeeById']);
-        Route::put('/{id}',[EmployeeController::class, 'getEmployeeById']);
+        Route::put('/{id}',[EmployeeController::class, 'updateEmployee']);
         Route::group([
             'prefix'=>'dashboard',
             'as'=>'dashboard.',
@@ -82,6 +84,14 @@ Route::group([
             Route::get('/status-stats',[EmployeeController::class, 'getEmployeeStatusStats'])->name('getEmployeeStatusStats'); //asumsiku tipeKontrak: Tetap,Kontrak,Lepas
             Route::get('/recent-approvals',[ApprovalController::class, 'getRecentApprovals'])->name('getRecentApprovals');
         });
+    });
+
+    Route::group([
+        'prefix'=>'positions',
+        'as' => 'positions.',
+    ], function(){
+        Route::get('/',[PositionsController::class, 'index'])->name('index');
+        
     });
 });
 

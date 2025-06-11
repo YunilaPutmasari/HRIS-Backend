@@ -1,0 +1,160 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Org\Position;
+use App\Models\Org\Department;
+use App\Models\Org\Company;
+
+class PositionsController extends Controller
+{
+    /**
+     * Get all positions based on department and company of the logged-in user.
+     */
+    public function index()
+    {
+        try {
+            $user = Auth::user();
+
+            if (!$user->workplace) {
+                return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
+            }
+
+            // Ambil semua department yang terkait dengan perusahaan user
+            $positionQuery = Position::whereHas('department', function ($query) use ($user) {
+                $query->where('id_company', $user->workplace->id);
+            });
+
+            $positions = $positionQuery->with(['department'])->get();
+
+            return BaseResponse::success($positions, 'Daftar posisi berhasil diambil.', 200);
+
+        } catch (\Exception $e) {
+            return BaseResponse::error(null, 'Gagal mengambil daftar posisi.', 500);
+        }
+    }
+
+    /**
+     * Create new position under a department.
+     */
+    public function store(Request $request)
+    {
+        try {
+            $user = Auth::user();
+
+            if (!$user->workplace) {
+                return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
+            }
+
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'level' => 'required|integer',
+                'gaji' => 'required|numeric',
+                'id_department' => 'required|uuid|exists:tb_department,id',
+            ]);
+
+            // Validasi bahwa department ini milik company user
+            $department = Department::where('id', $request->id_department)
+                ->whereHas('company', function ($q) use ($user) {
+                    $q->where('id', $user->workplace->id);
+                })
+                ->first();
+
+            if (!$department) {
+                return BaseResponse::error(null, 'Departemen tidak ditemukan atau bukan bagian dari perusahaan Anda.', 404);
+            }
+
+            $position = Position::create([
+                'id' => \Illuminate\Support\Str::uuid(),
+                'name' => $request->name,
+                'level' => $request->level,
+                'gaji' => $request->gaji,
+                'id_department' => $request->id_department,
+            ]);
+
+            return BaseResponse::success($position, 'Posisi berhasil dibuat.', 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return BaseResponse::error($e->errors(), 'Validasi gagal.', 422);
+        } catch (\Exception $e) {
+            return BaseResponse::error(null, 'Gagal membuat posisi.', 500);
+        }
+    }
+
+    /**
+     * Update existing position.
+     */
+    public function update(Request $request, $id)
+    {
+        try {
+            $user = Auth::user();
+
+            if (!$user->workplace) {
+                return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
+            }
+
+            $position = Position::where('id', $id)
+                ->whereHas('department', function ($q) use ($user) {
+                    $q->whereHas('company', function ($qq) use ($user) {
+                        $qq->where('id', $user->workplace->id);
+                    });
+                })
+                ->first();
+
+            if (!$position) {
+                return BaseResponse::error(null, 'Posisi tidak ditemukan atau bukan bagian dari perusahaan Anda.', 404);
+            }
+
+            $request->validate([
+                'name' => 'sometimes|required|string|max:255',
+                'level' => 'sometimes|required|integer',
+                'gaji' => 'sometimes|required|numeric',
+                'id_department' => 'sometimes|required|uuid|exists:tb_department,id',
+            ]);
+
+            $position->update($request->only(['name', 'level', 'gaji', 'id_department']));
+
+            return BaseResponse::success($position, 'Posisi berhasil diperbarui.', 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return BaseResponse::error($e->errors(), 'Validasi gagal.', 422);
+        } catch (\Exception $e) {
+            return BaseResponse::error(null, 'Gagal memperbarui posisi.', 500);
+        }
+    }
+
+    /**
+     * Delete position.
+     */
+    public function destroy($id)
+    {
+        try {
+            $user = Auth::user();
+
+            if (!$user->workplace) {
+                return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
+            }
+
+            $position = Position::where('id', $id)
+                ->whereHas('department', function ($q) use ($user) {
+                    $q->whereHas('company', function ($qq) use ($user) {
+                        $qq->where('id', $user->workplace->id);
+                    });
+                })
+                ->first();
+
+            if (!$position) {
+                return BaseResponse::error(null, 'Posisi tidak ditemukan atau bukan bagian dari perusahaan Anda.', 404);
+            }
+
+            $position->delete();
+
+            return BaseResponse::success(null, 'Posisi berhasil dihapus.', 200);
+
+        } catch (\Exception $e) {
+            return BaseResponse::error(null, 'Gagal menghapus posisi.', 500);
+        }
+    }
+}
