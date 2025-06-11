@@ -105,60 +105,136 @@ class EmployeeController extends Controller
         }
     }
 
+    //
     public function store(StoreEmployeeRequest $request)
     {
-        $data = $request->validated();
-        unset($data['dokumen']);
+        try {
+            DB::beginTransaction();
+            
+            $user = Auth::user();
 
-        \Log::info('Employee Data to Insert:', $data);
-
-        if ($request->hasFile('avatar')) {
-            $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
-        }
-
-        if ($request->hasFile('dokumen')) {
-            $files = $request->file('dokumen');
-            if (!is_array($files)) {
-                $files = [$files];
+            if (!$user->workplace) {
+                return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
             }
-            foreach ($files as $file) {
-                $path = $file->store('documents', 'public');
 
-                Document::create([
-                    'id_user' => $employee->id_user,
-                    'type' => 'other',
-                    'name' => $file->getClientOriginalName(),
-                    'file_path' => $path,
-                ]);
+            // Cek apakah perusahaan memiliki langganan aktif
+            $subscription = $user->workplace->subscription;
+            if (!$subscription) {
+                return BaseResponse::error(null, 'Perusahaan tidak memiliki langganan aktif.', 403);
             }
-        }
-        // Check subscription seat limit
-        $user = Auth::user();
-        if (!$user->workplace) {
-            return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
-        }
 
-        $subscription = $user->workplace->subscription;
-        if (!$subscription) {
-            return BaseResponse::error(null, 'Perusahaan tidak memiliki langganan aktif.', 403);
+            // Hitung jumlah karyawan aktif
+            $activeEmployees = Employee::whereHas('user', function ($query) use ($user) {
+                $query->where('id_workplace', $user->workplace->id);
+            })->where('employment_status', 'active')->count();
+
+            // Cek apakah sudah mencapai batas langganan
+            if ($activeEmployees >= $subscription->seats) {
+                return BaseResponse::error([
+                    'current_seats' => $activeEmployees,
+                    'max_seats' => $subscription->seats,
+                    'subscription_id' => $subscription->id
+                ], 'Jumlah karyawan telah mencapai batas maksimum. Silakan upgrade langganan Anda.', 403);
+            }
+
+            // Validasi request (sudah otomatis via StoreEmployeeRequest)
+            $validated = $request->validated();
+
+            // Validasi format tanggal
+            if (isset($validated['tanggal_lahir'])) {
+                $validated['tanggal_lahir'] = Carbon::parse($validated['tanggal_lahir'])->format('Y-m-d');
+            }
+            if (isset($validated['start_date'])) {
+                $validated['start_date'] = Carbon::parse($validated['start_date'])->format('Y-m-d');
+            }
+            if (isset($validated['end_date'])) {
+                $validated['end_date'] = Carbon::parse($validated['end_date'])->format('Y-m-d');
+            }
+            if (isset($validated['tanggal_efektif'])) {
+                $validated['tanggal_efektif'] = Carbon::parse($validated['tanggal_efektif'])->format('Y-m-d');
+            }
+
+            // Buat user baru
+            $userId = (string) \Illuminate\Support\Str::uuid();
+            $companyId = $user->workplace->id;
+
+            $newUser = User::create([
+                'id' => $userId,
+                'email' => $validated['email'],
+                'phone_number' => $validated['no_telp'] ?? null,
+                'password' => bcrypt($validated['password']),
+                'is_admin' => false,
+                'id_workplace' => $companyId,
+            ]);
+
+            // Buat employee
+            $employeeId = (string) \Illuminate\Support\Str::uuid();
+
+            $employee = Employee::create(array_merge($validated, [
+                'id' => $employeeId,
+                'id_user' => $userId,
+                'id_position' => $validated['id_position'] ?? null,
+                'nik' => $validated['nik'] ?? null,
+                'address' => $validated['address'] ?? null,
+                'tempat_lahir' => $validated['tempat_lahir'] ?? null,
+                'tanggal_lahir' => $validated['tanggal_lahir'] ?? null,
+                'jenis_kelamin' => $validated['jenis_kelamin'] ?? null,
+                'pendidikan' => $validated['pendidikan'] ?? null,
+                'no_telp' => $validated['no_telp'] ?? null,
+                'tipe_kontrak' => $validated['tipe_kontrak'] ?? null,
+                'cabang' => $validated['cabang'] ?? null,
+                'bank' => $validated['bank'] ?? null,
+                'no_rek' => $validated['no_rek'] ?? null,
+                'employment_status' => $validated['employment_status'] ?? 'active',
+                'start_date' => $validated['start_date'] ?? null,
+                'end_date' => $validated['end_date'] ?? null,
+                'tanggal_efektif' => $validated['tanggal_efektif'] ?? null,
+            ]));
+
+            // Upload avatar jika ada
+            if ($request->hasFile('avatar')) {
+                $path = $request->file('avatar')->store("avatars/{$userId}", 'public');
+                $employee->update(['avatar' => $path]);
+            }
+
+            // Upload dokumen jika ada
+            if ($request->hasFile('dokumen')) {
+                $files = $request->file('dokumen');
+                if (!is_array($files)) {
+                    $files = [$files];
+                }
+                foreach ($files as $file) {
+                    $filename = time() . '_' . $file->getClientOriginalName();
+                    $path = $file->storeAs("documents/{$userId}", $filename, 'public');
+
+                    Document::create([
+                        'id_user' => $userId,
+                        'type' => 'other',
+                        'name' => $filename,
+                        'file_path' => $path,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return BaseResponse::success([
+                'employee' => $employee->load(['position', 'documents']),
+                'user' => $newUser,
+            ], 'Karyawan berhasil ditambahkan', 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return BaseResponse::error($e->errors(), 'Validasi gagal', 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error("Gagal menambahkan karyawan: " . $e->getMessage());
+            return BaseResponse::error(null, 'Gagal menambahkan karyawan: ' . $e->getMessage(), 500);
         }
-
-        // Count active employees
-        $activeEmployees = Employee::whereHas('user', function ($query) use ($user) {
-            $query->where('id_workplace', $user->workplace->id);
-        })->where('employment_status', 'active')->count();
-
-        if ($activeEmployees >= $subscription->seats) {
-            return BaseResponse::error([
-                'current_seats' => $activeEmployees,
-                'max_seats' => $subscription->seats,
-                'subscription_id' => $subscription->id
-            ], 'Jumlah karyawan telah mencapai batas maksimum. Silakan upgrade langganan Anda.', 403);
-        }
-
-        $employee = Employee::create($request->all());
-        return BaseResponse::success($employee, 'Karyawan berhasil ditambahkan', 201);
     }
+    // 
 
     public function show($id)
     {

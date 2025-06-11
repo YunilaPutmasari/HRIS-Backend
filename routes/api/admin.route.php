@@ -73,6 +73,7 @@ Route::group([
         'as' => 'employees.',
     ], function(){
         Route::get('/comp-employees',[EmployeeController::class, 'getEmployeeBasedCompany'])->name('getEmployeeBasedCompany');
+        Route::post('/',[EmployeeController::class, 'store'])->name('store');
         Route::get('/{id}',[EmployeeController::class, 'getEmployeeById']);
         Route::put('/{id}',[EmployeeController::class, 'updateEmployee']);
         Route::group([
@@ -92,6 +93,7 @@ Route::group([
     ], function(){
         Route::get('/',[DeptPositionsController::class, 'index'])->name('index');
         Route::post('/',[DeptPositionsController::class, 'store']);
+        Route::get('/get/{id_position}',[DeptPositionsController::class, 'show']);
         Route::get('/{id_department}', [DeptPositionsController::class, 'getByDepartment'])->name('storeByDepartment');
         Route::post('/{id_department}', [DeptPositionsController::class, 'storeByDepartment'])->name('storeByDepartment');
         

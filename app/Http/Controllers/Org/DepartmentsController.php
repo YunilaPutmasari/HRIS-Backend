@@ -8,6 +8,7 @@ use App\Http\Responses\BaseResponse;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Org\Department;
 use App\Models\Org\Company;
+use App\Models\Org\Position;
 
 class DepartmentsController extends Controller
 {
@@ -128,5 +129,35 @@ class DepartmentsController extends Controller
         } catch (\Exception $e) {
             return BaseResponse::error(null, 'Gagal menghapus departemen.', 500);
         }
+    }
+
+    public function getDepartment($idDepartment)
+    {
+        try {
+            $user = Auth::user();
+
+            if (!$user->workplace) {
+                return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
+            }
+
+            // Validasi bahwa department milik perusahaan user
+            $department = Department::where('id', $idDepartment)
+                ->whereHas('company', function ($q) use ($user) {
+                    $q->where('id', $user->workplace->id);
+                })
+                ->first();
+
+            if (!$department) {
+                return BaseResponse::error(null, 'Departemen tidak ditemukan atau bukan bagian dari perusahaan Anda.', 404);
+            }
+
+            // Ambil semua position yang terkait dengan department ini
+            $positions = Position::where('id_department', $idDepartment)->get();
+
+            return BaseResponse::success($positions, 'Daftar posisi berhasil diambil.', 200);
+
+        } catch (\Exception $e) {
+            return BaseResponse::error($e->getMessage(), 'Gagal mengambil daftar posisi.', 500);
+        }        
     }
 }

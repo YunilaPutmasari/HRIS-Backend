@@ -71,6 +71,36 @@ class DeptPositionsController extends Controller
         }        
     }
 
+        /**
+     * Get detail position by ID
+     */
+    public function show($id)
+    {
+        try {
+            $user = Auth::user();
+
+            if (!$user->workplace) {
+                return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
+            }
+
+            // Ambil position beserta department dan company
+            $position = Position::whereHas('department', function ($query) use ($user) {
+                    $query->where('id_company', $user->workplace->id);
+                })
+                ->with(['department.company'])
+                ->find($id);
+
+            if (!$position) {
+                return BaseResponse::error(null, 'Posisi tidak ditemukan atau bukan bagian dari perusahaan Anda.', 404);
+            }
+
+            return BaseResponse::success($position, 'Detail posisi berhasil diambil.', 200);
+
+        } catch (\Exception $e) {
+            return BaseResponse::error(null, 'Gagal mengambil detail posisi.', 500);
+        }
+    }
+
     /**
      * Create new position under a department.
      */
