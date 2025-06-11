@@ -36,7 +36,7 @@ return [
     ],
     
     'xendit' => [
-        'secret' => env('XENDIT_API_KEY'),
+        'secret' => env('XENDIT_SECRET_KEY'),
         'webhook_token' => env('XENDIT_WEBHOOK_TOKEN'),
     ],
 

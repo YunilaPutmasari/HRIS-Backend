@@ -4,15 +4,14 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::table('tb_company', function (Blueprint $table) {
-            $table->boolean('has_used_trial')->default(false)->after('id_subscription');
+        Schema::table('tb_position', function (Blueprint $table) {
+            $table->decimal('gaji', 12, 2)->after('level')->nullable();
         });
     }
 
@@ -21,8 +20,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('tb_company', function (Blueprint $table) {
-            $table->dropColumn('has_used_trial');
+        Schema::table('tb_position', function (Blueprint $table) {
+            $table->dropColumn('gaji');
         });
     }
 };
