@@ -2,6 +2,7 @@
 
 namespace App\Models\Org;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Org\Employee;
 use App\Models\Oeg\Department;
@@ -16,7 +17,7 @@ class Position extends Model
     protected $primaryKey = 'id';
     public $incrementing = false;
 
-    use HasFactory, Notifiable, SoftDeletes;
+    use HasFactory, Notifiable, SoftDeletes, HasUuids;
     /**
      * The attributes that are mass assignable.
      *

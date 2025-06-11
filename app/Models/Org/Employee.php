@@ -7,10 +7,14 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Str;
 
 class Employee extends Model
 {
     protected $table = 'tb_employee';
+
+    protected $keyType = 'string';
+
     protected $primaryKey = 'id';
     public $incrementing = false;
 
@@ -23,10 +27,15 @@ class Employee extends Model
 
 
     protected $fillable = [
+        'id_user',
         'first_name',
         'last_name',
         'address',
         'id_position',  // tambah ini
+        'sign_in_code',
+        'id_position',
+        'employment_status',
+        'tipeKontrak',
     ];
 
 
@@ -36,9 +45,7 @@ class Employee extends Model
      * @var list<string>
      */
     protected $hidden = [
-        'id_position',
-        'sign_in_code',
-        'id_user',
+        // 'sign_in_code', //untuk ditampilkan di Profile
         'created_at',
         'updated_at',
     ];
@@ -54,7 +61,20 @@ class Employee extends Model
     }
     public function position()
     {
-        return $this->belongsTo(Position::class, 'id_position');
+        return $this->belongsTo(Position::class, 'id_position', 'id');
     }
 
+    /**
+     * Override fungsi boot untuk otomatis generate UUID saat user dibuat.
+     */
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->{$model->getKeyName()})) {
+                $model->{$model->getKeyName()} = (string) Str::uuid();
+            }
+        });
+    }
 }
