@@ -18,6 +18,7 @@ return new class extends Migration {
             $table->timestamp('starts_at')->nullable();
             $table->timestamp('ends_at')->nullable();
             $table->enum('status', ['trial', 'active', 'expired'])->default('trial');
+            $table->boolean('is_canceled')->default(false);
             $table->timestamps();
             $table->softDeletes();
 

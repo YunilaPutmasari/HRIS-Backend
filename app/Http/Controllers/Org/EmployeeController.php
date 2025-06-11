@@ -38,8 +38,32 @@ class EmployeeController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        // Check subscription seat limit
+        $user = Auth::user();
+        if (!$user->workplace) {
+            return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
+        }
+
+        $subscription = $user->workplace->subscription;
+        if (!$subscription) {
+            return BaseResponse::error(null, 'Perusahaan tidak memiliki langganan aktif.', 403);
+        }
+
+        // Count active employees
+        $activeEmployees = Employee::whereHas('user', function ($query) use ($user) {
+            $query->where('id_workplace', $user->workplace->id);
+        })->where('employment_status', 'active')->count();
+
+        if ($activeEmployees >= $subscription->seats) {
+            return BaseResponse::error([
+                'current_seats' => $activeEmployees,
+                'max_seats' => $subscription->seats,
+                'subscription_id' => $subscription->id
+            ], 'Jumlah karyawan telah mencapai batas maksimum. Silakan upgrade langganan Anda.', 403);
+        }
+
         $employee = Employee::create($request->all());
-        return response()->json($employee, 201);
+        return BaseResponse::success($employee, 'Karyawan berhasil ditambahkan', 201);
     }
 
     // ✅ SHOW - Ambil 1 employee berdasarkan id

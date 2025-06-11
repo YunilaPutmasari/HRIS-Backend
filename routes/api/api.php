@@ -18,8 +18,6 @@ Route::get('', function (Request $request) {
     return UserResource::collection(User::all());
 });
 Route::get('/employee', function () {
-    // $employees = Employee::with('position', 'user')->get();  // eager load relasi position dan user
-    // return EmployeeResource::collection($employees);
     return \App\Models\Org\Employee::with('user', 'position')->get();
 });
 

@@ -25,17 +25,19 @@ class Subscription extends Model
         'price_per_seat',
         'is_trial',
         'trial_ends_at',
-        'start_at',
+        'starts_at',
         'ends_at',
         'status',
+        'is_cancelled',
     ];
 
     protected $casts = [
-        'starts_at' => 'datetime',
-        'ends_at' => 'datetime',
+        // 'starts_at' => 'datetime',
+        // 'ends_at' => 'datetime',
         'trial_ends_at' => 'datetime',
         'price_per_seat' => 'float',
         'is_trial' => 'boolean',
+        'is_cancelled' => 'boolean',
     ];
 
     public function company()
