@@ -19,7 +19,6 @@ return new class extends Migration {
             $table->uuid('id_department');
             $table->timestamps();
             $table->softDeletes();
-
             $table->foreign('id_department')->references('id')->on('tb_department')->onDelete('cascade');
         });
 

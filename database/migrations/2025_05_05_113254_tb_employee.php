@@ -16,9 +16,9 @@ return new class extends Migration {
             $table->uuid('id')->primary()->default(DB::raw('public.uuid_generate_v4()'));
             $table->string('sign_in_code', 6)->default('');
             $table->uuid('id_user');
-            $table->enum('employment_status', ['active', 'inactive', 'resign'])->default('active');
             $table->string('first_name');
             $table->string('last_name');
+            $table->enum('employment_status', ['active', 'inactive', 'resign'])->default('active');
             $table->string('address');
             $table->uuid('id_position')->nullable();
             $table->timestamps();
@@ -26,6 +26,7 @@ return new class extends Migration {
 
             $table->foreign('id_user')->references('id')->on('tb_user')->onDelete('cascade');
             $table->foreign('id_position')->references('id')->on('tb_position')->onDelete('cascade');
+
         });
 
     }

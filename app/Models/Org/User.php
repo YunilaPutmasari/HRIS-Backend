@@ -98,6 +98,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(PersonalAccessToken::class, 'tokenable_id');
     }
+    // User.php
+    public function dokumen()
+    {
+        return $this->hasMany(Document::class, 'user_id');
+    }
 
     public function isManagerOf(Company $company): bool
     {

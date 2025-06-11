@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\org;
 
 use App\Http\Controllers\Controller;
-use App\Http\Responses\BaseResponse;
 use App\Models\Org\Employee;
 use App\Models\Org\Document;
 use App\Models\Org\Company;
@@ -117,11 +116,14 @@ class EmployeeController extends Controller
             $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
         }
 
+        $employee = Employee::create($data);
+
         if ($request->hasFile('dokumen')) {
             $files = $request->file('dokumen');
             if (!is_array($files)) {
                 $files = [$files];
             }
+
             foreach ($files as $file) {
                 $path = $file->store('documents', 'public');
 
@@ -133,32 +135,8 @@ class EmployeeController extends Controller
                 ]);
             }
         }
-        // Check subscription seat limit
-        $user = Auth::user();
-        if (!$user->workplace) {
-            return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
-        }
 
-        $subscription = $user->workplace->subscription;
-        if (!$subscription) {
-            return BaseResponse::error(null, 'Perusahaan tidak memiliki langganan aktif.', 403);
-        }
-
-        // Count active employees
-        $activeEmployees = Employee::whereHas('user', function ($query) use ($user) {
-            $query->where('id_workplace', $user->workplace->id);
-        })->where('employment_status', 'active')->count();
-
-        if ($activeEmployees >= $subscription->seats) {
-            return BaseResponse::error([
-                'current_seats' => $activeEmployees,
-                'max_seats' => $subscription->seats,
-                'subscription_id' => $subscription->id
-            ], 'Jumlah karyawan telah mencapai batas maksimum. Silakan upgrade langganan Anda.', 403);
-        }
-
-        $employee = Employee::create($request->all());
-        return BaseResponse::success($employee, 'Karyawan berhasil ditambahkan', 201);
+        return BaseResponse::success(new EmployeeResource($employee->load('position', 'documents')), 201);
     }
 
     public function show($id)
@@ -214,7 +192,6 @@ class EmployeeController extends Controller
         if (empty($employees)) {
             return BaseResponse::error('No data to import', 400);
         }
-    }
 
         \Log::info('Import employees:', $employees);
 
@@ -312,7 +289,7 @@ class EmployeeController extends Controller
             return BaseResponse::error(null, 'Gagal mengambil daftar karyawan', 500);
         }
     }
-
+// BREAK POINTS untuk dashboard
     public function getEmployee(){
         try {
             $user = Auth::user();
@@ -419,138 +396,5 @@ class EmployeeController extends Controller
         } catch (\Exception $e) {
             return BaseResponse::error(null, 'Gagal mengambil statistik status karyawan', 500);
         }
-            return BaseResponse::success($data, 'Statistik status karyawan berhasil diambil', 200);
-
-        } catch (\Exception $e) {
-            return BaseResponse::error(null, 'Gagal mengambil statistik status karyawan', 500);
-        }
-    }
-// ===================================================================================================
-// Break Points Untuk Controller Employee ============================================================
-// ===================================================================================================
-    public function getEmployeeDashboard()
-    {
-        try {
-            $user = Auth::user();
-            $employee = Employee::where('id_user', $user->id)
-                ->with(['user', 'position'])
-                ->first();
-
-            if (!$employee) {
-                return BaseResponse::error(null, 'Employee data not found', 404);
-            }
-
-            $data = [
-                'employee' => $employee,
-                'attendance_today' => $this->getTodayAttendance($employee->id),
-                'payroll_summary' => $this->getPayrollSummary($employee->id),
-                'last_updated' => now()->format('d F Y H:i'),
-            ];
-
-            return BaseResponse::success($data, 'Employee dashboard data retrieved successfully', 200);
-        } catch (\Exception $e) {
-            return BaseResponse::error(null, 'Failed to retrieve employee dashboard data', 500);
-        }
-    }
-
-    public function getEmployeeProfile()
-    {
-        try {
-            $user = Auth::user();
-            $employee = Employee::where('id_user', $user->id)
-                ->with(['user', 'position'])
-                ->first();
-
-            if (!$employee) {
-                return BaseResponse::error(null, 'Employee data not found', 404);
-            }
-
-            return BaseResponse::success($employee, 'Employee profile retrieved successfully', 200);
-        } catch (\Exception $e) {
-            return BaseResponse::error(null, 'Failed to retrieve employee profile', 500);
-        }
-    }
-
-    public function getEmployeeAttendance()
-    {
-        try {
-            $user = Auth::user();
-            $employee = Employee::where('id_user', $user->id)->first();
-
-            if (!$employee) {
-                return BaseResponse::error(null, 'Employee data not found', 404);
-            }
-
-            // TODO: Implement actual attendance data retrieval
-            $attendance = [
-                'today' => [
-                    'status' => 'present',
-                    'check_in' => '08:00',
-                    'check_out' => '17:00',
-                ],
-                'monthly_summary' => [
-                    'present' => 20,
-                    'absent' => 2,
-                    'late' => 1,
-                ],
-            ];
-
-            return BaseResponse::success($attendance, 'Employee attendance data retrieved successfully', 200);
-        } catch (\Exception $e) {
-            return BaseResponse::error(null, 'Failed to retrieve employee attendance data', 500);
-        }
-    }
-
-    public function getEmployeePayroll()
-    {
-        try {
-            $user = Auth::user();
-            $employee = Employee::where('id_user', $user->id)->first();
-
-            if (!$employee) {
-                return BaseResponse::error(null, 'Employee data not found', 404);
-            }
-
-            // TODO: Implement actual payroll data retrieval
-            $payroll = [
-                'current_month' => [
-                    'basic_salary' => 5000000,
-                    'allowances' => 1000000,
-                    'deductions' => 500000,
-                    'net_salary' => 5500000,
-                ],
-                'payment_history' => [
-                    [
-                        'month' => 'January 2024',
-                        'amount' => 5500000,
-                        'status' => 'paid',
-                    ],
-                ],
-            ];
-
-            return BaseResponse::success($payroll, 'Employee payroll data retrieved successfully', 200);
-        } catch (\Exception $e) {
-            return BaseResponse::error(null, 'Failed to retrieve employee payroll data', 500);
-        }
-    }
-
-    private function getTodayAttendance($employeeId)
-    {
-        // TODO: Implement actual attendance check
-        return [
-            'status' => 'present',
-            'check_in' => '08:00',
-            'check_out' => '17:00',
-        ];
-    }
-
-    private function getPayrollSummary($employeeId)
-    {
-        // TODO: Implement actual payroll summary
-        return [
-            'current_salary' => 5500000,
-            'last_payment' => '2024-01-31',
-            'payment_status' => 'paid',
-        ];
     }
 }
