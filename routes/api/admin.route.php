@@ -71,6 +71,7 @@ Route::group([
         'as' => 'employees.',
     ], function(){
         Route::get('/comp-employees',[EmployeeController::class, 'getEmployeeBasedCompany'])->name('getEmployeeBasedCompany');
+        Route::get('/{id}',[EmployeeController::class, 'getEmployeeById']);
         Route::group([
             'prefix'=>'dashboard',
             'as'=>'dashboard.',

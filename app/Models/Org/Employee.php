@@ -30,7 +30,10 @@ class Employee extends Model
 
     protected $fillable = [
         'avatar',
+        'sign_in_code',
         'id_user',
+        // 'id_jadwal',
+        'id_position',
         'first_name',
         'last_name',
         'nik',
@@ -39,30 +42,17 @@ class Employee extends Model
         'tanggal_lahir',
         'jenis_kelamin',
         'pendidikan',
-        'email',
         'no_telp',
-        'id_position',
         'start_date',
         'end_date',
-        'tenure',
-        'jadwal',
         'tipe_kontrak',
         'cabang',
         'employment_status',
         'tanggal_efektif',
         'bank',
-        'norek',
-        'gaji',
-        'uang_lembur',
-        'denda_terlambat',
-        'total_gaji',
+        'no_rek',
         'dokumen',
 
-        'id_position',  // tambah ini
-        'sign_in_code',
-        'id_position',
-        'employment_status',
-        'tipeKontrak',
     ];
 
 
@@ -82,11 +72,6 @@ class Employee extends Model
     {
         return $this->belongsTo(Company::class, 'id_company');
     }
-
-    // public function user()
-    // {
-    //     return $this->belongsTo(User::class, 'id_user');
-    // }
     public function position()
     {
         return $this->belongsTo(Position::class, 'id_position', 'id');

@@ -17,7 +17,6 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use App\Http\Responses\BaseResponse;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
@@ -214,10 +213,8 @@ class EmployeeController extends Controller
         if (empty($employees)) {
             return BaseResponse::error('No data to import', 400);
         }
-    }
-
         \Log::info('Import employees:', $employees);
-
+    
         try {
             foreach ($employees as $emp) {
                 if (empty($emp['first_name']) && empty($emp['last_name']) && !empty($emp['nama'])) {
@@ -225,16 +222,16 @@ class EmployeeController extends Controller
                     $emp['first_name'] = $nameParts[0];
                     $emp['last_name'] = $nameParts[1] ?? '';
                 }
-
+    
                 if (empty($emp['address'])) {
                     $emp['address'] = 'Tidak Diketahui';
                 }
-
+    
                 if (empty($emp['first_name']) || empty($emp['last_name']) || empty($emp['address'])) {
                     \Log::warning('Skipping employee, data tidak lengkap', $emp);
                     continue;
                 }
-
+    
                 Employee::updateOrCreate(
                     ['id' => $emp['id'] ?? null],
                     [
@@ -251,9 +248,9 @@ class EmployeeController extends Controller
                     ]
                 );
             }
-
+    
             $allEmployees = Employee::with('user')->get();
-
+    
             return BaseResponse::success([
                 'message' => 'Import berhasil',
                 'data' => $allEmployees
@@ -263,6 +260,7 @@ class EmployeeController extends Controller
             return BaseResponse::error('Gagal import data', 500, ['exception' => $e->getMessage()]);
         }
     }
+
 
     public function deleteEmployeeDocument($employeeId, $documentId)
     {
@@ -313,6 +311,39 @@ class EmployeeController extends Controller
         }
     }
 
+    public function getEmployeeById($employeeId)
+    {
+        try {
+            // Ambil user yang sedang login
+            $user = Auth::user();
+
+            // Pastikan user memiliki workplace
+            if (!$user->workplace) {
+                return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
+            }
+
+            // Cari employee dengan id tertentu dan pastikan dia satu perusahaan dengan user
+            $employee = Employee::whereHas('user', function ($query) use ($user) {
+                    $query->where('id_workplace', $user->workplace->id);
+                })
+                ->where('id', $employeeId)
+                ->with(['user', 'position'])
+                ->first();
+
+            // Jika employee tidak ditemukan
+            if (!$employee) {
+                return BaseResponse::error(null, 'Karyawan tidak ditemukan atau tidak berada di perusahaan Anda.', 404);
+            }
+
+            // Kembalikan response sukses
+            return BaseResponse::success($employee, 'Data karyawan berhasil diambil', 200);
+
+        } catch (\Exception $e) {
+            return BaseResponse::error(null, 'Gagal mengambil data karyawan', 500);
+        }
+    }
+
+// KEBAWAH ADALAH FUNSGI UNtK DASHBOARD
     public function getEmployee(){
         try {
             $user = Auth::user();
@@ -421,9 +452,6 @@ class EmployeeController extends Controller
         }
             return BaseResponse::success($data, 'Statistik status karyawan berhasil diambil', 200);
 
-        } catch (\Exception $e) {
-            return BaseResponse::error(null, 'Gagal mengambil statistik status karyawan', 500);
-        }
     }
 // ===================================================================================================
 // Break Points Untuk Controller Employee ============================================================
