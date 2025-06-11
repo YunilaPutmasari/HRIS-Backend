@@ -27,13 +27,22 @@ class ApprovalController extends Controller
             ->pluck('id')
             ->toArray();
 
+
         // Retrieve approvals for those users
         try {
-            $approval = Approval::whereIn('id_user', $userIds)
-                ->with([
-                    'employee',
-                    'employee.position'
-                ])->get();
+            if ($user->isAdmin()){
+                $approval = Approval::whereIn('id_user', $userIds)
+                    ->with([
+                        'employee',
+                        'employee.position'
+                    ])->get();
+            } else {
+                $approval = Approval::where('id_user', $user->id)
+                    ->with([
+                        'employee',
+                        'employee.position'
+                    ])->get();
+            }
         } catch (\Throwable $e) {
             return response()->json([
                 'error' => $e->getMessage(),
@@ -114,19 +123,6 @@ class ApprovalController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show($id)
-    {
-        $record = Approval::findOrFail($id);
-        return BaseResponse::success(
-            data: $record,
-            message: 'Approval retrieved successfully',
-            code: 200
-        );
-    }
-
-    /**
      * Update the specified resource in storage.
      */
     public function update(ApprovalUpdateRequest $request, $id)
@@ -158,6 +154,68 @@ class ApprovalController extends Controller
         );
     }
 
+    public function approve(Request $request, $id){
+        $user = $request->user();
+        $companies = $user->companies()->get();
+        $companyIds = $companies->pluck('id')->toArray();
+
+        $userIds = User::whereIn('id_workplace', $companyIds)
+            ->pluck('id')
+            ->toArray();
+
+        $approval = Approval::whereIn('id_user', $userIds)
+            ->where('id', $id)
+            ->first();
+
+        if (!$approval) {
+            return BaseResponse::error(
+                message: 'Approval not found',
+                code: 404
+            );
+        }
+
+        $approval->status = 'approved';
+        $approval->approved_by = $user->id;
+        $approval->save();
+
+        return BaseResponse::success(
+            data: $approval,
+            message: 'Approval approved successfully',
+            code: 200
+        );
+    }
+
+    public function reject(Request $request, $id){
+        $user = $request->user();
+        $companies = $user->companies()->get();
+        $companyIds = $companies->pluck('id')->toArray();
+
+        $userIds = User::whereIn('id_workplace', $companyIds)
+            ->pluck('id')
+            ->toArray();
+
+        $approval = Approval::whereIn('id_user', $userIds)
+            ->where('id', $id)
+            ->first();
+
+        if (!$approval) {
+            return BaseResponse::error(
+                message: 'Approval not found',
+                code: 404
+            );
+        }
+
+        $approval->status = 'rejected';
+        $approval->approved_by = $user->id;
+        $approval->save();
+
+        return BaseResponse::success(
+            data: $approval,
+            message: 'Approval rejected successfully',
+            code: 200
+        );
+    }
+
     /**
      * Remove the specified resource from storage.
      */
@@ -166,6 +224,20 @@ class ApprovalController extends Controller
         //
     }
 
+    public function isAdmin(Request $request) {
+        $user = $request->user();
+
+        if (!$user) {
+            return BaseResponse::error(
+                message: 'User not authenticated',
+                code: 401
+            );
+        }
+        return BaseResponse::success(
+            data: ['isAdmin' => $user->isAdmin()],
+            message: 'Admin status retrieved successfully',
+        );
+    }
     public function getRecentApprovals(Request $request)
     {
         $user = $request->user();
