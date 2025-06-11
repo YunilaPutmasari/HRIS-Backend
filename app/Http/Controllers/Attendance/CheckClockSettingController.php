@@ -27,6 +27,38 @@ class CheckClockSettingController extends Controller
         );
     }
 
+    public function show(Request $request, $id_ck_setting)
+    {
+        // user should own and be the admin of issued company id
+        $user = $request->user();
+        $company = $user->companies()->first();
+
+        if (!$company) {
+            return BaseResponse::error(
+                message: "You don't have permission to access this company",
+                code: 404
+            );
+        }
+
+        $checkClockSetting = CheckClockSetting::where('id', $id_ck_setting)
+            ->where('id_company', $company->id)
+            ->with('checkClockSettingTime')
+            ->first();
+
+        if (!$checkClockSetting) {
+            return BaseResponse::error(
+                message: 'Check clock setting not found',
+                code: 404
+            );
+        }
+
+        return BaseResponse::success(
+            data: $checkClockSetting,
+            message: 'Check clock setting retrieved successfully',
+            code: 200
+        );
+    }
+
     public function new(CheckClockSettingCreateRequest $request)
     {
         $data = $request->validated();

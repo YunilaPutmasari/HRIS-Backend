@@ -24,6 +24,7 @@ Route::group([
             'as' => 'check-clock-setting.',
         ], function () {
             Route::get('/', [CheckClockSettingController::class, 'index'])->name('index');
+            Route::get('/{id_ck_setting}', [CheckClockSettingController::class, 'show'])->name('show');
 
             Route::post('/new', [CheckClockSettingController::class, 'new'])->name('new');
             Route::post('/complete-new', [CheckClockSettingController::class, 'completeNew'])->name('complete-new');
