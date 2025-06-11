@@ -8,7 +8,6 @@ use App\Models\Org\Employee;
 use App\Http\Resources\EmployeeResource;
 use App\Http\Controllers\org\EmployeeController;
 use App\Http\Controllers\Auth\AuthController;
-// use App\Http\Controllers\Org\EmployeeController;
 use App\Http\Controllers\Payment\XenditWebhookController;
 
 
@@ -16,6 +15,24 @@ use App\Http\Controllers\Payment\XenditWebhookController;
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+
+Route::group([
+    'prefix' => 'user',
+    'as'=>'user.',
+    'middleware'=>'auth::sanctum'
+],function(){
+
+    // Employee dashboard data
+    Route::group([
+        'prefix' => 'employee',
+        'as' => 'employee.',
+    ], function(){
+        Route::get('/dashboard', [EmployeeController::class, 'getEmployeeDashboard']);
+        Route::get('/profile', [EmployeeController::class, 'getEmployeeProfile']);
+        Route::get('/attendance', [EmployeeController::class, 'getEmployeeAttendance']);
+        Route::get('/payroll', [EmployeeController::class, 'getEmployeePayroll']);
+    });
+});
 
 Route::get('', function (Request $request) {
     return UserResource::collection(User::all());
