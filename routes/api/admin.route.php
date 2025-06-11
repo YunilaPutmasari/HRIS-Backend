@@ -26,7 +26,7 @@ Route::group([
             Route::get('/', [CheckClockSettingController::class, 'index'])->name('index');
 
             Route::post('/new', [CheckClockSettingController::class, 'new'])->name('new');
-            Route::post('/{id_ck_setting}/new', [CheckClockSettingTimeController::class, 'new'])->name('new');
+            Route::post('/complete-new', [CheckClockSettingController::class, 'completeNew'])->name('complete-new');
 
             Route::put('/update/{id_ck_setting}', [CheckClockSettingController::class, 'update'])->name('update');
             Route::put('/{id_ck_setting}/update/{id_ck_setting_time}', [CheckClockSettingTimeController::class, 'update'])->name('update');
@@ -65,17 +65,17 @@ Route::group([
     });
 
     Route::group([
-        'prefix'=>'employees',
+        'prefix' => 'employees',
         'as' => 'employees.',
-    ], function(){
+    ], function () {
         Route::group([
-            'prefix'=>'dashboard',
-            'as'=>'dashboard.',
+            'prefix' => 'dashboard',
+            'as' => 'dashboard.',
         ], function () {
-            Route::get('/getEmployee',[EmployeeController::class, 'getEmployee'])->name('getEmployee');
-            Route::get('/contract-stats',[EmployeeController::class, 'getEmployeeContractStats'])->name('getEmployeeContractStats'); //asumsiku tipeKontrak: Tetap,Kontrak,Lepas
-            Route::get('/status-stats',[EmployeeController::class, 'getEmployeeStatusStats'])->name('getEmployeeStatusStats'); //asumsiku tipeKontrak: Tetap,Kontrak,Lepas
-            Route::get('/recent-approvals',[ApprovalController::class, 'getRecentApprovals'])->name('getRecentApprovals');
+            Route::get('/getEmployee', [EmployeeController::class, 'getEmployee'])->name('getEmployee');
+            Route::get('/contract-stats', [EmployeeController::class, 'getEmployeeContractStats'])->name('getEmployeeContractStats'); //asumsiku tipeKontrak: Tetap,Kontrak,Lepas
+            Route::get('/status-stats', [EmployeeController::class, 'getEmployeeStatusStats'])->name('getEmployeeStatusStats'); //asumsiku tipeKontrak: Tetap,Kontrak,Lepas
+            Route::get('/recent-approvals', [ApprovalController::class, 'getRecentApprovals'])->name('getRecentApprovals');
         });
     });
 });
@@ -84,7 +84,7 @@ Route::group([
     'prefix' => 'admin/subscription',
     'as' => 'admin.subscription',
     'middleware' => ['auth:sanctum', 'admin'],
-], function() {
+], function () {
     Route::get('/', [SubscriptionController::class, 'index'])->name('index');
     Route::post('/', [SubscriptionController::class, 'store'])->name('store');
     Route::put('/{id}', [SubscriptionController::class, 'update'])->name('update');
