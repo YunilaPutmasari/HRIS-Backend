@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->uuid('id_ck_setting');
             $table->time('clock_in');
             $table->time('clock_out');
-            $table->enum('status', ['on-time', 'late'])->default('on-time');
+            $table->enum('status', ['on-time', 'late', 'sick', 'leave', 'permit'])->default('on-time');
             $table->timestamps();
             $table->softDeletes();
 

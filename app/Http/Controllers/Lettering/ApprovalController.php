@@ -7,6 +7,8 @@ use App\Http\Requests\ApprovalStoreRequest;
 use App\Http\Requests\ApprovalUpdateRequest;
 use App\Http\Responses\BaseResponse;
 use App\Models\Approval;
+use App\Models\Attendance\CheckClock;
+use App\Models\Attendance\CheckClockSetting;
 use App\Models\Org\User;
 use Illuminate\Http\Request;
 
@@ -108,6 +110,33 @@ class ApprovalController extends Controller
             $data['id_user'] = $request->input('id_user');
             $data['status'] = 'approved';
             $data['approved_by'] = $user->id;
+
+            $checkClockSetting = CheckClockSetting::where('id_company', $user->id_workplace)->first();
+
+            if (!$checkClockSetting) {
+                return BaseResponse::error(
+                    message: 'Check clock setting not found',
+                    code: 404
+                );
+            }
+
+            // Create a new CheckClock record
+            $checkClock = CheckClock::create([
+                'id_user' => $request->id_user,
+                'id_ck_setting' => $checkClockSetting->id,
+                'clock_in' => $request->start_date,
+                'clock_out' => $request->end_date,
+                'status' => $request->request_type,
+            ]);
+
+            return BaseResponse::success(
+                data: [
+                    'approval' => Approval::create($data),
+                    'check_clock' => $checkClock
+                ],
+                message: 'Approval created and CheckClock created successfully',
+                code: 201
+            );
         } else {
             $data['id_user'] = $user->id;
             $data['status'] = 'pending';
@@ -178,9 +207,30 @@ class ApprovalController extends Controller
         $approval->approved_by = $user->id;
         $approval->save();
 
+        $checkClockSetting = CheckClockSetting::where('id_company', $user->id_workplace)->first();
+
+        if (!$checkClockSetting) {
+            return BaseResponse::error(
+                message: 'Check clock setting not found',
+                code: 404
+            );
+        }
+
+        // Create a new CheckClock record
+        $checkClock = CheckClock::create([
+            'id_user' => $approval->id_user,
+            'id_ck_setting' => $checkClockSetting->id,
+            'clock_in' => $approval->start_date,
+            'clock_out' => $approval->end_date,
+            'status' => $approval->request_type,
+        ]);
+
         return BaseResponse::success(
-            data: $approval,
-            message: 'Approval approved successfully',
+            data: [
+                'approval' => $approval,
+                'check_clock' => $checkClock
+            ],
+            message: 'Approval approved and CheckClock created successfully',
             code: 200
         );
     }
