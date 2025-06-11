@@ -34,6 +34,11 @@ class OrganizationSeeder extends Seeder
             'is_admin' => true,
         ]);
 
+        $company = Company::factory()->create([
+            'name' => 'PT cmlabs Indonesia Digital',
+            'id_manager' => $supreme_manager_user->id,
+        ]);
+
         Employee::factory()->create([
             'id_user' => $supreme_manager_user->id,
             'sign_in_code' => '999999',
@@ -41,12 +46,10 @@ class OrganizationSeeder extends Seeder
             'last_name' => 'Cmlabs',
             'address' => 'Jakarta',
             'employment_status' => 'active',
+            'id_workplace' => $company->id,
         ]);
 
-        $company = Company::factory()->create([
-            'name' => 'PT cmlabs Indonesia Digital',
-            'id_manager' => $supreme_manager_user->id,
-        ]);
+
 
         $departments = [
             'HR' => [

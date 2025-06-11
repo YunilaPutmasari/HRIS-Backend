@@ -25,7 +25,8 @@ class User extends Authenticatable
     public $incrementing = false;
 
     protected $with = [
-        'employee', 'workplace'
+        'employee',
+        'workplace'
     ];
 
 
@@ -53,7 +54,6 @@ class User extends Authenticatable
         'password',
         'remember_token',
         'is_admin',
-        'id_workplace'
     ];
 
     /**
@@ -69,8 +69,9 @@ class User extends Authenticatable
         ];
     }
 
-    public function setIsAdminAttribute($value){
-        $this->attributes['is_admin']=$value?'1':'0';
+    public function setIsAdminAttribute($value)
+    {
+        $this->attributes['is_admin'] = $value ? '1' : '0';
     }
 
     public function isAdmin(): bool
@@ -86,7 +87,7 @@ class User extends Authenticatable
     // INI JIKA INGIN DIGANTI DARI WORKPLACE MENJADI COMPANY BIAR LEBIH MUDAH
     public function workplace()
     {
-        return $this->belongsTo(Company::class, 'id_workplace')->with('subscription');
+        return $this->belongsTo(Company::class, 'id_workplace');
     }
 
     public function employee()
