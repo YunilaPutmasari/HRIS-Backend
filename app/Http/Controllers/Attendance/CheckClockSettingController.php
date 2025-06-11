@@ -33,7 +33,9 @@ class CheckClockSettingController extends Controller
 
         // user should own and be the admin of issued company id
         $user = $request->user();
-        $company = $user->companies()->where('id', $data['id_company'])->first();
+        // NOTE: Due to lack of context (likely because it hasn't been implemented yet) in frontend user auth, hence id_company become unrelevant (no source to take).
+        // $company = $user->companies()->where('id', $data['id_company'])->first();
+        $company = $user->companies()->first();
 
         if (!$company) {
             return BaseResponse::error(
@@ -44,7 +46,9 @@ class CheckClockSettingController extends Controller
 
         $checkClockSetting = CheckClockSetting::create([
             'name' => $data['name'],
-            'id_company' => $data['id_company'],
+            // NOTE: Due to lack of context (likely because it hasn't been implemented yet) in frontend user auth, hence id_company become unrelevant (no source to take).
+            // 'id_company' => $data['id_company'],
+            'id_company' => $company->id,
             'type' => $data['type'],
         ]);
 
@@ -61,7 +65,9 @@ class CheckClockSettingController extends Controller
 
         // user should own and be the admin of issued company id
         $user = $request->user();
-        $company = $user->companies()->where('id', $data['id_company'])->first();
+        // NOTE: Due to lack of context (likely because it hasn't been implemented yet) in frontend user auth, hence id_company become unrelevant (no source to take).
+        // $company = $user->companies()->where('id', $data['id_company'])->first();
+        $company = $user->companies()->first();
 
         if (!$company) {
             return BaseResponse::error(
@@ -72,7 +78,9 @@ class CheckClockSettingController extends Controller
 
         $checkClockSetting = CheckClockSetting::create([
             'name' => $data['name'],
-            'id_company' => $data['id_company'],
+            // NOTE: Due to lack of context (likely because it hasn't been implemented yet) in frontend user auth, hence id_company become unrelevant (no source to take).
+            // 'id_company' => $data['id_company'],
+            'id_company' => $company->id,
             'type' => $data['type'],
         ]);
 

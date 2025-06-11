@@ -9,7 +9,8 @@ class CheckClockSettingCompleteCreateRequest extends BaseRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'id_company' => 'required|uuid',
+            // NOTE: Due to lack of context (likely because it hasn't been implemented yet) in frontend user auth, hence id_company become unrelevant (no source to take).
+            // 'id_company' => 'required|uuid',
             'type' => 'required|in:WFA,WFO,Hybrid',
             'check_clock_setting_time' => 'required|array',
             'check_clock_setting_time.*.day' => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
