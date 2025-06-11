@@ -30,6 +30,7 @@ Route::group([
             Route::post('/complete-new', [CheckClockSettingController::class, 'completeNew'])->name('complete-new');
 
             Route::put('/update/{id_ck_setting}', [CheckClockSettingController::class, 'update'])->name('update');
+            Route::put('/complete-update/{id_ck_setting}', [CheckClockSettingController::class, 'completeUpdate'])->name('complete-update');
             Route::put('/{id_ck_setting}/update/{id_ck_setting_time}', [CheckClockSettingTimeController::class, 'update'])->name('update');
 
             Route::delete('/delete/{id_ck_setting}', [CheckClockSettingController::class, 'delete'])->name('delete');

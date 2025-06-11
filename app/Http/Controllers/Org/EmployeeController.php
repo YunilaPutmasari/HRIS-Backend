@@ -75,7 +75,8 @@ class EmployeeController extends Controller
         return response()->json(['message' => 'Employee deleted successfully']);
     }
 
-    public function getEmployee(){
+    public function getEmployee()
+    {
         $user = Auth::user();
 
         if (!$user->workplace) {
@@ -89,8 +90,8 @@ class EmployeeController extends Controller
         })->with(['user', 'position'])->get();
 
         $total = $employees->count();
-        $active = $employees->where('employment_status','active')->count();
-        $inactive = $employees->where('employment_status','inactive')->count();
+        $active = $employees->where('employment_status', 'active')->count();
+        $inactive = $employees->where('employment_status', 'inactive')->count();
         $newEmployees = $employees->filter(function ($employee) {
             return $employee->created_at >= Carbon::now()->subDays(30);
         })->count();
@@ -120,9 +121,9 @@ class EmployeeController extends Controller
         $employees = Employee::whereHas('user', function ($query) use ($user) {
             $query->where('id_workplace', $user->workplace->id);
         })
-        ->whereMonth('created_at', $month)
-        ->whereYear('created_at', $year)
-        ->get();
+            ->whereMonth('created_at', $month)
+            ->whereYear('created_at', $year)
+            ->get();
 
         $stats = [
             [
@@ -164,23 +165,23 @@ class EmployeeController extends Controller
         $employees = Employee::whereHas('user', function ($query) use ($user) {
             $query->where('id_workplace', $user->workplace->id);
         })
-        ->whereMonth('created_at', $month)
-        ->whereYear('created_at', $year)
-        ->get();
+            ->whereMonth('created_at', $month)
+            ->whereYear('created_at', $year)
+            ->get();
 
         $statusStat = [
             [
-                'label' => 'Aktif', 
+                'label' => 'Aktif',
                 'total' => $employees->where('employment_status', 'active')->count(),
             ],
             [
-                'label' => 'Baru', 
+                'label' => 'Baru',
                 'total' => $employees->filter(function ($employee) {
                     return $employee->created_at >= Carbon::now()->subDays(30);
                 })->count(),
             ],
             [
-                'label' => 'Tidak Aktif', 
+                'label' => 'Tidak Aktif',
                 'total' => $employees->where('employment_status', 'inactive')->count(),
             ],
         ];
