@@ -21,17 +21,17 @@ class AuthController extends Controller
     public function signup(SignUpRequest $request)
     {
         $data = $request->validated();
-    
+
         DB::beginTransaction();
-    
+
         try {
             // 1. Cek user berdasarkan email
             $user = User::where('email', $data['email'])->first();
-    
+
             if ($user) {
                 // 2. Cek apakah employee sudah dibuat
                 $existingEmployee = Employee::where('id_user', $user->id)->first();
-    
+
                 if ($existingEmployee) {
                     DB::rollBack();
                     return BaseResponse::error(
@@ -39,7 +39,7 @@ class AuthController extends Controller
                         code: 409
                     );
                 }
-    
+
                 // 3. User sudah ada tapi belum lengkap (dari Google)
                 $user->update([
                     'phone_number' => $data['phone_number'], // update dari google_id ke nomor asli
@@ -48,7 +48,7 @@ class AuthController extends Controller
             } else {
                 // 4. Jika belum ada, cek duplikasi phone_number
                 $dupePhone = User::where('phone_number', $data['phone_number'])->first();
-    
+
                 if ($dupePhone) {
                     DB::rollBack();
                     return BaseResponse::error(
@@ -56,7 +56,7 @@ class AuthController extends Controller
                         code: 409
                     );
                 }
-    
+
                 // 5. Buat user baru
                 $user = User::create([
                     'id' => Str::uuid(),
@@ -66,7 +66,7 @@ class AuthController extends Controller
                     'is_admin' => true,
                 ]);
             }
-    
+
             // 6. Buat company jika belum ada tempat kerja
             if (!$user->id_workplace) {
                 $company = Company::create([
@@ -74,17 +74,17 @@ class AuthController extends Controller
                     'address' => $data['company_address'],
                     'id_manager' => $user->id,
                 ]);
-    
+
                 $user->update([
                     'id_workplace' => $company->id,
                 ]);
             } else {
                 $company = Company::find($user->id_workplace);
             }
-    
+
             // 7. Buat employee
             $signInCode = $this->generateUniqueSignInCode();
-    
+
             Employee::create([
                 'id_user' => $user->id,
                 'first_name' => $data['first_name'],
@@ -92,9 +92,9 @@ class AuthController extends Controller
                 'address' => $data['address'] ?? 'Not Provided',
                 'sign_in_code' => $signInCode,
             ]);
-    
+
             DB::commit();
-    
+
             return BaseResponse::success(
                 message: 'Signup completed successfully',
                 code: 201
@@ -109,14 +109,14 @@ class AuthController extends Controller
     }
 
     private function generateUniqueSignInCode()
-{
-    do {
-        $code = 'MN' . str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-        $exists = Employee::where('sign_in_code', $code)->exists();
-    } while ($exists);
+    {
+        do {
+            $code = 'MN' . str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+            $exists = Employee::where('sign_in_code', $code)->exists();
+        } while ($exists);
 
-    return $code;
-}
+        return $code;
+    }
 
 
     public function signin(SignInRequest $request)
@@ -133,13 +133,13 @@ class AuthController extends Controller
             $user = User::where('phone_number', $data['phone_number'])->first();
         } else if (!empty($data['sign_in_code']) && !empty($data['company_name'])) {
             $user = User::whereHas('employee', function ($query) use ($data) {
-                    $query->where('sign_in_code', $data['sign_in_code']);
-                })->whereHas('workplace', function ($query) use ($data) {
-                    $query->where('name', $data['company_name']);
-                })
-                ->with(['employee','workplace'])
+                $query->where('sign_in_code', $data['sign_in_code']);
+            })->whereHas('workplace', function ($query) use ($data) {
+                $query->where('name', $data['company_name']);
+            })
+                ->with(['employee', 'workplace'])
                 ->first();
-       
+
         }
 
         if (!$user || !password_verify($data['password'], $user->password)) {
@@ -148,7 +148,7 @@ class AuthController extends Controller
             ], 401);
         }
 
-        if (!$user->workplace) {
+        if (!$user->workplace()) {
             return response()->json([
                 'message' => 'User is not associated with a company'
             ], 403);
@@ -169,15 +169,15 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         $user = auth()->user()->load('employee', 'workplace.subscription');
-        
+
         if (!$user) {
             return BaseResponse::error(
                 message: 'User not found',
                 code: 404
             );
         }
-        
-        $user -> load(['workplace', 'employee']);
+
+        $user->load(['workplace', 'employee']);
 
         return BaseResponse::success(
             data: $user,
@@ -192,67 +192,67 @@ class AuthController extends Controller
     }
 
     public function redirectToGoogleCallback()
-{
-    try {
-        $googleUser = Socialite::driver('google')->stateless()->user();
+    {
+        try {
+            $googleUser = Socialite::driver('google')->stateless()->user();
 
-        DB::beginTransaction();
+            DB::beginTransaction();
 
-        $user = User::where('email', $googleUser->getEmail())->first();
-        $isNewUser = false;
+            $user = User::where('email', $googleUser->getEmail())->first();
+            $isNewUser = false;
 
-        if (!$user) {
-            // 1. USER BELUM ADA → REGISTER BARU
-            $user = User::create([
-                'id' => Str::uuid(),
-                'email' => $googleUser->getEmail(),
-                'password' => Hash::make(Str::random(16)), // default password acak
-                'phone_number' => $googleUser->getId(), // sementara pakai Google ID
-                'is_admin' => true,
-                'id_workplace' => null,
-            ]);
+            if (!$user) {
+                // 1. USER BELUM ADA → REGISTER BARU
+                $user = User::create([
+                    'id' => Str::uuid(),
+                    'email' => $googleUser->getEmail(),
+                    'password' => Hash::make(Str::random(16)), // default password acak
+                    'phone_number' => $googleUser->getId(), // sementara pakai Google ID
+                    'is_admin' => true,
+                    'id_workplace' => null,
+                ]);
 
-            $isNewUser = true; // harus isi data tambahan via frontend
+                $isNewUser = true; // harus isi data tambahan via frontend
 
-        } else {
-            // 2. USER SUDAH ADA
-            $employee = Employee::where('id_user', $user->id)->first();
+            } else {
+                // 2. USER SUDAH ADA
+                $employee = Employee::where('id_user', $user->id)->first();
 
-            if (!$employee) {
-                // Kalau belum ada employee → anggap ini user Google yang perlu isi data
-                $isNewUser = true;
+                if (!$employee) {
+                    // Kalau belum ada employee → anggap ini user Google yang perlu isi data
+                    $isNewUser = true;
+                }
             }
+
+            DB::commit();
+
+            // 3. Login user
+            Auth::login($user);
+
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            // 4. Redirect ke FE
+            return BaseResponse::redirect(config('app.frontend_url') . '/auth/google/callback?' . http_build_query([
+                'token' => $token,
+                'is_new_user' => $isNewUser ? 'true' : 'false',
+                'name' => $googleUser->getName(),
+                'email' => $googleUser->getEmail(),
+            ]));
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return BaseResponse::error(
+                data: $e->getMessage(),
+                message: 'Failed to authenticate with Google',
+                code: 500
+            );
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            return BaseResponse::error(
+                message: 'An unexpected error occurred',
+                code: 500
+            );
         }
-
-        DB::commit();
-
-        // 3. Login user
-        Auth::login($user);
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        // 4. Redirect ke FE
-        return BaseResponse::redirect(config('app.frontend_url') . '/auth/google/callback?' . http_build_query([
-            'token' => $token,
-            'is_new_user' => $isNewUser ? 'true' : 'false',
-            'name' => $googleUser->getName(),
-            'email' => $googleUser->getEmail(),
-        ]));
-    } catch (\Exception $e) {
-        DB::rollBack();
-
-        return BaseResponse::error(
-            data: $e->getMessage(),
-            message: 'Failed to authenticate with Google',
-            code: 500
-        );
-    } catch (\Throwable $th) {
-        DB::rollBack();
-
-        return BaseResponse::error(
-            message: 'An unexpected error occurred',
-            code: 500
-        );
     }
-}
 }
