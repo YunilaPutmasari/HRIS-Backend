@@ -27,13 +27,22 @@ class ApprovalController extends Controller
             ->pluck('id')
             ->toArray();
 
+
         // Retrieve approvals for those users
         try {
-            $approval = Approval::whereIn('id_user', $userIds)
-                ->with([
-                    'employee',
-                    'employee.position'
-                ])->get();
+            if ($user->isAdmin()){
+                $approval = Approval::whereIn('id_user', $userIds)
+                    ->with([
+                        'employee',
+                        'employee.position'
+                    ])->get();
+            } else {
+                $approval = Approval::where('id_user', $user->id)
+                    ->with([
+                        'employee',
+                        'employee.position'
+                    ])->get();
+            }
         } catch (\Throwable $e) {
             return response()->json([
                 'error' => $e->getMessage(),
@@ -213,5 +222,20 @@ class ApprovalController extends Controller
     public function destroy(Approval $approval)
     {
         //
+    }
+
+    public function isAdmin(Request $request) {
+        $user = $request->user();
+
+        if (!$user) {
+            return BaseResponse::error(
+                message: 'User not authenticated',
+                code: 401
+            );
+        }
+        return BaseResponse::success(
+            data: ['isAdmin' => $user->isAdmin()],
+            message: 'Admin status retrieved successfully',
+        );
     }
 }
