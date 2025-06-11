@@ -39,8 +39,6 @@ require __DIR__ . '/position.route.php';
 require __DIR__ . '/user.route.php';
 
 Route::get('/employee', function () {
-    // $employees = Employee::with('position', 'user')->get();  // eager load relasi position dan user
-    // return EmployeeResource::collection($employees);
     return \App\Models\Org\Employee::with('user', 'position')->get();
 });
 
@@ -50,3 +48,4 @@ require __DIR__ . '/auth.route.php';
 require __DIR__ . '/admin.route.php';
 
 require __DIR__ . '/approval.route.php';
+require __DIR__ . '/employee.route.php';

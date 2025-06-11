@@ -51,6 +51,8 @@ Route::group([
         Route::get('/{id}', [InvoiceController::class, 'show'])->name('show');
         Route::put('/{id}', [InvoiceController::class, 'update'])->name('update');
         Route::delete('/{id}', [InvoiceController::class, 'destroy'])->name('destroy');
+        Route::post('xendit/callback', [InvoiceController::class, 'handleXenditCallback']);
+        Route::get('redirect', [InvoiceController::class, 'paymentRedirect']);
     });
 
     Route::group([
@@ -90,4 +92,5 @@ Route::group([
     Route::post('/', [SubscriptionController::class, 'store'])->name('store');
     Route::put('/{id}', [SubscriptionController::class, 'update'])->name('update');
     Route::post('/{id}/cancel', [SubscriptionController::class, 'cancel'])->name('cancel');
+    Route::post('/{id}/upgrade', [SubscriptionController::class, 'upgrade'])->name('upgrade');
 });
