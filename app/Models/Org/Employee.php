@@ -7,16 +7,19 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Org\Document;
+use App\Models\Org\Position;
+use App\Models\Org\Department;
 use Str;
 
 class Employee extends Model
 {
+    public $incrementing = false;
+    protected $keyType = 'string';
     protected $table = 'tb_employee';
 
-    protected $keyType = 'string';
-
     protected $primaryKey = 'id';
-    public $incrementing = false;
+
 
     use HasFactory, Notifiable, SoftDeletes;
     /**
@@ -27,16 +30,32 @@ class Employee extends Model
 
 
     protected $fillable = [
+        'avatar',
+        'sign_in_code',
         'id_user',
+        // 'id_jadwal',
+        'id_position',
         'first_name',
         'last_name',
+        'nik',
         'address',
-        'id_position',  // tambah ini
-        'sign_in_code',
-        'id_position',
+        'tempat_lahir',
+        'tanggal_lahir',
+        'jenis_kelamin',
+        'pendidikan',
+        'no_telp',
+        'start_date',
+        'end_date',
+        'tipe_kontrak',
+        'cabang',
         'employment_status',
-        'tipeKontrak',
+        'tanggal_efektif',
+        'bank',
+        'no_rek',
+        'dokumen',
+
     ];
+
 
 
     /**
@@ -54,15 +73,23 @@ class Employee extends Model
     {
         return $this->belongsTo(Company::class, 'id_company');
     }
-
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'id_user');
-    }
     public function position()
     {
         return $this->belongsTo(Position::class, 'id_position', 'id');
     }
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'id_department', 'id');
+    }
+    public function documents()
+    {
+        return $this->hasMany(Document::class, 'id_user', 'id_user');
+    }
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'id_user', 'id');
+    }
+
 
     /**
      * Override fungsi boot untuk otomatis generate UUID saat user dibuat.

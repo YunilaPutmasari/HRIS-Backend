@@ -11,6 +11,7 @@ use App\Http\Responses\BaseResponse;
 use App\Enums\InvoiceStatus;
 use Xendit\Xendit;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 // use Xendit\Invoice as XenditInvoice;
 
 class InvoiceController extends Controller
@@ -32,6 +33,41 @@ class InvoiceController extends Controller
             'status' => InvoiceStatus::UNPAID,
         ]));
 
+        // Debug logging for Xendit configuration
+        \Log::info('Xendit Configuration Check', [
+            'env_key_exists' => !empty(env('XENDIT_SECRET_KEY')),
+            'config_key_exists' => !empty(config('services.xendit.secret')),
+            'env_key_length' => strlen(env('XENDIT_SECRET_KEY') ?? ''),
+            'config_key_length' => strlen(config('services.xendit.secret') ?? '')
+        ]);
+
+        // Get Xendit API key from config instead of env directly
+        $xenditApiKey = config('services.xendit.secret');
+        if (!$xenditApiKey) {
+            \Log::error('Xendit API key not configured', [
+                'env_value' => env('XENDIT_SECRET_KEY'),
+                'config_value' => config('services.xendit.secret')
+            ]);
+            return BaseResponse::error(
+                message: 'Payment gateway configuration error',
+                code: 500
+            );
+        }
+
+        // Set API key with debug logging
+        try {
+            Xendit::setApiKey($xenditApiKey);
+            \Log::info('Xendit API key set successfully');
+        } catch (\Exception $e) {
+            \Log::error('Failed to set Xendit API key', [
+                'error' => $e->getMessage()
+            ]);
+            return BaseResponse::error(
+                message: 'Failed to initialize payment gateway',
+                code: 500
+            );
+        }
+
         try {
             $xenditInvoice = \Xendit\Invoice::create([
                 'external_id' => $invoice->id,
@@ -41,27 +77,44 @@ class InvoiceController extends Controller
                 'status' => 'unpaid'
             ]);
 
-            // Debug log (sementara untuk memastikan)
-            \Log::info('Xendit response', $xenditInvoice);
+            // Enhanced logging
+            \Log::info('Xendit invoice creation response', [
+                'invoice_id' => $invoice->id,
+                'xendit_response' => $xenditInvoice,
+                'has_invoice_url' => isset($xenditInvoice['invoice_url']),
+                'has_xendit_id' => isset($xenditInvoice['id'])
+            ]);
+
+            if (!isset($xenditInvoice['id']) || !isset($xenditInvoice['invoice_url'])) {
+                throw new \Exception('Xendit response missing required fields');
+            }
 
             $invoice->update([
-                'status' => 'unpaid',
-                'xendit_invoice_id' => $xenditInvoice['id'] ?? null,
-                'invoice_url' => $xenditInvoice['invoice_url'] ?? null,
+                'xendit_invoice_id' => $xenditInvoice['id'],
+                'invoice_url' => $xenditInvoice['invoice_url'],
             ]);
+
+            return BaseResponse::success(
+                data: $invoice,
+                message: 'Invoice berhasil dibuat dengan Xendit',
+                code: 201
+            );
+
         } catch (\Exception $e) {
-            \Log::error('Gagal membuat invoice Xendit', ['error' => $e->getMessage()]);
+            \Log::error('Gagal membuat invoice Xendit', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'invoice_id' => $invoice->id
+            ]);
+            
+            // Delete the created invoice since Xendit creation failed
+            $invoice->delete();
+            
             return BaseResponse::error(
                 message: 'Gagal membuat invoice di Xendit: ' . $e->getMessage(),
                 code: 500
             );
         }
-
-        return BaseResponse::success(
-            data: $invoice,
-            message: 'Invoice berhasil dibuat dengan Xendit',
-            code: 201
-        );
     }
 
 //Show invoice

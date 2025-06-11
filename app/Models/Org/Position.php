@@ -5,7 +5,7 @@ namespace App\Models\Org;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Org\Employee;
-use App\Models\Oeg\Department;
+use App\Models\Org\Department;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -16,6 +16,7 @@ class Position extends Model
     protected $table = 'tb_position';
     protected $primaryKey = 'id';
     public $incrementing = false;
+    protected $keyType = 'string';
 
     use HasFactory, Notifiable, SoftDeletes, HasUuids;
     /**
@@ -26,6 +27,7 @@ class Position extends Model
     protected $fillable = [
         'name',
         'level',
+        'gaji',
     ];
 
     /**

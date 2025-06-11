@@ -40,4 +40,9 @@ class Department extends Model
     {
         return $this->hasMany(Position::class, 'id_department');
     }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class,'id_company');
+    }
 }

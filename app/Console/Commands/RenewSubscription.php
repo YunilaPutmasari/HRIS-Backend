@@ -34,7 +34,7 @@ class RenewSubscription extends Command
 
         foreach ($subscriptions as $oldSubscription) {
             // Skip if subscription was cancelled
-            if ($oldSubscription->ends_at && $oldSubscription->ends_at->isPast()) {
+            if ($oldSubscription->is_cancelled) {
                 $this->info("Subscription {$oldSubscription->id} was cancelled, skipping renewal.");
                 continue;
             }

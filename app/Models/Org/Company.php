@@ -46,19 +46,30 @@ class Company extends Model
         return $this->belongsTo(User::class, 'id_manager');
     }
 
-    public function employees()
-    {
-        return $this->hasMany(User::class, 'id_company');
-    }
+    // public function employees()
+    // {
+    //     return $this->hasMany(User::class, 'id_company');
+    // }
 
     public function departments()
     {
         return $this->hasMany(Department::class, 'id_company');
     }
+    public function users()
+    {
+        return $this->hasMany(User::class, 'id_workplace');
+    }
+
+    public function employees()
+    {
+        // Melalui user ke employee
+        return $this->hasManyThrough(Employee::class, User::class, 'id_workplace', 'id_user', 'id', 'id');
+    }
+
 
     public function subscription()
     {
         return $this->hasOne(Subscription::class, 'id_company');
     }
-    
+
 }

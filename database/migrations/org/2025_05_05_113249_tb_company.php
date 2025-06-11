@@ -23,6 +23,7 @@ return new class extends Migration {
             $table->uuid("id_subscription")->nullable();
             $table->date("effective_date")->nullable();
             $table->text("address")->nullable();
+            $table->boolean('has_used_trial')->default(false);
             $table->timestamps();
             $table->softDeletes();
         });
