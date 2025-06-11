@@ -70,17 +70,35 @@ class CheckClockController extends Controller
         );
     }
 
-    public function clockIn(Request $request, string $id_ck_setting, string $id_ck_setting_time)
+    public function clockIn(Request $request)
     {
         $user = $request->user();
-        $checkClockSettingTime = CheckClockSettingTime::where('id', $id_ck_setting_time)
-            ->where('id_ck_setting', $id_ck_setting)
+        $checkClockSetting = CheckClockSetting::where('id', $user->id_check_clock_setting)
+            ->with('checkClockSettingTime')
             ->first();
 
-
-        if (!$checkClockSettingTime) {
+        if (!$checkClockSetting) {
             return BaseResponse::error(
-                message: 'Check clock setting time not found',
+                message: "Resource not found",
+                code: 404
+            );
+        }
+
+        date_default_timezone_set('Asia/Jakarta');
+        $today = date('l');
+
+        $id_ck_setting_time = null;
+
+        foreach ($checkClockSetting->checkClockSettingTime as $settingTime) {
+            if ($settingTime->day === $today) {
+                $id_ck_setting_time = $settingTime->id;
+                break;
+            }
+        }
+
+        if (!$id_ck_setting_time) {
+            return BaseResponse::error(
+                message: "No setting time found for today",
                 code: 404
             );
         }
@@ -88,7 +106,7 @@ class CheckClockController extends Controller
         $checkClock = CheckClock::updateOrCreate(
             [
                 'id_user' => $user->id,
-                'id_ck_setting' => $id_ck_setting,
+                'id_ck_setting' => $user->id_check_clock_setting,
                 'id_ck_setting_time' => $id_ck_setting_time,
             ],
             [
@@ -103,17 +121,35 @@ class CheckClockController extends Controller
         );
     }
 
-    public function clockOut(Request $request, string $id_ck_setting, string $id_ck_setting_time)
+    public function clockOut(Request $request)
     {
         $user = $request->user();
-        $checkClockSettingTime = CheckClockSettingTime::where('id', $id_ck_setting_time)
-            ->where('id_ck_setting', $id_ck_setting)
+        $checkClockSetting = CheckClockSetting::where('id', $user->id_check_clock_setting)
+            ->with('checkClockSettingTime')
             ->first();
 
-
-        if (!$checkClockSettingTime) {
+        if (!$checkClockSetting) {
             return BaseResponse::error(
-                message: 'Check clock setting time not found',
+                message: "Resource not found",
+                code: 404
+            );
+        }
+
+        date_default_timezone_set('Asia/Jakarta');
+        $today = date('l');
+
+        $id_ck_setting_time = null;
+
+        foreach ($checkClockSetting->checkClockSettingTime as $settingTime) {
+            if ($settingTime->day === $today) {
+                $id_ck_setting_time = $settingTime->id;
+                break;
+            }
+        }
+
+        if (!$id_ck_setting_time) {
+            return BaseResponse::error(
+                message: "No setting time found for today",
                 code: 404
             );
         }
@@ -121,7 +157,7 @@ class CheckClockController extends Controller
         $checkClock = CheckClock::updateOrCreate(
             [
                 'id_user' => $user->id,
-                'id_ck_setting' => $id_ck_setting,
+                'id_ck_setting' => $user->id_check_clock_setting,
                 'id_ck_setting_time' => $id_ck_setting_time,
             ],
             [
@@ -137,17 +173,35 @@ class CheckClockController extends Controller
     }
 
 
-    public function breakStart(Request $request, string $id_ck_setting, string $id_ck_setting_time)
+    public function breakStart(Request $request)
     {
         $user = $request->user();
-        $checkClockSettingTime = CheckClockSettingTime::where('id', $id_ck_setting_time)
-            ->where('id_ck_setting', $id_ck_setting)
+        $checkClockSetting = CheckClockSetting::where('id', $user->id_check_clock_setting)
+            ->with('checkClockSettingTime')
             ->first();
 
-
-        if (!$checkClockSettingTime) {
+        if (!$checkClockSetting) {
             return BaseResponse::error(
-                message: 'Check clock setting time not found',
+                message: "Resource not found",
+                code: 404
+            );
+        }
+
+        date_default_timezone_set('Asia/Jakarta');
+        $today = date('l');
+
+        $id_ck_setting_time = null;
+
+        foreach ($checkClockSetting->checkClockSettingTime as $settingTime) {
+            if ($settingTime->day === $today) {
+                $id_ck_setting_time = $settingTime->id;
+                break;
+            }
+        }
+
+        if (!$id_ck_setting_time) {
+            return BaseResponse::error(
+                message: "No setting time found for today",
                 code: 404
             );
         }
@@ -155,7 +209,7 @@ class CheckClockController extends Controller
         $checkClock = CheckClock::updateOrCreate(
             [
                 'id_user' => $user->id,
-                'id_ck_setting' => $id_ck_setting,
+                'id_ck_setting' => $user->id_check_clock_setting,
                 'id_ck_setting_time' => $id_ck_setting_time,
             ],
             [
@@ -165,23 +219,41 @@ class CheckClockController extends Controller
 
         return BaseResponse::success(
             data: $checkClock,
-            message: 'Break end successful',
+            message: 'Break start successful',
             code: 200
         );
     }
 
 
-    public function breakEnd(Request $request, string $id_ck_setting, string $id_ck_setting_time)
+    public function breakEnd(Request $request)
     {
         $user = $request->user();
-        $checkClockSettingTime = CheckClockSettingTime::where('id', $id_ck_setting_time)
-            ->where('id_ck_setting', $id_ck_setting)
+        $checkClockSetting = CheckClockSetting::where('id', $user->id_check_clock_setting)
+            ->with('checkClockSettingTime')
             ->first();
 
-
-        if (!$checkClockSettingTime) {
+        if (!$checkClockSetting) {
             return BaseResponse::error(
-                message: 'Check clock setting time not found',
+                message: "Resource not found",
+                code: 404
+            );
+        }
+
+        date_default_timezone_set('Asia/Jakarta');
+        $today = date('l');
+
+        $id_ck_setting_time = null;
+
+        foreach ($checkClockSetting->checkClockSettingTime as $settingTime) {
+            if ($settingTime->day === $today) {
+                $id_ck_setting_time = $settingTime->id;
+                break;
+            }
+        }
+
+        if (!$id_ck_setting_time) {
+            return BaseResponse::error(
+                message: "No setting time found for today",
                 code: 404
             );
         }
@@ -189,7 +261,7 @@ class CheckClockController extends Controller
         $checkClock = CheckClock::updateOrCreate(
             [
                 'id_user' => $user->id,
-                'id_ck_setting' => $id_ck_setting,
+                'id_ck_setting' => $user->id_check_clock_setting,
                 'id_ck_setting_time' => $id_ck_setting_time,
             ],
             [

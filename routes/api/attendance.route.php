@@ -13,10 +13,10 @@ Route::group([
     ], function () {
         Route::get('/self', [CheckClockController::class, 'selfCheckClocks'])->name('self');
         Route::get('/self-ck-setting', [CheckClockController::class, 'selfCheckClockSetting'])->name('self-ck-setting');
-        Route::get('/clock-in/{id_ck_setting}/{id_ck_setting_time}', [CheckClockController::class, 'clockIn'])->name('clock-in');
-        Route::get('/clock-out/{id_ck_setting}/{id_ck_setting_time}', [CheckClockController::class, 'clockOut'])->name('clock-out');
-        Route::get('/break-start/{id_ck_setting}/{id_ck_setting_time}', [CheckClockController::class, 'breakStart'])->name('break-start');
-        Route::get('/break-end/{id_ck_setting}/{id_ck_setting_time}', [CheckClockController::class, 'breakEnd'])->name('break-end');
+        Route::get('/clock-in', [CheckClockController::class, 'clockIn'])->name('clock-in');
+        Route::get('/clock-out', [CheckClockController::class, 'clockOut'])->name('clock-out');
+        Route::get('/break-start', [CheckClockController::class, 'breakStart'])->name('break-start');
+        Route::get('/break-end', [CheckClockController::class, 'breakEnd'])->name('break-end');
     });
 });
 
