@@ -41,6 +41,8 @@ class OrganizationSeeder extends Seeder
             'last_name' => 'Cmlabs',
             'address' => 'Jakarta',
             'employment_status' => 'active',
+            'id_position' => null,
+            'jenis_kelamin' => 'Laki-laki',
         ]);
 
         $company = Company::factory()->create([

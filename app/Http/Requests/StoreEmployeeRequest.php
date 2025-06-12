@@ -35,7 +35,7 @@ class StoreEmployeeRequest extends FormRequest
             'tanggal_lahir' => 'nullable|date',
             'jenis_kelamin' => 'nullable|string|in:Laki-laki,Perempuan',
             'pendidikan' => 'nullable|string|in:SMA/SMK,D3,S1,S2,S3',
-            'no_telp' => 'nullable|string|max:20',
+            'phone_number' => 'nullable|string|max:20',
             'id_position' => 'nullable|uuid',
             'tipe_kontrak' => 'nullable|string|in:Tetap,Kontrak,Magang',
             'cabang' => 'nullable|string|max:255',

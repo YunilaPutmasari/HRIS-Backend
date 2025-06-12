@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Http\Responses\BaseResponse;
 
 
 class EmployeeController extends Controller
@@ -56,7 +57,7 @@ class EmployeeController extends Controller
     }
 
 
-    public function upload(Request $request, $id)
+    public function uploadDocument(Request $request, $id)
     {
         try {
             Log::info('Upload request diterima, id: ' . $id);
@@ -97,7 +98,12 @@ class EmployeeController extends Controller
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return BaseResponse::error('Data karyawan tidak ditemukan', 404);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return BaseResponse::error('Validasi gagal', 422, $e->errors());
+            return BaseResponse::error(
+                ['exception' => $e->getMessage()], // data
+                'Error saat upload dokumen',       // message
+                500                                // status
+            );
+
         } catch (\Exception $e) {
             Log::error('Upload dokumen gagal: ' . $e->getMessage());
             return BaseResponse::error('Error saat upload dokumen', 500, ['exception' => $e->getMessage()]);
@@ -158,7 +164,7 @@ class EmployeeController extends Controller
             $newUser = new User();
             $newUser->id = $userId;
             $newUser->email = $validated['email'];
-            $newUser->phone_number = $validated['no_telp'] ?? null;
+            $newUser->phone_number = $validated['phone_number'] ?? null;
             $newUser->password = bcrypt($validated['password']);
             $newUser->is_admin = false;
             $newUser->id_workplace = $companyId;
@@ -186,7 +192,7 @@ class EmployeeController extends Controller
                 'tanggal_lahir' => $validated['tanggal_lahir'] ?? null,
                 'jenis_kelamin' => $validated['jenis_kelamin'] ?? null,
                 'pendidikan' => $validated['pendidikan'] ?? null,
-                'phone_number' => $validated['phone_number'] ?? null,
+                'no_telp' => $validated['no_telp'] ?? null,
                 'id_position' => $validated['id_position'] ?? null,
                 'tipe_kontrak' => $validated['tipe_kontrak'] ?? null,
                 'cabang' => $validated['cabang'] ?? null,

@@ -43,7 +43,7 @@ class Employee extends Model
         'tanggal_lahir',
         'jenis_kelamin',
         'pendidikan',
-        'no_telp',
+        'phone_number',
         'start_date',
         'end_date',
         'tipe_kontrak',

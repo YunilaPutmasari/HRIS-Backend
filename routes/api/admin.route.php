@@ -76,6 +76,9 @@ Route::group([
         Route::post('/', [EmployeeController::class, 'store'])->name('store');
         Route::get('/{id}', [EmployeeController::class, 'getEmployeeById']);
         Route::put('/{id}', [EmployeeController::class, 'updateEmployee']);
+        Route::post('/{id}/upload-document', [EmployeeController::class, 'uploadDocument']);
+        Route::delete('/{id}', [EmployeeController::class, 'destroy'])->name('destroy');
+
         Route::group([
             'prefix' => 'dashboard',
             'as' => 'dashboard.',

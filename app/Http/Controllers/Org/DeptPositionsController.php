@@ -68,10 +68,10 @@ class DeptPositionsController extends Controller
 
         } catch (\Exception $e) {
             return BaseResponse::error($e->getMessage(), 'Gagal mengambil daftar posisi.', 500);
-        }        
+        }
     }
 
-        /**
+    /**
      * Get detail position by ID
      */
     public function show($id)
@@ -85,8 +85,8 @@ class DeptPositionsController extends Controller
 
             // Ambil position beserta department dan company
             $position = Position::whereHas('department', function ($query) use ($user) {
-                    $query->where('id_company', $user->workplace->id);
-                })
+                $query->where('id_company', $user->workplace->id);
+            })
                 ->with(['department.company'])
                 ->find($id);
 
@@ -148,7 +148,7 @@ class DeptPositionsController extends Controller
         }
     }
 
-     /**
+    /**
      * Create new position under a specific department by ID in the URL.
      */
     public function storeByDepartment(Request $request, $idDepartment)
