@@ -11,6 +11,7 @@ use App\Models\Attendance\CheckClock;
 use App\Models\Attendance\CheckClockSetting;
 use App\Models\Org\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ApprovalController extends Controller
 {
@@ -37,13 +38,21 @@ class ApprovalController extends Controller
                     ->with([
                         'employee',
                         'employee.position'
-                    ])->get();
+                    ])->get()
+                    ->map(function ($approval) {
+                        $approval->document_url = $approval->document ? Storage::url($approval->document) : null;
+                        return $approval;
+                    });
             } else {
                 $approval = Approval::where('id_user', $user->id)
                     ->with([
                         'employee',
                         'employee.position'
-                    ])->get();
+                    ])->get()
+                    ->map(function ($approval) {
+                        $approval->document_url = $approval->document ? Storage::url($approval->document) : null;
+                        return $approval;
+                    });
             }
         } catch (\Throwable $e) {
             return response()->json([
@@ -214,28 +223,9 @@ class ApprovalController extends Controller
         $approval->approved_by = $user->id;
         $approval->save();
 
-        $checkClockSetting = CheckClockSetting::where('id_company', $user->id_workplace)->first();
-
-        if (!$checkClockSetting) {
-            return BaseResponse::error(
-                message: 'Check clock setting not found',
-                code: 404
-            );
-        }
-
-        // Create a new CheckClock record
-        $checkClock = CheckClock::create([
-            'id_user' => $approval->id_user,
-            'id_ck_setting' => $checkClockSetting->id,
-            'clock_in' => $approval->start_date,
-            'clock_out' => $approval->end_date,
-            'status' => $approval->request_type,
-        ]);
-
         return BaseResponse::success(
             data: [
                 'approval' => $approval,
-                'check_clock' => $checkClock
             ],
             message: 'Approval approved and CheckClock created successfully',
             code: 200
