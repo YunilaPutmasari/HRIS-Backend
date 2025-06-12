@@ -12,7 +12,10 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Sanctum\PersonalAccessToken;
+use App\Models\Attendance\CheckClock;
+use App\Models\Attendance\CheckClockSetting;
 use Str;
+
 
 class User extends Authenticatable
 {
@@ -25,7 +28,8 @@ class User extends Authenticatable
     public $incrementing = false;
 
     protected $with = [
-        'employee', 'workplace'
+        'employee',
+        'workplace'
     ];
 
 
@@ -41,6 +45,7 @@ class User extends Authenticatable
         'phone_number',
         'password',
         'is_admin',
+        'id_check_clock_setting',
         'id_workplace' // TAK TAMBAHKAN INI UNTUK NANTI HRD MENAMBAHKAN EMPLOYEE
     ];
 
@@ -53,7 +58,6 @@ class User extends Authenticatable
         'password',
         'remember_token',
         'is_admin',
-        'id_workplace'
     ];
 
     /**
@@ -69,8 +73,9 @@ class User extends Authenticatable
         ];
     }
 
-    public function setIsAdminAttribute($value){
-        $this->attributes['is_admin']=$value?'1':'0';
+    public function setIsAdminAttribute($value)
+    {
+        $this->attributes['is_admin'] = $value ? '1' : '0';
     }
 
     public function isAdmin(): bool
@@ -86,7 +91,7 @@ class User extends Authenticatable
     // INI JIKA INGIN DIGANTI DARI WORKPLACE MENJADI COMPANY BIAR LEBIH MUDAH
     public function workplace()
     {
-        return $this->belongsTo(Company::class, 'id_workplace')->with('subscription');
+        return $this->belongsTo(Company::class, 'id_workplace');
     }
 
     public function employee()
@@ -102,6 +107,16 @@ class User extends Authenticatable
     public function dokumen()
     {
         return $this->hasMany(Document::class, 'user_id');
+    }
+
+    public function checkClocks()
+    {
+        return $this->hasMany(CheckClock::class, 'id_user');
+    }
+
+    public function checkClockSetting()
+    {
+        return $this->belongsTo(CheckClockSetting::class, 'id_check_clock_setting');
     }
 
     public function isManagerOf(Company $company): bool

@@ -4,7 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\Org\Department;
 use App\Models\Org\Position;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Attendance\CheckClockSetting;
+use App\Models\Attendance\CheckClockSettingTime;
 use Illuminate\Database\Seeder;
 
 use App\Models\Org\Company;
@@ -34,6 +35,11 @@ class OrganizationSeeder extends Seeder
             'is_admin' => true,
         ]);
 
+        $company = Company::factory()->create([
+            'name' => 'PT cmlabs Indonesia Digital',
+            'id_manager' => $supreme_manager_user->id,
+        ]);
+
         Employee::factory()->create([
             'id_user' => $supreme_manager_user->id,
             'sign_in_code' => '999999',
@@ -43,9 +49,27 @@ class OrganizationSeeder extends Seeder
             'employment_status' => 'active',
         ]);
 
-        $company = Company::factory()->create([
-            'name' => 'PT cmlabs Indonesia Digital',
-            'id_manager' => $supreme_manager_user->id,
+        $check_clock_setting = CheckClockSetting::factory()->create([
+            'name' => 'Default Check Clock Setting',
+            'id_company' => $company->id,
+            'type' => 'WFO',
+        ]);
+
+        $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        foreach ($days as $day) {
+            CheckClockSettingTime::factory()->create([
+                'id_ck_setting' => $check_clock_setting->id,
+                'day' => $day,
+                'clock_in' => '09:00',
+                'clock_out' => '17:00',
+                'break_start' => '12:00',
+                'break_end' => '13:00',
+            ]);
+        }
+
+        $supreme_manager_user->update([
+            'id_workplace' => $company->id,
+            'id_check_clock_setting' => $check_clock_setting->id,
         ]);
 
         $departments = [

@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Subscription\Subscription;
+use App\Models\Attendance\CheckClock;
+use App\Models\Attendance\CheckClockSetting;
 
 class Company extends Model
 {
@@ -72,4 +74,8 @@ class Company extends Model
         return $this->hasOne(Subscription::class, 'id_company');
     }
 
+    public function checkClocks()
+    {
+        return $this->hasManyThrough(CheckClock::class, User::class, 'id_workplace', 'id_user', 'id', 'id');
+    }
 }

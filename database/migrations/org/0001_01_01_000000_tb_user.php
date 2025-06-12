@@ -20,6 +20,7 @@ return new class extends Migration {
             $table->string('phone_number');
             $table->string('is_admin')->default('0');
             $table->uuid('id_workplace')->nullable();
+            $table->uuid('id_check_clock_setting')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

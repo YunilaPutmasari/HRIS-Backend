@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Attendance\CheckClockSettingController;
 use App\Http\Controllers\Attendance\CheckClockSettingTimeController;
+use App\Http\Controllers\Attendance\CheckClockController;
 use App\Http\Controllers\Payment\InvoiceController;
 use App\Http\Controllers\Payment\PaymentController;
 use App\Http\Controllers\Org\EmployeeController;
@@ -26,16 +27,27 @@ Route::group([
             'as' => 'check-clock-setting.',
         ], function () {
             Route::get('/', [CheckClockSettingController::class, 'index'])->name('index');
+            Route::get('/{id_ck_setting}', [CheckClockSettingController::class, 'show'])->name('show');
 
             Route::post('/new', [CheckClockSettingController::class, 'new'])->name('new');
-            Route::post('/{id_ck_setting}/new', [CheckClockSettingTimeController::class, 'new'])->name('new');
+            Route::post('/complete-new', [CheckClockSettingController::class, 'completeNew'])->name('complete-new');
 
             Route::put('/update/{id_ck_setting}', [CheckClockSettingController::class, 'update'])->name('update');
+            Route::put('/complete-update/{id_ck_setting}', [CheckClockSettingController::class, 'completeUpdate'])->name('complete-update');
             Route::put('/{id_ck_setting}/update/{id_ck_setting_time}', [CheckClockSettingTimeController::class, 'update'])->name('update');
 
             Route::delete('/delete/{id_ck_setting}', [CheckClockSettingController::class, 'delete'])->name('delete');
             Route::delete('/{id_ck_setting}/delete/{id_ck_setting_time}', [CheckClockSettingTimeController::class, 'delete'])->name('delete');
         });
+
+        Route::group([
+            'prefix' => 'check-clock',
+            'as' => 'check-clock.',
+        ], function () {
+            Route::get('/employee-check-clocks', [CheckClockController::class, 'employeeCheckClocks'])->name('employee-check-clocks');
+        });
+
+
         Route::group([
             'prefix' => 'check-clock-setting-time',
             'as' => 'check-clock-setting-time.',
@@ -69,44 +81,44 @@ Route::group([
     });
 
     Route::group([
-        'prefix'=>'employees',
+        'prefix' => 'employees',
         'as' => 'employees.',
-    ], function(){
-        Route::get('/comp-employees',[EmployeeController::class, 'getEmployeeBasedCompany'])->name('getEmployeeBasedCompany');
-        Route::post('/',[EmployeeController::class, 'store'])->name('store');
-        Route::get('/{id}',[EmployeeController::class, 'getEmployeeById']);
-        Route::put('/{id}',[EmployeeController::class, 'updateEmployee']);
+    ], function () {
+        Route::get('/comp-employees', [EmployeeController::class, 'getEmployeeBasedCompany'])->name('getEmployeeBasedCompany');
+        Route::post('/', [EmployeeController::class, 'store'])->name('store');
+        Route::get('/{id}', [EmployeeController::class, 'getEmployeeById']);
+        Route::put('/{id}', [EmployeeController::class, 'updateEmployee']);
         Route::group([
-            'prefix'=>'dashboard',
-            'as'=>'dashboard.',
+            'prefix' => 'dashboard',
+            'as' => 'dashboard.',
         ], function () {
-            Route::get('/getEmployee',[EmployeeController::class, 'getEmployee'])->name('getEmployee');
-            Route::get('/contract-stats',[EmployeeController::class, 'getEmployeeContractStats'])->name('getEmployeeContractStats'); //asumsiku tipeKontrak: Tetap,Kontrak,Lepas
-            Route::get('/status-stats',[EmployeeController::class, 'getEmployeeStatusStats'])->name('getEmployeeStatusStats'); //asumsiku tipeKontrak: Tetap,Kontrak,Lepas
-            Route::get('/recent-approvals',[ApprovalController::class, 'getRecentApprovals'])->name('getRecentApprovals');
+            Route::get('/getEmployee', [EmployeeController::class, 'getEmployee'])->name('getEmployee');
+            Route::get('/contract-stats', [EmployeeController::class, 'getEmployeeContractStats'])->name('getEmployeeContractStats'); //asumsiku tipeKontrak: Tetap,Kontrak,Lepas
+            Route::get('/status-stats', [EmployeeController::class, 'getEmployeeStatusStats'])->name('getEmployeeStatusStats'); //asumsiku tipeKontrak: Tetap,Kontrak,Lepas
+            Route::get('/recent-approvals', [ApprovalController::class, 'getRecentApprovals'])->name('getRecentApprovals');
         });
     });
 
     Route::group([
-        'prefix'=>'positions',
+        'prefix' => 'positions',
         'as' => 'positions.',
-    ], function(){
-        Route::get('/',[DeptPositionsController::class, 'index'])->name('index');
-        Route::post('/',[DeptPositionsController::class, 'store']);
-        Route::get('/get/{id_position}',[DeptPositionsController::class, 'show']);
+    ], function () {
+        Route::get('/', [DeptPositionsController::class, 'index'])->name('index');
+        Route::post('/', [DeptPositionsController::class, 'store']);
+        Route::get('/get/{id_position}', [DeptPositionsController::class, 'show']);
         Route::get('/{id_department}', [DeptPositionsController::class, 'getByDepartment'])->name('storeByDepartment');
         Route::post('/{id_department}', [DeptPositionsController::class, 'storeByDepartment'])->name('storeByDepartment');
-        
+
     });
-    
+
     Route::group([
-        'prefix'=>'departments',
+        'prefix' => 'departments',
         'as' => 'departments.',
-    ], function(){
-        Route::get('/',[DepartmentsController::class, 'index'])->name('index');
-        Route::get('/{id_department}',[DepartmentsController::class, 'getDepartment']);
-        Route::post('/',[DepartmentsController::class, 'store']);
-        
+    ], function () {
+        Route::get('/', [DepartmentsController::class, 'index'])->name('index');
+        Route::get('/{id_department}', [DepartmentsController::class, 'getDepartment']);
+        Route::post('/', [DepartmentsController::class, 'store']);
+
     });
 });
 
@@ -114,7 +126,7 @@ Route::group([
     'prefix' => 'admin/subscription',
     'as' => 'admin.subscription',
     'middleware' => ['auth:sanctum', 'admin'],
-], function() {
+], function () {
     Route::get('/', [SubscriptionController::class, 'index'])->name('index');
     Route::post('/', [SubscriptionController::class, 'store'])->name('store');
     Route::put('/{id}', [SubscriptionController::class, 'update'])->name('update');
