@@ -127,28 +127,10 @@ class ApprovalController extends Controller
             $data['status'] = 'approved';
             $data['approved_by'] = $user->id;
 
-            $checkClockSetting = CheckClockSetting::where('id_company', $user->id_workplace)->first();
-
-            if (!$checkClockSetting) {
-                return BaseResponse::error(
-                    message: 'Check clock setting not found',
-                    code: 404
-                );
-            }
-
-            // Create a new CheckClock record
-            $checkClock = CheckClock::create([
-                'id_user' => $request->id_user,
-                'id_ck_setting' => $checkClockSetting->id,
-                'clock_in' => $request->start_date,
-                'clock_out' => $request->end_date,
-                'status' => $request->request_type,
-            ]);
 
             return BaseResponse::success(
                 data: [
                     'approval' => Approval::create($data),
-                    'check_clock' => $checkClock
                 ],
                 message: 'Approval created and CheckClock created successfully',
                 code: 201
