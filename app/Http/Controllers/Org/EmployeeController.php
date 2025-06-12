@@ -184,6 +184,7 @@ class EmployeeController extends Controller
             $employeeData = [
                 'id' => $employeeId,
                 'id_user' => $userId,
+                'sign_in_code' => \Illuminate\Support\Str::random(6),
                 'first_name' => $validated['first_name'],
                 'last_name' => $validated['last_name'],
                 'nik' => $validated['nik'] ?? null,
