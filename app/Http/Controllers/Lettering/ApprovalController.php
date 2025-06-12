@@ -106,6 +106,13 @@ class ApprovalController extends Controller
         $companyIds = $companies->pluck('id')->toArray();
 
         $data = $request->validated();
+
+        if ($request->hasFile('document')) {
+            $file = $request->file('document');
+            $filePatth = $file->store('documents', 'public');
+            $data['document'] = $filePatth;
+        }
+
         if ($user->isAdmin()) {
             $data['id_user'] = $request->input('id_user');
             $data['status'] = 'approved';

@@ -22,6 +22,7 @@ class Approval extends Model
         'reason',
         'status',
         'approved_by',
+        'document',
     ];
 
     public function user(){
