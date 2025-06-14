@@ -13,7 +13,7 @@ class PositionSeeder2 extends Seeder
      */
     public function run(): void
     {
-        $fixedDepartmentId = '4a1a75b3-5c25-4f7c-98cf-13a4748fff34';
+        $fixedDepartmentId = 'dd9c6b13-2227-4a3f-b6a2-2691fb05a70b';
 
         $positions = [
             ['id' => (string) Str::uuid(), 'name' => 'Software Engineer', 'level' => 2, 'id_department' => $fixedDepartmentId],

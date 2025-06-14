@@ -120,25 +120,25 @@ class EmployeeController extends Controller
                 return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
             }
 
-            // Cek apakah perusahaan memiliki langganan aktif
-            $subscription = $user->workplace->subscription;
-            if (!$subscription) {
-                return BaseResponse::error(null, 'Perusahaan tidak memiliki langganan aktif.', 403);
-            }
+            // // Cek apakah perusahaan memiliki langganan aktif
+            // $subscription = $user->workplace->subscription;
+            // if (!$subscription) {
+            //     return BaseResponse::error(null, 'Perusahaan tidak memiliki langganan aktif.', 403);
+            // }
 
-            // Hitung jumlah karyawan aktif
-            $activeEmployees = Employee::whereHas('user', function ($query) use ($user) {
-                $query->where('id_workplace', $user->workplace->id);
-            })->where('employment_status', 'active')->count();
+            // // Hitung jumlah karyawan aktif
+            // $activeEmployees = Employee::whereHas('user', function ($query) use ($user) {
+            //     $query->where('id_workplace', $user->workplace->id);
+            // })->where('employment_status', 'active')->count();
 
-            // Cek apakah sudah mencapai batas langganan
-            if ($activeEmployees >= $subscription->seats) {
-                return BaseResponse::error([
-                    'current_seats' => $activeEmployees,
-                    'max_seats' => $subscription->seats,
-                    'subscription_id' => $subscription->id
-                ], 'Jumlah karyawan telah mencapai batas maksimum. Silakan upgrade langganan Anda.', 403);
-            }
+            // // Cek apakah sudah mencapai batas langganan
+            // if ($activeEmployees >= $subscription->seats) {
+            //     return BaseResponse::error([
+            //         'current_seats' => $activeEmployees,
+            //         'max_seats' => $subscription->seats,
+            //         'subscription_id' => $subscription->id
+            //     ], 'Jumlah karyawan telah mencapai batas maksimum. Silakan upgrade langganan Anda.', 403);
+            // }
 
             // Validasi request (sudah otomatis via StoreEmployeeRequest)
             $validated = $request->validated();
@@ -424,7 +424,7 @@ class EmployeeController extends Controller
                 $query->where('id_workplace', $user->workplace->id);
             })
                 ->where('id', $employeeId)
-                ->with(['user', 'position'])
+                ->with(['user', 'position', 'documents'])
                 ->first();
 
             // Jika employee tidak ditemukan
@@ -433,7 +433,7 @@ class EmployeeController extends Controller
             }
 
             // Kembalikan response sukses
-            return BaseResponse::success($employee, 'Data karyawan berhasil diambil', 200);
+            return BaseResponse::success(new EmployeeResource($employee), 'Data karyawan berhasil diambil', 200);
 
         } catch (\Exception $e) {
             return BaseResponse::error(null, 'Gagal mengambil data karyawan', 500);
@@ -459,7 +459,7 @@ class EmployeeController extends Controller
                 'id_position' => 'nullable|uuid',
                 'employment_status' => 'in:active,inactive,resign',
                 'tipe_kontrak' => 'in:Tetap,Kontrak,Lepas',
-                'no_telp' => 'nullable|string',
+                'phone_number' => 'nullable|string',
                 'cabang' => 'nullable|string',
                 'nik' => 'nullable|string',
                 'tempat_lahir' => 'nullable|string',

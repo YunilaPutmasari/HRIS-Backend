@@ -33,7 +33,7 @@ class UpdateEmployeeRequest extends FormRequest
             'jenis_kelamin' => 'sometimes|string|in:Laki-laki,Perempuan',
             'pendidikan' => 'sometimes|string|in:SMA/SMK,D3,S1,S2,S3',
             'email' => 'sometimes|email|max:255',
-            'no_telp' => 'sometimes|string|max:20',
+            'phone_number' => 'sometimes|string|max:20',
             'start_date' => 'sometimes|date',
             'end_date' => 'sometimes|nullable|date|after_or_equal:startDate',
             'tenure' => 'sometimes|string|max:50',
