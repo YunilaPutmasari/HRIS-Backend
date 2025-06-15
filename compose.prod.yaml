@@ -14,7 +14,8 @@ services:
       # -----------------------------------------------------------
       - laravel-storage-production:/var/www/storage:ro
       - laravel-public-assets:/var/www/public/build:ro
-      - ./:/your/project/root/directory/path
+      - ./:/home/ubuntu/hris_backend:ro 
+      - /etc/letsencrypt/live/api.hriscmlabs.my.id:/etc/nginx/ssl:ro
       - /etc/letsencrypt/live/api.hriscmlabs.my.id/fullchain.pem:/etc/nginx/ssl/fullchain.pem
       - /etc/letsencrypt/live/api.hriscmlabs.my.id/privkey.pem:/etc/nginx/ssl/privkey.pem
     networks:
