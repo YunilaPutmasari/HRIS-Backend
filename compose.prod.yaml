@@ -5,6 +5,7 @@ services:
       context: .
       dockerfile: ./docker/production/nginx/Dockerfile
     restart: unless-stopped # Automatically restart unless the service is explicitly stopped
+    user: root  # Run as root to ensure proper permissions for Letsencrypt certificates and other files
     volumes:
       # Mount the 'laravel-storage-production' volume to '/var/www/storage' inside the container.
       # -----------------------------------------------------------
@@ -15,9 +16,9 @@ services:
       - laravel-storage-production:/var/www/storage:ro
       - laravel-public-assets:/var/www/public/build:ro
       - ./:/home/ubuntu/hris_backend:ro 
-      - /etc/letsencrypt/live/api.hriscmlabs.my.id:/etc/nginx/ssl:ro
-      - /etc/letsencrypt/live/api.hriscmlabs.my.id/fullchain.pem:/etc/nginx/ssl/fullchain.pem
-      - /etc/letsencrypt/live/api.hriscmlabs.my.id/privkey.pem:/etc/nginx/ssl/privkey.pem
+      - /etc/letsencrypt/live/api.hriscmlabs.my.id:/var/www/ssl:ro
+      - /etc/letsencrypt/live/api.hriscmlabs.my.id/fullchain.pem:/var/www/ssl/fullchain.pem:ro
+      - /etc/letsencrypt/live/api.hriscmlabs.my.id/privkey.pem:/var/www/ssl/privkey.pem:ro
     networks:
       - laravel-production
     ports:
