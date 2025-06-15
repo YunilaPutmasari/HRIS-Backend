@@ -359,15 +359,16 @@ class EmployeeController extends Controller
     }
 
 
-    public function deleteEmployeeDocument($employeeId, $documentId)
+    public function deleteEmployeeDocument($userId, $documentId)
     {
-        \Log::info("Delete document called with employeeId: $employeeId, documentId: $documentId");
+        \Log::info("Delete document called with userId: $userId, documentId: $documentId");
 
         try {
-            $employee = Employee::where('id', $employeeId)->firstOrFail();
+            // Cek apakah ada employee dengan id_user tersebut
+            $employee = Employee::where('id_user', $userId)->firstOrFail();
             \Log::info("Employee found: " . $employee->id);
 
-            $userId = $employee->id_user;
+            // Cari dokumen yang memang dimiliki user tersebut
             $document = Document::where('id', $documentId)
                 ->where('id_user', $userId)
                 ->first();
@@ -377,15 +378,17 @@ class EmployeeController extends Controller
                 return BaseResponse::error('Dokumen tidak ditemukan atau tidak milik employee ini.', 404);
             }
 
+            // Hapus dokumen
             $document->delete();
             \Log::info("Document deleted successfully.");
 
             return BaseResponse::success(['message' => 'Dokumen berhasil dihapus dari employee.']);
         } catch (\Exception $e) {
-            \Log::error('Error hapus dokumen: ' . $e->getMessage());
+            \Log::error('Exception in deleteEmployeeDocument: ' . $e->getMessage());
             return BaseResponse::error('Terjadi kesalahan saat menghapus dokumen.', 500);
         }
     }
+
 
     public function getEmployeeBasedCompany()
     {
