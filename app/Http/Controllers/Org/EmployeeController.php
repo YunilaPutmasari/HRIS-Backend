@@ -268,31 +268,31 @@ class EmployeeController extends Controller
         return BaseResponse::success(new EmployeeResource($employee->load('position', 'documents')));
     }
 
-    public function update(UpdateEmployeeRequest $request, $id)
-    {
-        $employee = Employee::find($id);
-        if (!$employee) {
-            return BaseResponse::error('Employee not found', 404);
-        }
+    // public function update(UpdateEmployeeRequest $request, $id)
+    // {
+    //     $employee = Employee::find($id);
+    //     if (!$employee) {
+    //         return BaseResponse::error('Employee not found', 404);
+    //     }
 
-        Log::info('Validated data:', $request->validated());
+    //     Log::info('Validated data:', $request->validated());
 
-        $data = $request->validated();
-        unset($data['avatar']);
+    //     $data = $request->validated();
+    //     unset($data['avatar']);
 
-        $employee->fill($data);
+    //     $employee->fill($data);
 
-        if ($request->hasFile('avatar')) {
-            $employee->avatar = $request->file('avatar')->store('avatars', 'public');
-        }
+    //     if ($request->hasFile('avatar')) {
+    //         $employee->avatar = $request->file('avatar')->store('avatars', 'public');
+    //     }
 
-        $employee->save();
+    //     $employee->save();
 
-        return BaseResponse::success([
-            'message' => 'Data berhasil diperbarui.',
-            'data' => $employee->load('position', 'documents', 'department')
-        ]);
-    }
+    //     return BaseResponse::success([
+    //         'message' => 'Data berhasil diperbarui.',
+    //         'data' => $employee->load('position', 'documents', 'department')
+    //     ]);
+    // }
 
     public function destroy($id)
     {
@@ -446,7 +446,7 @@ class EmployeeController extends Controller
         }
     }
 
-    public function updateEmployee(Request $request, $employeeId)
+    public function updateEmployee(UpdateEmployeeRequest $request, string $employeeId)
     {
         try {
             // Ambil user yang login
@@ -459,13 +459,14 @@ class EmployeeController extends Controller
 
             // Validasi input-panjang memang
             $request->validate([
+
                 'first_name' => 'required|string|max:255',
                 'last_name' => 'required|string|max:255',
                 'address' => 'nullable|string',
                 'id_position' => 'nullable|uuid',
                 'employment_status' => 'in:active,inactive,resign',
                 'tipe_kontrak' => 'in:Tetap,Kontrak,Lepas',
-                'phone_number' => 'nullable|string',
+
                 'cabang' => 'nullable|string',
                 'nik' => 'nullable|string',
                 'tempat_lahir' => 'nullable|string',
@@ -482,12 +483,17 @@ class EmployeeController extends Controller
             ]);
 
             // Cari employee yang berada di perusahaan yang sama
+            $employeeId = (string) $employeeId;
             $employee = Employee::whereHas('user', function ($query) use ($user) {
                 $query->where('id_workplace', $user->workplace->id);
             })
                 ->where('id', $employeeId)
+
                 ->with('user')
                 ->first();
+
+
+
 
             // Update data employee
 
@@ -498,7 +504,7 @@ class EmployeeController extends Controller
                 'id_position',
                 'employment_status',
                 'tipe_kontrak',
-                'phone_number',
+
                 'cabang',
                 'nik',
                 'tempat_lahir',
@@ -514,35 +520,36 @@ class EmployeeController extends Controller
             ]));
             if ($request->hasFile('avatar')) {
                 $avatarFile = $request->file('avatar');
-
-                // Ambil ID employee sebagai folder
                 $employeeFolder = 'avatars/' . $employee->id;
-
-                // Buat nama unik
                 $avatarName = Str::random(40) . '.' . $avatarFile->getClientOriginalExtension();
+                $employee->avatar = $avatarFile->storeAs($employeeFolder, $avatarName, 'public');
 
-                // Simpan file di dalam folder berdasarkan ID employee
-                $avatarFile->storeAs('public/' . $employeeFolder, $avatarName);
+                // Simpan ke storage/app/public/avatars/{id}
 
-                // Hapus file lama jika ada
-                if ($employee->avatar && \Storage::exists('public/' . $employee->avatar)) {
-                    \Storage::delete('public/' . $employee->avatar);
+
+                // Hapus avatar lama jika ada
+                if ($employee->avatar && Storage::exists('public/' . $employee->avatar)) {
+                    Storage::delete('public/' . $employee->avatar);
                 }
 
-                // Simpan path relatif ke DB (contoh: avatars/uuid/namafile.jpg)
+                // Simpan path baru ke DB (tanpa "public/")
                 $employee->avatar = $employeeFolder . '/' . $avatarName;
             }
 
 
             // SIMPAN avatar baru (jika di-set manual)
             $employee->save();
+            // Setelah $employee->save();
+            $employee->avatar = $employee->avatar ? asset('storage/' . $employee->avatar) : null;
 
             return BaseResponse::success($employee, 'Data karyawan berhasil diperbarui', 200);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return BaseResponse::error($e->errors(), 'Validasi gagal', 422);
-        } catch (\Exception $e) {
-            return BaseResponse::error(null, 'Gagal memperbarui data karyawan', 500);
+
+        } catch (\Exception $e) { {
+                return BaseResponse::error($e->getMessage(), 'Gagal memperbarui data karyawan', 500);
+            }
+
         }
     }
 

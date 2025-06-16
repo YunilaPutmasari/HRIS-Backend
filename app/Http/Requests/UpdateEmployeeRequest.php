@@ -22,7 +22,7 @@ class UpdateEmployeeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'avatar' => 'sometimes|nullable|file|image|mimes:jpeg,png,jpg,gif|max:2048', // max 2MB
+            'avatar' => 'sometimes|nullable|file|image|mimes:jpeg,png,jpg,gif|max:5000', // max 2MB
             'id_user' => 'sometimes|uuid',
             'first_name' => 'sometimes|string|max:255',
             'last_name' => 'sometimes|nullable|string|max:255',
