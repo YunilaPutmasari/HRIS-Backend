@@ -37,6 +37,7 @@ class StoreEmployeeRequest extends FormRequest
             'pendidikan' => 'nullable|string|in:SMA/SMK,D3,S1,S2,S3',
             'phone_number' => 'nullable|string|max:20',
             'id_position' => 'nullable|uuid',
+            'id_department' => 'nullable|uuid',
             'tipe_kontrak' => 'nullable|string|in:Tetap,Kontrak,Magang',
             'cabang' => 'nullable|string|max:255',
             'employment_status' => 'nullable|string|in:active,inactive,resign',

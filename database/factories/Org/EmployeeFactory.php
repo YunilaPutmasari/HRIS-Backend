@@ -24,10 +24,10 @@ class EmployeeFactory extends Factory
             'employment_status' => $this->faker->randomElement(['active', 'inactive', 'resign']),
             'id_position' => null, // sesuaikan kalau perlu
             // Kolom baru yang kamu tambahkan
-            'jenisKelamin' => $this->faker->randomElement(['Laki-laki', 'Perempuan']),
-            'notelp' => $this->faker->phoneNumber(),
+            'jenis_kelamin' => $this->faker->randomElement(['Laki-laki', 'Perempuan']),
+            'no_telp' => $this->faker->phoneNumber(),
             'cabang' => $this->faker->city(),
-            'jabatan' => $this->faker->jobTitle(),
+            // 'position' => $this->faker->jobTitle(),
             'id_position' => null,
 
         ];

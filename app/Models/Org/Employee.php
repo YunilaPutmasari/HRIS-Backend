@@ -34,6 +34,7 @@ class Employee extends Model
         'sign_in_code',
         'id_user',
         // 'id_jadwal',
+        'id_department',
         'id_position',
         'first_name',
         'last_name',

@@ -22,7 +22,7 @@ class EmployeeResource extends JsonResource
             'jenis_kelamin' => $this->jenis_kelamin ?? '',
             'pendidikan' => $this->pendidikan ?? '',
             'email' => $this->user?->email ?? '',
-            'phone_number' => $this->phonee_number ?? '',
+            'phone_number' => $this->phone_number ?? '',
             'start_date' => $this->start_date,
             'end_date' => $this->end_date,
             'tenure' => $this->tenure,
@@ -32,6 +32,8 @@ class EmployeeResource extends JsonResource
             'employment_status' => $this->employment_status ?? '',
             'jabatan' => $this->position ? $this->position->name : null,
             'id_position' => $this->id_position,
+            'id_department' => $this->id_department,
+            'department' => $this->department ? $this->department->name : null,
             'tanggal_efektif' => $this->tanggal_efektif,
             'bank' => $this->bank ?? '',
             'no_rek' => $this->no_rek ?? '',
@@ -64,5 +66,12 @@ class EmployeeResource extends JsonResource
     {
         // Cukup cek kalau relasi position sudah ada
         return $this->position ? $this->position->name : null;
+
     }
+    private function department_name()
+    {
+        return $this->department ? $this->department->name : null;
+    }
+
+
 }

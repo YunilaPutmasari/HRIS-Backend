@@ -42,6 +42,7 @@ class UpdateEmployeeRequest extends FormRequest
             'cabang' => 'sometimes|string|max:255',
             'employment_status' => 'sometimes|string|in:active,inactive,resign',
             'id_position' => 'sometimes|string|max:255',
+            'id_department' => 'sometimes|string|max:255',
             'jabatan' => 'sometimes|string|max:255',
             'tanggal_efektif' => 'sometimes|date',
             'bank' => 'sometimes|string|max:50',

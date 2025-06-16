@@ -13,7 +13,7 @@ class DepartmentSeeder2 extends Seeder
      */
     public function run(): void
     {
-        $companyId = '01976c37-6ff8-73d9-80a1-1a7452e0d7fe'; // Ganti dengan ID company sesuai kebutuhan
+        $companyId = '019776f3-c8e4-71f4-863a-e148ffc43ff9'; // Ganti dengan ID company sesuai kebutuhan
 
         $departments = [
             ['name' => 'IT', 'location' => 'Jakarta'],

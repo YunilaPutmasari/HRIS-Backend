@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use App\Http\Responses\BaseResponse;
+use Illuminate\Support\Str;
 
 
 class EmployeeController extends Controller
@@ -195,6 +196,7 @@ class EmployeeController extends Controller
                 'pendidikan' => $validated['pendidikan'] ?? null,
                 'no_telp' => $validated['no_telp'] ?? null,
                 'id_position' => $validated['id_position'] ?? null,
+                'id_department' => $validated['id_department'] ?? null,
                 'tipe_kontrak' => $validated['tipe_kontrak'] ?? null,
                 'cabang' => $validated['cabang'] ?? null,
                 'bank' => $validated['bank'] ?? null,
@@ -242,7 +244,7 @@ class EmployeeController extends Controller
             }
 
             return BaseResponse::success([
-                'employee' => $employee->load(['position', 'documents']),
+                'employee' => $employee->load(['position', 'documents', 'department']),
                 'user' => $createdUser,
             ], 'Karyawan berhasil ditambahkan', 201);
 
@@ -288,7 +290,7 @@ class EmployeeController extends Controller
 
         return BaseResponse::success([
             'message' => 'Data berhasil diperbarui.',
-            'data' => $employee->load('position', 'documents')
+            'data' => $employee->load('position', 'documents', 'department')
         ]);
     }
 
@@ -340,6 +342,7 @@ class EmployeeController extends Controller
                         'no_telp' => $emp['no_telp'] ?? null,
                         'cabang' => $emp['cabang'] ?? null,
                         'jabatan' => $emp['jabatan'] ?? null,
+                        'department' => $emp['department'] ?? null,
                         'employment_status' => $emp['employment_status'] ?? 'active',
                         'email' => $emp['email'] ?? null,
                     ]
@@ -474,6 +477,7 @@ class EmployeeController extends Controller
                 'tanggal_efektif' => 'nullable|date',
                 'bank' => 'nullable|string',
                 'no_rek' => 'nullable|string',
+                'avatar' => 'nullable|file|image|mimes:jpeg,png,jpg,gif|max:2048',
                 // tambahkan field lain sesuai kebutuhan
             ]);
 
@@ -485,11 +489,8 @@ class EmployeeController extends Controller
                 ->with('user')
                 ->first();
 
-            if (!$employee) {
-                return BaseResponse::error(null, 'Karyawan tidak ditemukan atau tidak berada di perusahaan Anda.', 404);
-            }
-
             // Update data employee
+
             $employee->update($request->only([
                 'first_name',
                 'last_name',
@@ -511,6 +512,30 @@ class EmployeeController extends Controller
                 'no_rek',
                 // tambahkan field lain sesuai fillable
             ]));
+            if ($request->hasFile('avatar')) {
+                $avatarFile = $request->file('avatar');
+
+                // Ambil ID employee sebagai folder
+                $employeeFolder = 'avatars/' . $employee->id;
+
+                // Buat nama unik
+                $avatarName = Str::random(40) . '.' . $avatarFile->getClientOriginalExtension();
+
+                // Simpan file di dalam folder berdasarkan ID employee
+                $avatarFile->storeAs('public/' . $employeeFolder, $avatarName);
+
+                // Hapus file lama jika ada
+                if ($employee->avatar && \Storage::exists('public/' . $employee->avatar)) {
+                    \Storage::delete('public/' . $employee->avatar);
+                }
+
+                // Simpan path relatif ke DB (contoh: avatars/uuid/namafile.jpg)
+                $employee->avatar = $employeeFolder . '/' . $avatarName;
+            }
+
+
+            // SIMPAN avatar baru (jika di-set manual)
+            $employee->save();
 
             return BaseResponse::success($employee, 'Data karyawan berhasil diperbarui', 200);
 
