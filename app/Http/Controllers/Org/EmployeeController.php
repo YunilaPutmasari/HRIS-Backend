@@ -194,7 +194,7 @@ class EmployeeController extends Controller
                 'tanggal_lahir' => $validated['tanggal_lahir'] ?? null,
                 'jenis_kelamin' => $validated['jenis_kelamin'] ?? null,
                 'pendidikan' => $validated['pendidikan'] ?? null,
-                'no_telp' => $validated['no_telp'] ?? null,
+                'phone_number' => $validated['phone_number'] ?? null,
                 'id_position' => $validated['id_position'] ?? null,
                 'id_department' => $validated['id_department'] ?? null,
                 'tipe_kontrak' => $validated['tipe_kontrak'] ?? null,
@@ -339,7 +339,7 @@ class EmployeeController extends Controller
                         'last_name' => $emp['last_name'],
                         'address' => $emp['address'],
                         'jenis_kelamin' => $emp['jenis_kelamin'] ?? null,
-                        'no_telp' => $emp['no_telp'] ?? null,
+                        'phone_number' => $emp['phone_number'] ?? null,
                         'cabang' => $emp['cabang'] ?? null,
                         'jabatan' => $emp['jabatan'] ?? null,
                         'department' => $emp['department'] ?? null,
@@ -430,7 +430,7 @@ class EmployeeController extends Controller
                 $query->where('id_workplace', $user->workplace->id);
             })
                 ->where('id', $employeeId)
-                ->with(['user', 'position', 'documents'])
+                ->with(['user', 'position', 'documents', 'company', 'department'])
                 ->first();
 
             // Jika employee tidak ditemukan
@@ -498,7 +498,7 @@ class EmployeeController extends Controller
                 'id_position',
                 'employment_status',
                 'tipe_kontrak',
-                'no_telp',
+                'phone_number',
                 'cabang',
                 'nik',
                 'tempat_lahir',
