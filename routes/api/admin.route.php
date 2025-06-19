@@ -11,6 +11,8 @@ use App\Http\Controllers\Org\DeptPositionsController;
 use App\Http\Controllers\Org\DepartmentsController;
 use App\Http\Controllers\Subscription\SubscriptionController;
 use App\Http\Controllers\Lettering\ApprovalController;
+use App\Http\Controllers\Lettering\LetterController;
+use App\Http\Controllers\Lettering\LetterFormatController;
 
 Route::group([
     'prefix' => 'admin',
@@ -77,9 +79,17 @@ Route::group([
         Route::get('/{id}', [EmployeeController::class, 'getEmployeeById']);
         Route::put('/{id}', [EmployeeController::class, 'updateEmployee']);
         Route::post('/{id}/upload-document', [EmployeeController::class, 'uploadDocument']);
+
         Route::delete('/{id}', [EmployeeController::class, 'destroy'])->name('destroy');
         Route::delete('user/{id}/document/{id_document}', [EmployeeController::class, 'deleteEmployeeDocument'])->name('deleteEmployeeDocument');
-
+        Route::post('/import', [EmployeeController::class, 'import'])->name('import');
+        Route::group([
+            'prefix' => 'letter',
+            'as' => 'letter.',
+        ], function () {
+            Route::get('/formats', [LetterController::class, 'getFormats'])->name('getFormats');
+            Route::post('/', [LetterController::class, 'store'])->name('store');
+        });
         Route::group([
             'prefix' => 'dashboard',
             'as' => 'dashboard.',
@@ -125,3 +135,4 @@ Route::group([
     Route::post('/{id}/cancel', [SubscriptionController::class, 'cancel'])->name('cancel');
     Route::post('/{id}/upgrade', [SubscriptionController::class, 'upgrade'])->name('upgrade');
 });
+
