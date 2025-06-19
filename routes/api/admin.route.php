@@ -73,11 +73,15 @@ Route::group([
     Route::group([
         'prefix' => 'employees',
         'as' => 'employees.',
-    ], function(){
-        Route::get('/comp-employees',[EmployeeController::class, 'getEmployeeBasedCompany'])->name('getEmployeeBasedCompany');
-        Route::post('/',[EmployeeController::class, 'store'])->name('store');
-        Route::get('/{id}',[EmployeeController::class, 'getEmployeeById']);
-        Route::put('/{id}',[EmployeeController::class, 'updateEmployee']);
+    ], function () {
+        Route::get('/comp-employees', [EmployeeController::class, 'getEmployeeBasedCompany'])->name('getEmployeeBasedCompany');
+        Route::post('/', [EmployeeController::class, 'store'])->name('store');
+        Route::get('/{id}', [EmployeeController::class, 'getEmployeeById']);
+        Route::put('/{id}', [EmployeeController::class, 'updateEmployee']);
+        Route::post('/{id}/upload-document', [EmployeeController::class, 'uploadDocument']);
+        Route::delete('/{id}', [EmployeeController::class, 'destroy'])->name('destroy');
+        Route::delete('user/{id}/document/{id_document}', [EmployeeController::class, 'deleteEmployeeDocument'])->name('deleteEmployeeDocument');
+
         Route::group([
             'prefix' => 'dashboard',
             'as' => 'dashboard.',
@@ -90,25 +94,25 @@ Route::group([
     });
 
     Route::group([
-        'prefix'=>'positions',
+        'prefix' => 'positions',
         'as' => 'positions.',
-    ], function(){
-        Route::get('/',[DeptPositionsController::class, 'index'])->name('index');
-        Route::post('/',[DeptPositionsController::class, 'store']);
-        Route::get('/get/{id_position}',[DeptPositionsController::class, 'show']);
+    ], function () {
+        Route::get('/', [DeptPositionsController::class, 'index'])->name('index');
+        Route::post('/', [DeptPositionsController::class, 'store']);
+        Route::get('/get/{id_position}', [DeptPositionsController::class, 'show']);
         Route::get('/{id_department}', [DeptPositionsController::class, 'getByDepartment'])->name('storeByDepartment');
         Route::post('/{id_department}', [DeptPositionsController::class, 'storeByDepartment'])->name('storeByDepartment');
-        
+
     });
-    
+
     Route::group([
-        'prefix'=>'departments',
+        'prefix' => 'departments',
         'as' => 'departments.',
-    ], function(){
-        Route::get('/',[DepartmentsController::class, 'index'])->name('index');
-        Route::get('/{id_department}',[DepartmentsController::class, 'getDepartment']);
-        Route::post('/',[DepartmentsController::class, 'store']);
-        
+    ], function () {
+        Route::get('/', [DepartmentsController::class, 'index'])->name('index');
+        Route::get('/{id_department}', [DepartmentsController::class, 'getDepartment']);
+        Route::post('/', [DepartmentsController::class, 'store']);
+
     });
 });
 

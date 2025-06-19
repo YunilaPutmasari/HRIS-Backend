@@ -46,7 +46,8 @@ class OrganizationSeeder extends Seeder
             'last_name' => 'Cmlabs',
             'address' => 'Jakarta',
             'employment_status' => 'active',
-            'id_workplace' => $company->id,
+            'id_position' => null,
+            'jenis_kelamin' => 'Laki-laki',
         ]);
 
 
