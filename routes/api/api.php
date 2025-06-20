@@ -47,3 +47,4 @@ require __DIR__ . '/admin.route.php';
 // require __DIR__ . '/employee.route.php';
 // require __DIR__ . '/position.route.php';
 require __DIR__ . '/approval.route.php';
+require __DIR__ . '/employee.route.php';
