@@ -8,28 +8,17 @@ use Carbon\Carbon;
 
 class ExpireSubscription extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'subscription:expire';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
     protected $description = 'Expire subscriptions whose ends_at has passed';
 
-    /**
-     * Execute the console command.
-     */
     public function handle()
     {
         $now = Carbon::now();
 
-        $subscrpitions = Subscription::where('ends_at', '<',now())->where('status','!=','expired')->get();
+        $subscrpitions = Subscription::where('ends_at', '<',now())
+            ->where('status','active')
+            ->get();
 
         foreach ($subscrpitions as $sub){
             $sub->update(['status'=>'expired']);

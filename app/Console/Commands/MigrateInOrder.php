@@ -62,10 +62,18 @@ class MigrateInOrder extends Command
             'lettering/2025_05_13_074521_tb_documents.php',
             'lettering/2025_05_13_074529_tb_employee_request.php',
 
+            // subscription migrations
+            'subscription/2025_06_14_182027_tb_package_types.php',
+            'subscription/2025_05_13_081936_tb_subscription.php',
+            'subscription/2025_06_14_184654_tb_pending_change.php',
+            'subscription/2025_06_15_132931_tb_daily_usage_records.php',
+            
             // payment migrations
-            'payment/2025_05_13_081936_tb_subscription.php',
             'payment/2025_05_13_081937_tb_invoice.php',
             'payment/2025_05_13_081938_tb_payment.php',
+
+            // reset password
+            '2025_05_31_031804_create_table_password_resets.php',
         ];
 
         // set foreign key check to 0

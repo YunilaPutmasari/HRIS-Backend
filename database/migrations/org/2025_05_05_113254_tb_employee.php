@@ -21,6 +21,7 @@ return new class extends Migration {
             $table->string('nik')->nullable()->unique();
             $table->enum('employment_status', ['active', 'inactive', 'resign'])->default('active');
             $table->string('address')->nullable();
+            $table->uuid('id_department')->nullable();
             $table->uuid('id_position')->nullable();
             // $table->uuid('id_jadwal')->nullable();
             // =======================
@@ -47,6 +48,7 @@ return new class extends Migration {
 
 
             $table->foreign('id_user')->references('id')->on('tb_user')->onDelete('cascade');
+            $table->foreign('id_department')->references('id')->on('tb_department')->onDelete('cascade');
             $table->foreign('id_position')->references('id')->on('tb_position')->onDelete('cascade');
             // $table->foreign('id_jadwal')->references('id')->on('tb_position')->onDelete('cascade');
 
