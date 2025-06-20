@@ -13,9 +13,14 @@ use App\Models\Org\User;
 class Letter extends Model
 {
     use SoftDeletes;
+    protected $casts = [
+        'id_letter_format' => 'string',
+    ];
 
     protected $table = 'tb_letter';
     public $incrementing = false;
+    protected $keyType = 'string';
+
 
     protected $fillable = [
         'id',

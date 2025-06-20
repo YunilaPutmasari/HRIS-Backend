@@ -11,6 +11,7 @@ class LetterFormat extends Model
 
     protected $table = 'tb_letter_format';
     public $incrementing = false;
+    public $keyType = 'string';
 
     protected $fillable = [
         'id',
