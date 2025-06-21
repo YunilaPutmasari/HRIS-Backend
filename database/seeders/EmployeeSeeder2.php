@@ -20,7 +20,7 @@ class EmployeeSeeder2 extends Seeder
         $companyId = '01975f52-b27c-72eb-a539-ecff21c032f7';
         $password = Hash::make('password');
 
-        for ($i=7; $i<=20; $i++){
+        for ($i = 7; $i <= 20; $i++) {
             $user = User::create([
                 'id' => (string) Str::uuid(),
                 'email' => "employee{$i}@example.com",
@@ -47,9 +47,9 @@ class EmployeeSeeder2 extends Seeder
                 'start_date' => "2020-01-0$i",
                 'end_date' => in_array($i, [1, 5, 9]) ? "2023-12-31" : null,
                 'employment_status' => in_array($i, [1, 5, 9, 12]) ? 'inactive' : 'active',
-                'tipe_kontrak' => match(true) {
-                    in_array($i, [1,5]) => 'Lepas',
-                    in_array($i, [2,4,9,12]) => 'Kontrak',
+                'tipe_kontrak' => match (true) {
+                    in_array($i, [1, 5]) => 'Lepas',
+                    in_array($i, [2, 4, 9, 12]) => 'Kontrak',
                     default => 'Tetap',
                 },
                 'cabang' => "Cabang Jakarta",

@@ -13,27 +13,52 @@ class PositionSeeder2 extends Seeder
      */
     public function run(): void
     {
-        // Ambil ID department dari tb_department
-        $itDept = DB::table('tb_department')->where('name', 'IT')->where('location','Jakarta')->value('id');
-        $hrDept = DB::table('tb_department')->where('name', 'HR')->where('location','Jakarta')->value('id');
-        $financeDept = DB::table('tb_department')->where('name', 'Finance')->where('location','Jakarta')->value('id');
+        $fixedDepartmentId = '2bd9a20d-4946-457e-874d-60174d64bdaf';
 
-        $positions = [];
-
-        if ($itDept) {
-            $positions[] = ['id' => (string) Str::uuid(), 'name' => 'Software Engineer', 'level' => 2, 'id_department' => $itDept];
-            $positions[] = ['id' => (string) Str::uuid(), 'name' => 'System Analyst', 'level' => 3, 'id_department' => $itDept];
-        }
-
-        if ($hrDept) {
-            $positions[] = ['id' => (string) Str::uuid(), 'name' => 'HR Specialist', 'level' => 2, 'id_department' => $hrDept];
-            $positions[] = ['id' => (string) Str::uuid(), 'name' => 'Recruitment Officer', 'level' => 1, 'id_department' => $hrDept];
-        }
-
-        if ($financeDept) {
-            $positions[] = ['id' => (string) Str::uuid(), 'name' => 'Accountant', 'level' => 2, 'id_department' => $financeDept];
-            $positions[] = ['id' => (string) Str::uuid(), 'name' => 'Finance Staff', 'level' => 1, 'id_department' => $financeDept];
-        }
+        $positions = [
+            [
+                'id' => (string) Str::uuid(),
+                'name' => 'Software Engineer',
+                'level' => 2,
+                'gaji' => 12000000,
+                'id_department' => $fixedDepartmentId
+            ],
+            [
+                'id' => (string) Str::uuid(),
+                'name' => 'System Analyst',
+                'level' => 3,
+                'gaji' => 11000000,
+                'id_department' => $fixedDepartmentId
+            ],
+            [
+                'id' => (string) Str::uuid(),
+                'name' => 'HR Specialist',
+                'level' => 2,
+                'gaji' => 9000000,
+                'id_department' => $fixedDepartmentId
+            ],
+            [
+                'id' => (string) Str::uuid(),
+                'name' => 'Recruitment Officer',
+                'level' => 1,
+                'gaji' => 8000000,
+                'id_department' => $fixedDepartmentId
+            ],
+            [
+                'id' => (string) Str::uuid(),
+                'name' => 'Accountant',
+                'level' => 2,
+                'gaji' => 9500000,
+                'id_department' => $fixedDepartmentId
+            ],
+            [
+                'id' => (string) Str::uuid(),
+                'name' => 'Finance Staff',
+                'level' => 1,
+                'gaji' => 8500000,
+                'id_department' => $fixedDepartmentId
+            ],
+        ];
 
         foreach ($positions as $position) {
             DB::table('tb_position')->insert($position + [

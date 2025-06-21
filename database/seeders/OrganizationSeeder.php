@@ -47,6 +47,8 @@ class OrganizationSeeder extends Seeder
             'last_name' => 'Cmlabs',
             'address' => 'Jakarta',
             'employment_status' => 'active',
+            'id_position' => null,
+            'jenis_kelamin' => 'Laki-laki',
         ]);
 
         $check_clock_setting = CheckClockSetting::factory()->create([

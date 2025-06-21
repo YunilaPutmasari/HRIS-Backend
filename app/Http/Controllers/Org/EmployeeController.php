@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\org;
 
 use App\Http\Controllers\Controller;
-use App\Http\Responses\BaseResponse;
 use App\Models\Org\Employee;
 use App\Models\Org\Document;
 use App\Models\Org\Company;
@@ -19,6 +18,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Http\Responses\BaseResponse;
+use Illuminate\Support\Str;
 
 
 class EmployeeController extends Controller
@@ -57,7 +58,7 @@ class EmployeeController extends Controller
     }
 
 
-    public function upload(Request $request, $id)
+    public function uploadDocument(Request $request, $id)
     {
         try {
             Log::info('Upload request diterima, id: ' . $id);
@@ -98,7 +99,12 @@ class EmployeeController extends Controller
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return BaseResponse::error('Data karyawan tidak ditemukan', 404);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return BaseResponse::error('Validasi gagal', 422, $e->errors());
+            return BaseResponse::error(
+                ['exception' => $e->getMessage()], // data
+                'Error saat upload dokumen',       // message
+                500                                // status
+            );
+
         } catch (\Exception $e) {
             Log::error('Upload dokumen gagal: ' . $e->getMessage());
             return BaseResponse::error('Error saat upload dokumen', 500, ['exception' => $e->getMessage()]);
@@ -115,25 +121,25 @@ class EmployeeController extends Controller
                 return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
             }
 
-            // Cek apakah perusahaan memiliki langganan aktif
-            $subscription = $user->workplace->subscription;
-            if (!$subscription) {
-                return BaseResponse::error(null, 'Perusahaan tidak memiliki langganan aktif.', 403);
-            }
+            // // Cek apakah perusahaan memiliki langganan aktif
+            // $subscription = $user->workplace->subscription;
+            // if (!$subscription) {
+            //     return BaseResponse::error(null, 'Perusahaan tidak memiliki langganan aktif.', 403);
+            // }
 
-            // Hitung jumlah karyawan aktif
-            $activeEmployees = Employee::whereHas('user', function ($query) use ($user) {
-                $query->where('id_workplace', $user->workplace->id);
-            })->where('employment_status', 'active')->count();
+            // // Hitung jumlah karyawan aktif
+            // $activeEmployees = Employee::whereHas('user', function ($query) use ($user) {
+            //     $query->where('id_workplace', $user->workplace->id);
+            // })->where('employment_status', 'active')->count();
 
-            // Cek apakah sudah mencapai batas langganan
-            if ($activeEmployees >= $subscription->seats) {
-                return BaseResponse::error([
-                    'current_seats' => $activeEmployees,
-                    'max_seats' => $subscription->seats,
-                    'subscription_id' => $subscription->id
-                ], 'Jumlah karyawan telah mencapai batas maksimum. Silakan upgrade langganan Anda.', 403);
-            }
+            // // Cek apakah sudah mencapai batas langganan
+            // if ($activeEmployees >= $subscription->seats) {
+            //     return BaseResponse::error([
+            //         'current_seats' => $activeEmployees,
+            //         'max_seats' => $subscription->seats,
+            //         'subscription_id' => $subscription->id
+            //     ], 'Jumlah karyawan telah mencapai batas maksimum. Silakan upgrade langganan Anda.', 403);
+            // }
 
             // Validasi request (sudah otomatis via StoreEmployeeRequest)
             $validated = $request->validated();
@@ -159,7 +165,7 @@ class EmployeeController extends Controller
             $newUser = new User();
             $newUser->id = $userId;
             $newUser->email = $validated['email'];
-            $newUser->phone_number = $validated['no_telp'] ?? null;
+            $newUser->phone_number = $validated['phone_number'] ?? null;
             $newUser->password = bcrypt($validated['password']);
             $newUser->is_admin = false;
             $newUser->id_workplace = $companyId;
@@ -175,7 +181,7 @@ class EmployeeController extends Controller
 
             // Buat employee dengan data yang sudah divalidasi
             $employeeId = (string) \Illuminate\Support\Str::uuid();
-            
+
             $employeeData = [
                 'id' => $employeeId,
                 'id_user' => $userId,
@@ -190,6 +196,7 @@ class EmployeeController extends Controller
                 'pendidikan' => $validated['pendidikan'] ?? null,
                 'phone_number' => $validated['phone_number'] ?? null,
                 'id_position' => $validated['id_position'] ?? null,
+                'id_department' => $validated['id_department'] ?? null,
                 'tipe_kontrak' => $validated['tipe_kontrak'] ?? null,
                 'cabang' => $validated['cabang'] ?? null,
                 'bank' => $validated['bank'] ?? null,
@@ -237,7 +244,7 @@ class EmployeeController extends Controller
             }
 
             return BaseResponse::success([
-                'employee' => $employee->load(['position', 'documents']),
+                'employee' => $employee->load(['position', 'documents', 'department']),
                 'user' => $createdUser,
             ], 'Karyawan berhasil ditambahkan', 201);
 
@@ -261,31 +268,31 @@ class EmployeeController extends Controller
         return BaseResponse::success(new EmployeeResource($employee->load('position', 'documents')));
     }
 
-    public function update(UpdateEmployeeRequest $request, $id)
-    {
-        $employee = Employee::find($id);
-        if (!$employee) {
-            return BaseResponse::error('Employee not found', 404);
-        }
+    // public function update(UpdateEmployeeRequest $request, $id)
+    // {
+    //     $employee = Employee::find($id);
+    //     if (!$employee) {
+    //         return BaseResponse::error('Employee not found', 404);
+    //     }
 
-        Log::info('Validated data:', $request->validated());
+    //     Log::info('Validated data:', $request->validated());
 
-        $data = $request->validated();
-        unset($data['avatar']);
+    //     $data = $request->validated();
+    //     unset($data['avatar']);
 
-        $employee->fill($data);
+    //     $employee->fill($data);
 
-        if ($request->hasFile('avatar')) {
-            $employee->avatar = $request->file('avatar')->store('avatars', 'public');
-        }
+    //     if ($request->hasFile('avatar')) {
+    //         $employee->avatar = $request->file('avatar')->store('avatars', 'public');
+    //     }
 
-        $employee->save();
+    //     $employee->save();
 
-        return BaseResponse::success([
-            'message' => 'Data berhasil diperbarui.',
-            'data' => $employee->load('position', 'documents')
-        ]);
-    }
+    //     return BaseResponse::success([
+    //         'message' => 'Data berhasil diperbarui.',
+    //         'data' => $employee->load('position', 'documents', 'department')
+    //     ]);
+    // }
 
     public function destroy($id)
     {
@@ -306,7 +313,7 @@ class EmployeeController extends Controller
             return BaseResponse::error('No data to import', 400);
         }
         \Log::info('Import employees:', $employees);
-    
+
         try {
             foreach ($employees as $emp) {
                 if (empty($emp['first_name']) && empty($emp['last_name']) && !empty($emp['nama'])) {
@@ -314,16 +321,16 @@ class EmployeeController extends Controller
                     $emp['first_name'] = $nameParts[0];
                     $emp['last_name'] = $nameParts[1] ?? '';
                 }
-    
+
                 if (empty($emp['address'])) {
                     $emp['address'] = 'Tidak Diketahui';
                 }
-    
+
                 if (empty($emp['first_name']) || empty($emp['last_name']) || empty($emp['address'])) {
                     \Log::warning('Skipping employee, data tidak lengkap', $emp);
                     continue;
                 }
-    
+
                 Employee::updateOrCreate(
                     ['id' => $emp['id'] ?? null],
                     [
@@ -332,17 +339,18 @@ class EmployeeController extends Controller
                         'last_name' => $emp['last_name'],
                         'address' => $emp['address'],
                         'jenis_kelamin' => $emp['jenis_kelamin'] ?? null,
-                        'no_telp' => $emp['no_telp'] ?? null,
+                        'phone_number' => $emp['phone_number'] ?? null,
                         'cabang' => $emp['cabang'] ?? null,
                         'jabatan' => $emp['jabatan'] ?? null,
+                        'department' => $emp['department'] ?? null,
                         'employment_status' => $emp['employment_status'] ?? 'active',
                         'email' => $emp['email'] ?? null,
                     ]
                 );
             }
-    
+
             $allEmployees = Employee::with('user')->get();
-    
+
             return BaseResponse::success([
                 'message' => 'Import berhasil',
                 'data' => $allEmployees
@@ -354,15 +362,16 @@ class EmployeeController extends Controller
     }
 
 
-    public function deleteEmployeeDocument($employeeId, $documentId)
+    public function deleteEmployeeDocument($userId, $documentId)
     {
-        \Log::info("Delete document called with employeeId: $employeeId, documentId: $documentId");
+        \Log::info("Delete document called with userId: $userId, documentId: $documentId");
 
         try {
-            $employee = Employee::where('id', $employeeId)->firstOrFail();
+            // Cek apakah ada employee dengan id_user tersebut
+            $employee = Employee::where('id_user', $userId)->firstOrFail();
             \Log::info("Employee found: " . $employee->id);
 
-            $userId = $employee->id_user;
+            // Cari dokumen yang memang dimiliki user tersebut
             $document = Document::where('id', $documentId)
                 ->where('id_user', $userId)
                 ->first();
@@ -372,15 +381,17 @@ class EmployeeController extends Controller
                 return BaseResponse::error('Dokumen tidak ditemukan atau tidak milik employee ini.', 404);
             }
 
+            // Hapus dokumen
             $document->delete();
             \Log::info("Document deleted successfully.");
 
             return BaseResponse::success(['message' => 'Dokumen berhasil dihapus dari employee.']);
         } catch (\Exception $e) {
-            \Log::error('Error hapus dokumen: ' . $e->getMessage());
+            \Log::error('Exception in deleteEmployeeDocument: ' . $e->getMessage());
             return BaseResponse::error('Terjadi kesalahan saat menghapus dokumen.', 500);
         }
     }
+
 
     public function getEmployeeBasedCompany()
     {
@@ -416,10 +427,10 @@ class EmployeeController extends Controller
 
             // Cari employee dengan id tertentu dan pastikan dia satu perusahaan dengan user
             $employee = Employee::whereHas('user', function ($query) use ($user) {
-                    $query->where('id_workplace', $user->workplace->id);
-                })
+                $query->where('id_workplace', $user->workplace->id);
+            })
                 ->where('id', $employeeId)
-                ->with(['user', 'position'])
+                ->with(['user', 'position', 'documents', 'company', 'department'])
                 ->first();
 
             // Jika employee tidak ditemukan
@@ -428,33 +439,34 @@ class EmployeeController extends Controller
             }
 
             // Kembalikan response sukses
-            return BaseResponse::success($employee, 'Data karyawan berhasil diambil', 200);
+            return BaseResponse::success(new EmployeeResource($employee), 'Data karyawan berhasil diambil', 200);
 
         } catch (\Exception $e) {
             return BaseResponse::error(null, 'Gagal mengambil data karyawan', 500);
         }
     }
 
-    public function updateEmployee(Request $request, $employeeId)
+    public function updateEmployee(UpdateEmployeeRequest $request, string $employeeId)
     {
         try {
             // Ambil user yang login
             $user = Auth::user();
-    
+
             // Pastikan user memiliki workplace
             if (!$user->workplace) {
                 return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
             }
-    
+
             // Validasi input-panjang memang
             $request->validate([
+
                 'first_name' => 'required|string|max:255',
                 'last_name' => 'required|string|max:255',
                 'address' => 'nullable|string',
                 'id_position' => 'nullable|uuid',
                 'employment_status' => 'in:active,inactive,resign',
                 'tipe_kontrak' => 'in:Tetap,Kontrak,Lepas',
-                'no_telp' => 'nullable|string',
+
                 'cabang' => 'nullable|string',
                 'nik' => 'nullable|string',
                 'tempat_lahir' => 'nullable|string',
@@ -466,22 +478,25 @@ class EmployeeController extends Controller
                 'tanggal_efektif' => 'nullable|date',
                 'bank' => 'nullable|string',
                 'no_rek' => 'nullable|string',
+                'avatar' => 'nullable|file|image|mimes:jpeg,png,jpg,gif|max:2048',
                 // tambahkan field lain sesuai kebutuhan
             ]);
-    
+
             // Cari employee yang berada di perusahaan yang sama
+            $employeeId = (string) $employeeId;
             $employee = Employee::whereHas('user', function ($query) use ($user) {
-                    $query->where('id_workplace', $user->workplace->id);
-                })
+                $query->where('id_workplace', $user->workplace->id);
+            })
                 ->where('id', $employeeId)
+
                 ->with('user')
                 ->first();
-    
-            if (!$employee) {
-                return BaseResponse::error(null, 'Karyawan tidak ditemukan atau tidak berada di perusahaan Anda.', 404);
-            }
-    
+
+
+
+
             // Update data employee
+
             $employee->update($request->only([
                 'first_name',
                 'last_name',
@@ -489,7 +504,7 @@ class EmployeeController extends Controller
                 'id_position',
                 'employment_status',
                 'tipe_kontrak',
-                'no_telp',
+
                 'cabang',
                 'nik',
                 'tempat_lahir',
@@ -503,18 +518,44 @@ class EmployeeController extends Controller
                 'no_rek',
                 // tambahkan field lain sesuai fillable
             ]));
-    
+            if ($request->hasFile('avatar')) {
+                $avatarFile = $request->file('avatar');
+                $employeeFolder = 'avatars/' . $employee->id;
+                $avatarName = Str::random(40) . '.' . $avatarFile->getClientOriginalExtension();
+                $employee->avatar = $avatarFile->storeAs($employeeFolder, $avatarName, 'public');
+
+                // Simpan ke storage/app/public/avatars/{id}
+
+
+                // Hapus avatar lama jika ada
+                if ($employee->avatar && Storage::exists('public/' . $employee->avatar)) {
+                    Storage::delete('public/' . $employee->avatar);
+                }
+
+                // Simpan path baru ke DB (tanpa "public/")
+                $employee->avatar = $employeeFolder . '/' . $avatarName;
+            }
+
+
+            // SIMPAN avatar baru (jika di-set manual)
+            $employee->save();
+            // Setelah $employee->save();
+            $employee->avatar = $employee->avatar ? asset('storage/' . $employee->avatar) : null;
+
             return BaseResponse::success($employee, 'Data karyawan berhasil diperbarui', 200);
-    
         } catch (\Illuminate\Validation\ValidationException $e) {
             return BaseResponse::error($e->errors(), 'Validasi gagal', 422);
-        } catch (\Exception $e) {
-            return BaseResponse::error(null, 'Gagal memperbarui data karyawan', 500);
+
+        } catch (\Exception $e) { {
+                return BaseResponse::error($e->getMessage(), 'Gagal memperbarui data karyawan', 500);
+            }
+
         }
     }
 
-// KEBAWAH ADALAH FUNSGI UNtK DASHBOARD
-    public function getEmployee(){
+    // KEBAWAH ADALAH FUNSGI UNtK DASHBOARD
+    public function getEmployee()
+    {
         try {
             $user = Auth::user();
 
@@ -527,8 +568,8 @@ class EmployeeController extends Controller
             })->with(['user', 'position'])->get();
 
             $total = $employees->count();
-            $active = $employees->where('employment_status','active')->count();
-            $inactive = $employees->where('employment_status','inactive')->count();
+            $active = $employees->where('employment_status', 'active')->count();
+            $inactive = $employees->where('employment_status', 'inactive')->count();
             $newEmployees = $employees->filter(fn($e) => $e->created_at >= now()->subDays(30))->count();
 
             $data = [
@@ -542,7 +583,7 @@ class EmployeeController extends Controller
             return BaseResponse::success($data, 'Statistik karyawan berhasil diambil', 200);
 
         } catch (\Exception $e) {
-            return BaseResponse::error(null, 'Gagal mengambil statistik karyawan',500);
+            return BaseResponse::error(null, 'Gagal mengambil statistik karyawan', 500);
         }
     }
 
@@ -561,9 +602,9 @@ class EmployeeController extends Controller
             $employees = Employee::whereHas('user', function ($query) use ($user) {
                 $query->where('id_workplace', $user->workplace->id);
             })
-            ->whereMonth('created_at', $month)
-            ->whereYear('created_at', $year)
-            ->get();
+                ->whereMonth('created_at', $month)
+                ->whereYear('created_at', $year)
+                ->get();
 
             $stats = [
                 ['label' => 'Tetap', 'total' => $employees->where('tipe_kontrak', 'Tetap')->count()],
@@ -599,9 +640,9 @@ class EmployeeController extends Controller
             $employees = Employee::whereHas('user', function ($query) use ($user) {
                 $query->where('id_workplace', $user->workplace->id);
             })
-            ->whereMonth('created_at', $month)
-            ->whereYear('created_at', $year)
-            ->get();
+                ->whereMonth('created_at', $month)
+                ->whereYear('created_at', $year)
+                ->get();
 
             $statusStat = [
                 ['label' => 'Aktif', 'total' => $employees->where('employment_status', 'active')->count()],
@@ -620,10 +661,10 @@ class EmployeeController extends Controller
         } catch (\Exception $e) {
             return BaseResponse::error(null, 'Gagal mengambil statistik status karyawan', 500);
         }
-            return BaseResponse::success($data, 'Statistik status karyawan berhasil diambil', 200);
+        return BaseResponse::success($data, 'Statistik status karyawan berhasil diambil', 200);
 
     }
-// ===================================================================================================
+    // ===================================================================================================
 // Break Points Untuk Controller Employee ============================================================
 // ===================================================================================================
     public function getEmployeeDashboard()

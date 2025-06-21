@@ -6,14 +6,14 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-class DepartmentSeeder2 extends Seeder
+class DepartmentSeeder3 extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        $companyId = '019776f3-c8e4-71f4-863a-e148ffc43ff9'; // Ganti dengan ID company sesuai kebutuhan
+        $companyId = '019760fb-b612-7009-9e12-f81e27d34d66'; // Ganti dengan ID company sesuai kebutuhan
 
         $departments = [
             ['name' => 'IT', 'location' => 'Jakarta'],

@@ -25,8 +25,10 @@ class EmployeeFactory extends Factory
             'id_position' => null, // sesuaikan kalau perlu
             // Kolom baru yang kamu tambahkan
             'jenis_kelamin' => $this->faker->randomElement(['Laki-laki', 'Perempuan']),
-            'no_telp' => $this->faker->phoneNumber(),
+            'phone_number' => $this->faker->phoneNumber(),
             'cabang' => $this->faker->city(),
+            // 'position' => $this->faker->jobTitle(),
+            'id_position' => null,
         ];
     }
 }

@@ -186,10 +186,33 @@ class AuthController extends Controller
         );
     }
 
-    public function redirectToGoogle()
-    {
-        return Socialite::driver('google')->stateless()->redirect();
-    }
+    // public function redirectToGoogle()
+    // {
+    //     return Socialite::driver('google')->stateless()->redirect();
+    // }
+
+    //autth id_karyawan
+    public function redirectToGoogle(Request $request)
+{
+    $loginMethod = $request->query('login_method');
+
+    // Simpan login_method di state agar dikirim ke Google dan kembali saat callback
+    return Socialite::driver('google')
+        ->stateless() // Hati-hati dengan stateless, kalau session penting bisa dihapus
+        ->with(['state' => $loginMethod])
+        ->redirect();
+}
+
+//     public function redirectToGoogle(Request $request)
+// {
+//     $loginMethod = $request->query('login_method');
+
+//     // Simpan login_method ke dalam session sementara
+//     session(['login_method' => $loginMethod]);
+
+//     return Socialite::driver('google')->stateless()->redirect();
+// }
+
 
     public function redirectToGoogleCallback()
     {
@@ -230,6 +253,15 @@ class AuthController extends Controller
             Auth::login($user);
 
             $token = $user->createToken('auth_token')->plainTextToken;
+            //auth id_karyawan
+            $loginMethod = request()->get('state'); // Ambil dari parameter callback dari Google
+
+            // Misal: cek role manager atau employee
+            $role = 'employee'; // default
+
+            if ($user->is_admin) {
+                $role = 'manager';
+            }
 
             // 4. Redirect ke FE
             return BaseResponse::redirect(config('app.frontend_url') . '/auth/google/callback?' . http_build_query([
@@ -237,6 +269,8 @@ class AuthController extends Controller
                 'is_new_user' => $isNewUser ? 'true' : 'false',
                 'name' => $googleUser->getName(),
                 'email' => $googleUser->getEmail(),
+                'login_method' => $loginMethod,  // Gunakan hasil dari `request()->get('state')`
+                'role' => $role,
             ]));
         } catch (\Exception $e) {
             DB::rollBack();
