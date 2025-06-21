@@ -68,11 +68,6 @@ class XenditWebhookController extends Controller
         $pendingChange = $subscription->pendingChange;
 
         if ($pendingChange && $pendingChange->status === 'pending') {
-            // $subscription->update([
-            //     'id_package_type' => $pendingChange->id_new_package_type,
-            //     'seats' => $pendingChange->new_seats,
-            //     'status' => 'active'
-            // ]);
             $subscription->update([
                 'status' => 'expired',
                 'ends_at' => now(),

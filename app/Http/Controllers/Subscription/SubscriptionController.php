@@ -255,21 +255,58 @@ class SubscriptionController extends Controller
 
         $newSeats = $validated['new_seats'];
         $newPackageTypeId = $validated['id_new_package_type'] ?? $currentPackageTypeId;
+        $newPackageType = PackageType::findOrFail($newPackageTypeId);
+        Log::info("ID Package Type", ['id' => $newPackageTypeId]);
+        if ($newSeats > $newPackageType->max_seats) {
+            return BaseResponse::error(
+                null,
+                "Jumlah seat tidak boleh melebihi batas paket (maksimal: {$newPackageType->max_seats})",
+                400
+            );
+        }
+        
+        if ($newSeats < $totalEmployees) {
+            return BaseResponse::error(null, 'Jumlah seat harus ≥ jumlah karyawan', 400);
+        }
         
         $changeType = 'upgrade';
         if ($newSeats < $currentSeats || ($newPackageTypeId && $newPackageTypeId !== $subscription->id_package_type)) {
             $changeType = 'downgrade';
 
-            if ($newSeats < $totalEmployees) {
-                return BaseResponse::error(null, 'Jumlah seat harus ≥ jumlah karyawan', 400);
-            }
 
             if ($newPackageTypeId && $newPackageTypeId !== $subscription->id_package_type) {
-                $newPackageType = PackageType::findOrFail($newPackageTypeId);
+                
+                if ($newSeats > $newPackageType->max_seats){
+                    return BaseResponse::error(null,"Jumlah seat melebihi {$newPackageType->max_seats}", 400);
+                }
+
                 if ($newPackageType->max_seats < $totalEmployees) {
                     return BaseResponse::error(null, 'Max seats paket baru tidak mencukupi', 400);
                 }
             }
+        }
+
+        // Aturan dari free ke paid dan sebaliknya
+        if($subscription->packageType->is_free && $newPackageType->price_per_seat > 0){
+            $subscription->update([
+                'status' => 'expired',
+                'ends_at' => now(),
+            ]);
+
+            $newSubscription = Subscription::create([
+                'id_company' => $subscription->id_company,
+                'id_package_type' => $newPackageType->id,
+                'seats' => $newSeats,
+                'starts_at' => now(),
+                'ends_at' => now()->minutes(10),
+                'status' => 'active'
+            ]);
+
+            $company->update(['id_subscription' => $newSubscription->id]);
+
+            return BaseResponse::success([
+                'subscription_id' => $newSubscription->id
+            ]);
         }
 
         // Simpan pending change
