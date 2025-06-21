@@ -14,7 +14,7 @@ class ApprovalSeeder extends Seeder
      */
     public function run(): void
     {
-        $companyId = '01974d1b-f010-716a-8ede-be668ca7d657';
+        $companyId = '01975f52-b27c-72eb-a539-ecff21c032f7';
         $users = User::where('id_workplace',$companyId)->get();
 
         if($users->isEmpty()){
