@@ -8,6 +8,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Subscription\Subscription;
+use App\Models\Subscription\DailyUsageRecord;
+use App\Models\Org\User;
+use App\Models\Org\Employee;
+use App\Models\Org\Department;
+use App\Models\Payment\Invoice; //tambahan untuk invoice
+
+use App\Models\Attendance\CheckClock;
+use App\Models\Attendance\CheckClockSetting;
 
 class Company extends Model
 {
@@ -27,7 +35,7 @@ class Company extends Model
         'name',
         'address',
         'id_manager',
-        'id_subscription'
+        'id_subscription' //untuk nyantol ke subscription
     ];
 
     /**
@@ -46,19 +54,50 @@ class Company extends Model
         return $this->belongsTo(User::class, 'id_manager');
     }
 
-    public function employees()
-    {
-        return $this->hasMany(User::class, 'id_company');
-    }
+    // public function employees()
+    // {
+    //     return $this->hasMany(User::class, 'id_company');
+    // }
 
     public function departments()
     {
         return $this->hasMany(Department::class, 'id_company');
     }
+    public function users()
+    {
+        return $this->hasMany(User::class, 'id_workplace');
+    }
 
+    public function employees()
+    {
+        // Melalui user ke employee
+        return $this->hasManyThrough(Employee::class, User::class, 'id_workplace', 'id_user', 'id', 'id');
+    }
+    
+    public function checkClocks()
+    {
+        return $this->hasManyThrough(CheckClock::class, User::class, 'id_workplace', 'id_user', 'id', 'id');
+    }
+
+    // Company yang harusnya punya subscription dan invoice
     public function subscription()
     {
         return $this->hasOne(Subscription::class, 'id_company');
     }
-    
+
+    public function latestSubscription()
+    {
+        return $this->hasOne(Subscription::class, 'id_company')
+            ->orderByDesc('starts_at');
+    }
+    // Belum selesai penambahan model dan controller
+    public function dailyUsageRecords()
+    {
+        return $this->hasMany(DailyUsageRecords::class, 'id_company');
+    }
+    // Invoice harusnya dimiliki oleh company, ganti dari yg sebelumnya ada di user
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class, 'id_subscription');
+    }
 }

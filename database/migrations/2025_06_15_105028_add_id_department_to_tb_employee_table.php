@@ -4,16 +4,17 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::table('tb_invoice', function (Blueprint $table) {
-            $table->uuid('id_subscription')->nullable()->after('id_user');
-            $table->foreign('id_subscription')->references('id')->on('tb_subscription')->onDelete('set null');
+        Schema::table('tb_employee', function (Blueprint $table) {
+            // Tambahkan kolom id_department bertipe UUID, nullable kalau perlu
+            $table->uuid('id_department')->nullable()->after('id_position');
+
+
         });
     }
 
@@ -22,7 +23,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('tb_invoice', function (Blueprint $table) {
+        Schema::table('tb_employee', function (Blueprint $table) {
             //
         });
     }

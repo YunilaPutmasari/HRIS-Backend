@@ -16,16 +16,42 @@ return new class extends Migration {
             $table->uuid('id')->primary()->default(DB::raw('public.uuid_generate_v4()'));
             $table->string('sign_in_code', 6)->default('');
             $table->uuid('id_user');
-            $table->enum('employment_status', ['active', 'inactive', 'resign'])->default('active');
             $table->string('first_name');
             $table->string('last_name');
-            $table->string('address');
+            $table->string('nik')->nullable()->unique();
+            $table->enum('employment_status', ['active', 'inactive', 'resign'])->default('active');
+            $table->string('address')->nullable();
+            $table->uuid('id_department')->nullable();
             $table->uuid('id_position')->nullable();
+            // $table->uuid('id_jadwal')->nullable();
+            // =======================
+            $table->string('jenis_kelamin')->nullable();
+            $table->string('no_telp')->nullable();
+            $table->string('cabang')->nullable();
+            $table->string('grade')->nullable();
+            $table->string('bank')->nullable();
+            $table->string('no_rek')->nullable();
+            $table->string('pendidikan')->nullable();
+            $table->string('tipe_kontrak')->nullable();
+            $table->string('tempat_lahir')->nullable();
+            $table->date('tanggal_lahir')->nullable();
+            $table->string('dokumen')->nullable();
+            $table->string('avatar')->nullable();
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
+            $table->date('tanggal_efektif')->nullable();
+            
             $table->timestamps();
             $table->softDeletes();
 
+
+
+
             $table->foreign('id_user')->references('id')->on('tb_user')->onDelete('cascade');
+            $table->foreign('id_department')->references('id')->on('tb_department')->onDelete('cascade');
             $table->foreign('id_position')->references('id')->on('tb_position')->onDelete('cascade');
+            // $table->foreign('id_jadwal')->references('id')->on('tb_position')->onDelete('cascade');
+
         });
 
     }

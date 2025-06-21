@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use App\Models\Payment\Payment;
 use App\Models\Subscription\Subscription;
 use App\Models\Org\User;
+use App\Models\Org\Company;
 
 class Invoice extends Model
 {
@@ -26,10 +27,13 @@ class Invoice extends Model
      */
 
      protected $fillable = [
-        'id_user',
+        // 'id_user', //gajadi karena kita akan ganti ke company bukan user
+        'id_company', //cek ketok foreign
         'id_subscription', //untuk koneksi dengan subscription
         'total_amount',
+        'status', //kurang aman karena di fillable, sek aku blm paham mengamankan e
         'due_datetime',
+        'payment_date', //tambahan untuk tanggal pembayaran
         'xendit_invoice_id', 
         'invoice_url',
     ];
@@ -39,7 +43,8 @@ class Invoice extends Model
      * @var list<string>
      */
     protected $hidden = [
-        'id_user',
+        // 'id_user',
+        'company_id',
         'created_at',
         'updated_at',
     ];
@@ -50,11 +55,16 @@ class Invoice extends Model
     protected $casts = [
         'total_amount' => 'float',
         'due_datetime' => 'datetime',
+        'status' => 'string',
     ];
 
-    // Relation
+    // Relation, ini ga dipake bakalan karena pakai company
     public function user(){
         return $this->belongsTo(User::class, 'id_user');
+    }
+
+    public function company(){
+        return $this->belongsTo(Company::class, 'id_company');
     }
 
     // Invoice Relasi ke payment untuk semua pembayaran terkait

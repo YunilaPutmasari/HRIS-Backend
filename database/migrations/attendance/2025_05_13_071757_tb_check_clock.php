@@ -15,14 +15,19 @@ return new class extends Migration {
             $table->uuid('id')->primary()->default(DB::raw('public.uuid_generate_v4()'));
             $table->uuid('id_user');
             $table->uuid('id_ck_setting');
+            $table->uuid('id_ck_setting_time');
             $table->time('clock_in');
             $table->time('clock_out');
+            $table->time('break_start')->nullable();
+            $table->time('break_end')->nullable();
             $table->enum('status', ['on-time', 'late', 'sick', 'leave', 'permit'])->default('on-time');
+          
             $table->timestamps();
             $table->softDeletes();
 
             $table->foreign('id_user')->references('id')->on('tb_user')->onDelete('cascade');
             $table->foreign('id_ck_setting')->references('id')->on('tb_check_clock_setting')->onDelete('cascade');
+            $table->foreign('id_ck_setting_time')->references('id')->on('tb_check_clock_setting_time')->onDelete('cascade');
         });
     }
 

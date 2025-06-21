@@ -4,11 +4,16 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Attendance\CheckClockSettingController;
 use App\Http\Controllers\Attendance\CheckClockSettingTimeController;
+use App\Http\Controllers\Attendance\CheckClockController;
 use App\Http\Controllers\Payment\InvoiceController;
 use App\Http\Controllers\Payment\PaymentController;
 use App\Http\Controllers\Org\EmployeeController;
+use App\Http\Controllers\Org\DeptPositionsController;
+use App\Http\Controllers\Org\DepartmentsController;
 use App\Http\Controllers\Subscription\SubscriptionController;
 use App\Http\Controllers\Lettering\ApprovalController;
+use App\Http\Controllers\Lettering\LetterController;
+use App\Http\Controllers\Lettering\LetterFormatController;
 
 Route::group([
     'prefix' => 'admin',
@@ -36,6 +41,15 @@ Route::group([
             Route::delete('/delete/{id_ck_setting}', [CheckClockSettingController::class, 'delete'])->name('delete');
             Route::delete('/{id_ck_setting}/delete/{id_ck_setting_time}', [CheckClockSettingTimeController::class, 'delete'])->name('delete');
         });
+
+        Route::group([
+            'prefix' => 'check-clock',
+            'as' => 'check-clock.',
+        ], function () {
+            Route::get('/employee-check-clocks', [CheckClockController::class, 'employeeCheckClocks'])->name('employee-check-clocks');
+        });
+
+
         Route::group([
             'prefix' => 'check-clock-setting-time',
             'as' => 'check-clock-setting-time.',
@@ -53,6 +67,8 @@ Route::group([
         Route::get('/{id}', [InvoiceController::class, 'show'])->name('show');
         Route::put('/{id}', [InvoiceController::class, 'update'])->name('update');
         Route::delete('/{id}', [InvoiceController::class, 'destroy'])->name('destroy');
+        Route::post('xendit/callback', [InvoiceController::class, 'handleXenditCallback']);
+        Route::get('redirect', [InvoiceController::class, 'paymentRedirect']);
     });
 
     Route::group([
@@ -70,6 +86,22 @@ Route::group([
         'prefix' => 'employees',
         'as' => 'employees.',
     ], function () {
+        Route::get('/comp-employees', [EmployeeController::class, 'getEmployeeBasedCompany'])->name('getEmployeeBasedCompany');
+        Route::post('/', [EmployeeController::class, 'store'])->name('store');
+        Route::get('/{id}', [EmployeeController::class, 'getEmployeeById']);
+        Route::put('/{id}', [EmployeeController::class, 'updateEmployee']);
+        Route::post('/{id}/upload-document', [EmployeeController::class, 'uploadDocument']);
+
+        Route::delete('/{id}', [EmployeeController::class, 'destroy'])->name('destroy');
+        Route::delete('user/{id}/document/{id_document}', [EmployeeController::class, 'deleteEmployeeDocument'])->name('deleteEmployeeDocument');
+        Route::post('/import', [EmployeeController::class, 'import'])->name('import');
+        Route::group([
+            'prefix' => 'letter',
+            'as' => 'letter.',
+        ], function () {
+            Route::get('/formats', [LetterController::class, 'getFormats'])->name('getFormats');
+            Route::post('/', [LetterController::class, 'store'])->name('store');
+        });
         Route::group([
             'prefix' => 'dashboard',
             'as' => 'dashboard.',
@@ -80,6 +112,28 @@ Route::group([
             Route::get('/recent-approvals', [ApprovalController::class, 'getRecentApprovals'])->name('getRecentApprovals');
         });
     });
+
+    Route::group([
+        'prefix' => 'positions',
+        'as' => 'positions.',
+    ], function () {
+        Route::get('/', [DeptPositionsController::class, 'index'])->name('index');
+        Route::post('/', [DeptPositionsController::class, 'store']);
+        Route::get('/get/{id_position}', [DeptPositionsController::class, 'show']);
+        Route::get('/{id_department}', [DeptPositionsController::class, 'getByDepartment'])->name('storeByDepartment');
+        Route::post('/{id_department}', [DeptPositionsController::class, 'storeByDepartment'])->name('storeByDepartment');
+
+    });
+
+    Route::group([
+        'prefix' => 'departments',
+        'as' => 'departments.',
+    ], function () {
+        Route::get('/', [DepartmentsController::class, 'index'])->name('index');
+        Route::get('/{id_department}', [DepartmentsController::class, 'getDepartment']);
+        Route::post('/', [DepartmentsController::class, 'store']);
+
+    });
 });
 
 Route::group([
@@ -87,8 +141,15 @@ Route::group([
     'as' => 'admin.subscription',
     'middleware' => ['auth:sanctum', 'admin'],
 ], function () {
-    Route::get('/', [SubscriptionController::class, 'index'])->name('index');
-    Route::post('/', [SubscriptionController::class, 'store'])->name('store');
-    Route::put('/{id}', [SubscriptionController::class, 'update'])->name('update');
-    Route::post('/{id}/cancel', [SubscriptionController::class, 'cancel'])->name('cancel');
+    Route::post('/subscribe', [SubscriptionController::class, 'subscribe']);
+    Route::post('/request-change', [SubscriptionController::class, 'requestChange']);
+    Route::post('/cancel', [SubscriptionController::class, 'cancelSubscription']);
+    Route::get('/',[SubscriptionController::class,'getAllSubscription']);
+    Route::get('/active',[SubscriptionController::class,'getActiveSubscription']);
+    Route::get('/current',[SubscriptionController::class,'getCurrentSubscription']);
+    Route::get('/invoices',[SubscriptionController::class,'getCompanyInvoices']);
+    Route::get('/packageTypes',[SubscriptionController::class,'getAllPackageTypes']);
+    Route::get('/invoices/{invoice_id}',[SubscriptionController::class,'getInvoiceDetail']);
+    Route::get('/{subscription_id}',[SubscriptionController::class,'getUsageBySubscription']);
 });
+
