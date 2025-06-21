@@ -16,7 +16,6 @@ class CheckOverdueInvoices extends Command
     {
         $now = Carbon::now();
 
-        // $invoices = Invoice::where('status','unpaid') //Tidak disarankan ternyata
         $invoices = Invoice::where('status',InvoiceStatus::UNPAID)
             ->where('due_datetime','<',$now)
             ->get();

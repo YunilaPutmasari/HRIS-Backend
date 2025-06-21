@@ -123,8 +123,6 @@ class AuthController extends Controller
     {
         $data = $request->validated();
 
-        // dd($data); 
-
         $user = null;
 
         if (!empty($data['email'])) {
@@ -154,6 +152,23 @@ class AuthController extends Controller
             ], 403);
         }
 
+        $company = $user->workplace;
+        $hasSubscription = $company->subscription()
+            ->whereIn('status')->exists();
+
+        if (!$hasSubscription) {
+            $newSub = Subscription::create([
+                'id_company' => $company->id,
+                'id_package_type' => $freePlan->id,
+                'seats' => $freePlan->max_seats,
+                'starts_at' => now(),
+                'ends_at' => now()->day(28)->addMonthNoOverflow()->endOfDay(),
+                'status' => 'active',
+            ]);
+
+            $company->update(['id_subscription' => $newSub->id]);
+        }
+        
         $token = $user->createToken('access_token')->plainTextToken;
 
         return BaseResponse::success(
