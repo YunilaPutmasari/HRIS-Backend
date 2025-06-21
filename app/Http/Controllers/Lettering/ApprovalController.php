@@ -9,6 +9,7 @@ use App\Http\Responses\BaseResponse;
 use App\Models\Approval;
 use App\Models\Org\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ApprovalController extends Controller
 {
@@ -27,13 +28,30 @@ class ApprovalController extends Controller
             ->pluck('id')
             ->toArray();
 
+
         // Retrieve approvals for those users
         try {
-            $approval = Approval::whereIn('id_user', $userIds)
-                ->with([
-                    'employee',
-                    'employee.position'
-                ])->get();
+            if ($user->isAdmin()){
+                $approval = Approval::whereIn('id_user', $userIds)
+                    ->with([
+                        'employee',
+                        'employee.position'
+                    ])->get()
+                    ->map(function ($approval) {
+                        $approval->document_url = $approval->document ? Storage::url($approval->document) : null;
+                        return $approval;
+                    });
+            } else {
+                $approval = Approval::where('id_user', $user->id)
+                    ->with([
+                        'employee',
+                        'employee.position'
+                    ])->get()
+                    ->map(function ($approval) {
+                        $approval->document_url = $approval->document ? Storage::url($approval->document) : null;
+                        return $approval;
+                    });
+            }
         } catch (\Throwable $e) {
             return response()->json([
                 'error' => $e->getMessage(),
@@ -45,7 +63,6 @@ class ApprovalController extends Controller
         return BaseResponse::success(
             data : $approval,
             message : 'Approval retrieved successfully',
-            code : 200,
         );
     }
 
@@ -85,6 +102,53 @@ class ApprovalController extends Controller
         }
     }
 
+    public function show(Request $request, $id)
+    {
+        $user = $request->user();
+
+        $approval = Approval::with([
+                'employee',
+                'employee.position'
+            ])
+            ->find($id);
+        if (!$approval) {
+            return BaseResponse::error(
+                message: 'Approval not found',
+                code: 404
+            );
+        }
+
+        $isOwner = ($approval->id_user == $user->id);
+
+        if ($user->isAdmin()) {
+            $companies = $user->companies()->pluck('id')->toArray();
+
+            $approvalOwner = User::find($approval->id_user);
+
+            if (!$isOwner && !in_array($approvalOwner->id_workplace, $companies)) {
+                return BaseResponse::error(
+                    message: 'You do not have permission to view this approval',
+                    code: 403
+                );
+            }
+        } else {
+            if (!$isOwner) {
+                return BaseResponse::error(
+                    message: 'You do not have permission to view this approval',
+                    code: 403
+                );
+            }
+        }
+
+        $approval->document_url = $approval->document ? Storage::url($approval->document) : null;
+
+        return BaseResponse::success(
+            data: $approval,
+            message: 'Approval retrieved successfully',
+            code: 200
+        );
+    }
+
     /**
      * Store a newly created resource in storage.
      */
@@ -95,10 +159,26 @@ class ApprovalController extends Controller
         $companyIds = $companies->pluck('id')->toArray();
 
         $data = $request->validated();
+
+        if ($request->hasFile('document')) {
+            $file = $request->file('document');
+            $filePatth = $file->store('documents', 'public');
+            $data['document'] = $filePatth;
+        }
+
         if ($user->isAdmin()) {
             $data['id_user'] = $request->input('id_user');
             $data['status'] = 'approved';
             $data['approved_by'] = $user->id;
+
+
+            return BaseResponse::success(
+                data: [
+                    'approval' => Approval::create($data),
+                ],
+                message: 'Approval created and CheckClock created successfully',
+                code: 201
+            );
         } else {
             $data['id_user'] = $user->id;
             $data['status'] = 'pending';
@@ -114,46 +194,118 @@ class ApprovalController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show($id)
-    {
-        $record = Approval::findOrFail($id);
-        return BaseResponse::success(
-            data: $record,
-            message: 'Approval retrieved successfully',
-            code: 200
-        );
-    }
-
-    /**
      * Update the specified resource in storage.
      */
     public function update(ApprovalUpdateRequest $request, $id)
     {
-        $data = $request->validated();
+        $approval = Approval::find($id);
 
-        // user should own and be the admin of issued company id
+        if (!$approval) {
+            return BaseResponse::error(
+                message: 'Approval not found',
+                code: 404
+            );
+        }
+
+        $user = $request->user();
+        $isOwner = ($approval->id_user == $user->id);
+
+        if (!$user->isAdmin()) {
+            if (!$isOwner) {
+                return BaseResponse::error(
+                    message: 'You do not have permission to update this approval',
+                    code: 403
+                );
+            }
+            if ($approval->status !== 'pending') {
+                return BaseResponse::error(
+                    message: 'This approval cannot be edited because it has already been processed.',
+                    code: 403
+                );
+            }
+        }
+
+        if ($user->isAdmin()) {
+            $adminCompanyIds = $user->companies()->pluck('id')->toArray();
+            $approvalOwner = User::find($approval->id_user);
+
+            if (!$isOwner && (!is_null($approvalOwner) && !in_array($approvalOwner->id_workplace, $adminCompanyIds))) {
+                return BaseResponse::error(
+                    message: 'You do not have permission to update this approval',
+                    code: 403
+                );
+            }
+        }
+
+        $data = $request->validated();
+        $approval->update($data);
+
+        return BaseResponse::success(
+            data: $approval->fresh(),
+            message: 'Approval updated successfully',
+        );
+    }
+
+    public function approve(Request $request, $id){
         $user = $request->user();
         $companies = $user->companies()->get();
-        $companiesIds = $companies->pluck('id')->toArray();
+        $companyIds = $companies->pluck('id')->toArray();
 
-        $approval = Approval::whereIn('id_company', $companiesIds)
+        $userIds = User::whereIn('id_workplace', $companyIds)
+            ->pluck('id')
+            ->toArray();
+
+        $approval = Approval::whereIn('id_user', $userIds)
             ->where('id', $id)
             ->first();
 
         if (!$approval) {
             return BaseResponse::error(
-                message: 'Check clock setting not found',
+                message: 'Approval not found',
                 code: 404
             );
         }
 
-        $approval->update($data);
+        $approval->status = 'approved';
+        $approval->approved_by = $user->id;
+        $approval->save();
+
+        return BaseResponse::success(
+            data: [
+                'approval' => $approval,
+            ],
+            message: 'Approval approved and CheckClock created successfully',
+            code: 200
+        );
+    }
+
+    public function reject(Request $request, $id){
+        $user = $request->user();
+        $companies = $user->companies()->get();
+        $companyIds = $companies->pluck('id')->toArray();
+
+        $userIds = User::whereIn('id_workplace', $companyIds)
+            ->pluck('id')
+            ->toArray();
+
+        $approval = Approval::whereIn('id_user', $userIds)
+            ->where('id', $id)
+            ->first();
+
+        if (!$approval) {
+            return BaseResponse::error(
+                message: 'Approval not found',
+                code: 404
+            );
+        }
+
+        $approval->status = 'rejected';
+        $approval->approved_by = $user->id;
+        $approval->save();
 
         return BaseResponse::success(
             data: $approval,
-            message: 'Approval updated successfully',
+            message: 'Approval rejected successfully',
             code: 200
         );
     }
@@ -166,6 +318,20 @@ class ApprovalController extends Controller
         //
     }
 
+    public function isAdmin(Request $request) {
+        $user = $request->user();
+
+        if (!$user) {
+            return BaseResponse::error(
+                message: 'User not authenticated',
+                code: 401
+            );
+        }
+        return BaseResponse::success(
+            data: ['isAdmin' => $user->isAdmin()],
+            message: 'Admin status retrieved successfully',
+        );
+    }
     public function getRecentApprovals(Request $request)
     {
         try {

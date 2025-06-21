@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Org\Document;
 use App\Models\Org\Position;
 use App\Models\Org\Department;
+
 use Str;
 
 class Employee extends Model
@@ -19,9 +20,11 @@ class Employee extends Model
     protected $table = 'tb_employee';
 
     protected $primaryKey = 'id';
+    protected $casts = [
+        'id' => 'string',
+    ];
 
-
-    use HasFactory, Notifiable, SoftDeletes;
+    use HasFactory, Notifiable, SoftDeletes, HasUuids;
     /**
      * The attributes that are mass assignable.
      *
@@ -34,6 +37,7 @@ class Employee extends Model
         'sign_in_code',
         'id_user',
         // 'id_jadwal',
+        'id_department',
         'id_position',
         'first_name',
         'last_name',
@@ -43,7 +47,7 @@ class Employee extends Model
         'tanggal_lahir',
         'jenis_kelamin',
         'pendidikan',
-        'no_telp',
+
         'start_date',
         'end_date',
         'tipe_kontrak',

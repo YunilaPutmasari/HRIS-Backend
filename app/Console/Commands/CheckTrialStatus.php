@@ -21,11 +21,14 @@ class CheckTrialStatus extends Command
 
         foreach ($subscriptions as $subscription) {
             $subscription->update([
-                'status' => 'expired', // atau pending_payment
+                'is_trial' => false,
+                'status' => 'active', // atau pending_payment
+                'starts_at' => now(),
+                'ends_at' => now()->day(28)->addMonthNoOverflow()->endOfDay(),
             ]);
 
             // Log atau notifikasi opsional
-            $this->info("Subscription {$subscription->id} expired from trial.");
+            $this->info("Subscription {$subscription->id} trial expired dan menjadi aktif");
         }
 
         return Command::SUCCESS;

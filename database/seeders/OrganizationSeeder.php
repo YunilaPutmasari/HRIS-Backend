@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Approval;
 use App\Models\Org\Department;
 use App\Models\Org\Position;
 use App\Models\Attendance\CheckClockSetting;
@@ -47,6 +48,8 @@ class OrganizationSeeder extends Seeder
             'last_name' => 'Cmlabs',
             'address' => 'Jakarta',
             'employment_status' => 'active',
+            'id_position' => null,
+            'jenis_kelamin' => 'Laki-laki',
         ]);
 
         $check_clock_setting = CheckClockSetting::factory()->create([
@@ -124,6 +127,10 @@ class OrganizationSeeder extends Seeder
                     Employee::factory()->create([
                         'id_user' => $user_aux->id,
                         'employment_status' => 'active',
+                    ]);
+
+                    Approval::factory()->create([
+                        'id_user' => $user_aux->id_user,
                     ]);
                 }
             }

@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->uuid('id')->primary()->default(DB::raw('public.uuid_generate_v4()'));
             $table->string('name');
             $table->string('level');
+            $table->decimal('gaji', 15, 2);
             $table->uuid('id_department');
             $table->timestamps();
             $table->softDeletes();

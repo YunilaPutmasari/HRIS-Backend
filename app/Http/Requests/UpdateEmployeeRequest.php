@@ -22,7 +22,7 @@ class UpdateEmployeeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'avatar' => 'sometimes|nullable|file|image|mimes:jpeg,png,jpg,gif|max:2048', // max 2MB
+            'avatar' => 'sometimes|nullable|file|image|mimes:jpeg,png,jpg,gif|max:5000', // max 2MB
             'id_user' => 'sometimes|uuid',
             'first_name' => 'sometimes|string|max:255',
             'last_name' => 'sometimes|nullable|string|max:255',
@@ -33,7 +33,7 @@ class UpdateEmployeeRequest extends FormRequest
             'jenis_kelamin' => 'sometimes|string|in:Laki-laki,Perempuan',
             'pendidikan' => 'sometimes|string|in:SMA/SMK,D3,S1,S2,S3',
             'email' => 'sometimes|email|max:255',
-            'no_telp' => 'sometimes|string|max:20',
+            'phone_number' => 'sometimes|string|max:20',
             'start_date' => 'sometimes|date',
             'end_date' => 'sometimes|nullable|date|after_or_equal:startDate',
             'tenure' => 'sometimes|string|max:50',
@@ -42,6 +42,7 @@ class UpdateEmployeeRequest extends FormRequest
             'cabang' => 'sometimes|string|max:255',
             'employment_status' => 'sometimes|string|in:active,inactive,resign',
             'id_position' => 'sometimes|string|max:255',
+            'id_department' => 'sometimes|string|max:255',
             'jabatan' => 'sometimes|string|max:255',
             'tanggal_efektif' => 'sometimes|date',
             'bank' => 'sometimes|string|max:50',

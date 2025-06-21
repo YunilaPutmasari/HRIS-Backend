@@ -12,6 +12,8 @@ use App\Http\Controllers\Org\DeptPositionsController;
 use App\Http\Controllers\Org\DepartmentsController;
 use App\Http\Controllers\Subscription\SubscriptionController;
 use App\Http\Controllers\Lettering\ApprovalController;
+use App\Http\Controllers\Lettering\LetterController;
+use App\Http\Controllers\Lettering\LetterFormatController;
 
 Route::group([
     'prefix' => 'admin',
@@ -88,6 +90,18 @@ Route::group([
         Route::post('/', [EmployeeController::class, 'store'])->name('store');
         Route::get('/{id}', [EmployeeController::class, 'getEmployeeById']);
         Route::put('/{id}', [EmployeeController::class, 'updateEmployee']);
+        Route::post('/{id}/upload-document', [EmployeeController::class, 'uploadDocument']);
+
+        Route::delete('/{id}', [EmployeeController::class, 'destroy'])->name('destroy');
+        Route::delete('user/{id}/document/{id_document}', [EmployeeController::class, 'deleteEmployeeDocument'])->name('deleteEmployeeDocument');
+        Route::post('/import', [EmployeeController::class, 'import'])->name('import');
+        Route::group([
+            'prefix' => 'letter',
+            'as' => 'letter.',
+        ], function () {
+            Route::get('/formats', [LetterController::class, 'getFormats'])->name('getFormats');
+            Route::post('/', [LetterController::class, 'store'])->name('store');
+        });
         Route::group([
             'prefix' => 'dashboard',
             'as' => 'dashboard.',
@@ -127,9 +141,15 @@ Route::group([
     'as' => 'admin.subscription',
     'middleware' => ['auth:sanctum', 'admin'],
 ], function () {
-    Route::get('/', [SubscriptionController::class, 'index'])->name('index');
-    Route::post('/', [SubscriptionController::class, 'store'])->name('store');
-    Route::put('/{id}', [SubscriptionController::class, 'update'])->name('update');
-    Route::post('/{id}/cancel', [SubscriptionController::class, 'cancel'])->name('cancel');
-    Route::post('/{id}/upgrade', [SubscriptionController::class, 'upgrade'])->name('upgrade');
+    Route::post('/subscribe', [SubscriptionController::class, 'subscribe']);
+    Route::post('/request-change', [SubscriptionController::class, 'requestChange']);
+    Route::post('/cancel', [SubscriptionController::class, 'cancelSubscription']);
+    Route::get('/',[SubscriptionController::class,'getAllSubscription']);
+    Route::get('/active',[SubscriptionController::class,'getActiveSubscription']);
+    Route::get('/current',[SubscriptionController::class,'getCurrentSubscription']);
+    Route::get('/invoices',[SubscriptionController::class,'getCompanyInvoices']);
+    Route::get('/packageTypes',[SubscriptionController::class,'getAllPackageTypes']);
+    Route::get('/invoices/{invoice_id}',[SubscriptionController::class,'getInvoiceDetail']);
+    Route::get('/{subscription_id}',[SubscriptionController::class,'getUsageBySubscription']);
 });
+

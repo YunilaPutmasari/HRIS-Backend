@@ -22,7 +22,7 @@ class EmployeeResource extends JsonResource
             'jenis_kelamin' => $this->jenis_kelamin ?? '',
             'pendidikan' => $this->pendidikan ?? '',
             'email' => $this->user?->email ?? '',
-            'no_telp' => $this->no_telp ?? '',
+            'phone_number' => $this->user?->phone_number ?? '',
             'start_date' => $this->start_date,
             'end_date' => $this->end_date,
             'tenure' => $this->tenure,
@@ -32,9 +32,11 @@ class EmployeeResource extends JsonResource
             'employment_status' => $this->employment_status ?? '',
             'jabatan' => $this->position ? $this->position->name : null,
             'id_position' => $this->id_position,
+            'id_department' => $this->id_department,
+            'department' => $this->department ? $this->department->name : null,
             'tanggal_efektif' => $this->tanggal_efektif,
             'bank' => $this->bank ?? '',
-            'norek' => $this->norek ?? '',
+            'no_rek' => $this->no_rek ?? '',
             'avatar' => $this->avatar ? asset('storage/' . $this->avatar) : null,
             // 'dokumen' => $this->dokumen ? asset('storage/' . $this->dokumen) : null,
             'dokumen' => $this->documents?->map(function ($dok) {
@@ -47,10 +49,16 @@ class EmployeeResource extends JsonResource
             }) ?? [],
 
 
-            'gaji' => $this->gaji ? 'Rp ' . number_format($this->gaji, 0, ',', '.') : 'Rp 0',
+
+            'gaji' => $this->position->gaji ? 'Rp ' . number_format($this->position->gaji, 0, ',', '.') : 'Rp 0',
             'uang_lembur' => $this->uang_lembur ? 'Rp ' . number_format($this->uang_lembur, 0, ',', '.') : 'Rp 0',
             'denda_terlambat' => $this->denda_terlambat ? 'Rp ' . number_format($this->denda_terlambat, 0, ',', '.') : 'Rp 0',
             'total_gaji' => $this->total_gaji ? 'Rp ' . number_format($this->total_gaji, 0, ',', '.') : 'Rp 0',
+
+            'user' => [
+                'email' => $this->user->email ?? null,
+                'phone_number' => $this->user->phone_number ?? null,
+            ],
 
 
 
@@ -64,5 +72,12 @@ class EmployeeResource extends JsonResource
     {
         // Cukup cek kalau relasi position sudah ada
         return $this->position ? $this->position->name : null;
+
     }
+    private function department_name()
+    {
+        return $this->department ? $this->department->name : null;
+    }
+
+
 }
