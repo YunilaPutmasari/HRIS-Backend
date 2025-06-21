@@ -49,10 +49,59 @@ class XenditWebhookController extends Controller
                 'payment_datetime' => now(),
             ]);
 
-            // $this->createNewSubscriptionAfterPayment($invoice);
+            $this->applySubscriptionChanges($invoice);
         }
 
         return response()->json(['message' => 'Webhook handled'], 200);
+    }
+
+    protected function applySubscriptionChanges(Invoice $invoice)
+    {
+        $subscription = $invoice->subscription;
+
+        if (!$subscription) {
+            \Log::warning("Tidak ada subscription untuk invoice ID: {$invoice->id}");
+            return;
+        }
+
+        // Cek apakah ada pending change
+        $pendingChange = $subscription->pendingChange;
+
+        if ($pendingChange && $pendingChange->status === 'pending') {
+            $subscription->update([
+                'status' => 'expired',
+                'ends_at' => now(),
+            ]);
+            $newSubscription = Subscription::create([
+                'id_company' => $subscription->id_company,
+                'id_package_type' => $pendingChange->id_new_package_type,
+                'seats' => $pendingChange->new_seats,
+                'starts_at' => now(),
+                'ends_at' => now()->day(28)->addMonthNoOverflow()->endOfDay(),
+                'status' => 'active',
+            ]);
+            $company = $subscription->company;
+            $company->update(['id_subscription' => $newSubscription->id]);
+
+            // Hapus pending change
+            $pendingChange->delete();
+
+            \Log::info("Langganan baru dibuat", [
+                'old_sub' => $subscription->id,
+                'new_sub' => $newSubscription->id
+            ]);
+
+        }
+        
+        // Jika subscription status == canceled
+        if ($subscription->status === 'canceled') {
+            $subscription->update([
+                'status' => 'expired',
+                'ends_at' => now(),
+            ]);
+
+            \Log::info("Langganan dibatalkan", ['subscription_id' => $subscription->id]);
+        }
     }
 }
 

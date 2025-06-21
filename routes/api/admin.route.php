@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Attendance\CheckClockSettingController;
 use App\Http\Controllers\Attendance\CheckClockSettingTimeController;
+use App\Http\Controllers\Attendance\CheckClockController;
 use App\Http\Controllers\Payment\InvoiceController;
 use App\Http\Controllers\Payment\PaymentController;
 use App\Http\Controllers\Org\EmployeeController;
@@ -40,6 +41,15 @@ Route::group([
             Route::delete('/delete/{id_ck_setting}', [CheckClockSettingController::class, 'delete'])->name('delete');
             Route::delete('/{id_ck_setting}/delete/{id_ck_setting_time}', [CheckClockSettingTimeController::class, 'delete'])->name('delete');
         });
+
+        Route::group([
+            'prefix' => 'check-clock',
+            'as' => 'check-clock.',
+        ], function () {
+            Route::get('/employee-check-clocks', [CheckClockController::class, 'employeeCheckClocks'])->name('employee-check-clocks');
+        });
+
+
         Route::group([
             'prefix' => 'check-clock-setting-time',
             'as' => 'check-clock-setting-time.',
@@ -131,10 +141,15 @@ Route::group([
     'as' => 'admin.subscription',
     'middleware' => ['auth:sanctum', 'admin'],
 ], function () {
-    Route::get('/', [SubscriptionController::class, 'index'])->name('index');
-    Route::post('/', [SubscriptionController::class, 'store'])->name('store');
-    Route::put('/{id}', [SubscriptionController::class, 'update'])->name('update');
-    Route::post('/{id}/cancel', [SubscriptionController::class, 'cancel'])->name('cancel');
-    Route::post('/{id}/upgrade', [SubscriptionController::class, 'upgrade'])->name('upgrade');
+    Route::post('/subscribe', [SubscriptionController::class, 'subscribe']);
+    Route::post('/request-change', [SubscriptionController::class, 'requestChange']);
+    Route::post('/cancel', [SubscriptionController::class, 'cancelSubscription']);
+    Route::get('/',[SubscriptionController::class,'getAllSubscription']);
+    Route::get('/active',[SubscriptionController::class,'getActiveSubscription']);
+    Route::get('/current',[SubscriptionController::class,'getCurrentSubscription']);
+    Route::get('/invoices',[SubscriptionController::class,'getCompanyInvoices']);
+    Route::get('/packageTypes',[SubscriptionController::class,'getAllPackageTypes']);
+    Route::get('/invoices/{invoice_id}',[SubscriptionController::class,'getInvoiceDetail']);
+    Route::get('/{subscription_id}',[SubscriptionController::class,'getUsageBySubscription']);
 });
 

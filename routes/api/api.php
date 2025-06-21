@@ -18,15 +18,15 @@ Route::get('/user', function (Request $request) {
 
 Route::group([
     'prefix' => 'user',
-    'as'=>'user.',
-    'middleware'=>'auth::sanctum'
-],function(){
+    'as' => 'user.',
+    'middleware' => 'auth::sanctum'
+], function () {
 
     // Employee dashboard data
     Route::group([
         'prefix' => 'employee',
         'as' => 'employee.',
-    ], function(){
+    ], function () {
         Route::get('/dashboard', [EmployeeController::class, 'getEmployeeDashboard']);
         Route::get('/profile', [EmployeeController::class, 'getEmployeeProfile']);
         Route::get('/attendance', [EmployeeController::class, 'getEmployeeAttendance']);
@@ -43,6 +43,7 @@ Route::post('/xendit/webhook/invoice', [XenditWebhookController::class, 'handle'
 
 require __DIR__ . '/auth.route.php';
 require __DIR__ . '/admin.route.php';
+require __DIR__ . '/attendance.route.php';
 // require __DIR__ . '/user.route.php';
 // require __DIR__ . '/employee.route.php';
 // require __DIR__ . '/position.route.php';

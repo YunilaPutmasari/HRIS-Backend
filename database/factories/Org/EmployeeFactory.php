@@ -29,7 +29,6 @@ class EmployeeFactory extends Factory
             'cabang' => $this->faker->city(),
             // 'position' => $this->faker->jobTitle(),
             'id_position' => null,
-
         ];
     }
 }
