@@ -17,10 +17,11 @@ return new class extends Migration {
             $table->uuid('id_ck_setting');
             $table->uuid('id_ck_setting_time');
             $table->time('clock_in');
+            $table->time('clock_out');
             $table->time('break_start')->nullable();
             $table->time('break_end')->nullable();
-            $table->time('clock_out')->nullable();
-            $table->enum('status', ['on-time', 'late'])->default('on-time');
+            $table->enum('status', ['on-time', 'late', 'sick', 'leave', 'permit'])->default('on-time');
+          
             $table->timestamps();
             $table->softDeletes();
 
