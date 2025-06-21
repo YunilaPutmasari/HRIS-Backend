@@ -15,13 +15,10 @@ class ApprovalUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            "id_user" => "required|integer|exists:tb_user,id",
             "request_type" => "required|string|max:255",
-            "start_date" => "required|date_format:Y-m-d H:i:s",
-            "end_date" => "required|date_format:Y-m-d H:i:s",
+            "start_date" => "required|date_format:Y-m-d H:i",
+            "end_date" => "required|date_format:Y-m-d H:i",
             "reason" => "required|string|max:255",
-            "status" => "required|string|max:255",
-            "approved_by" => "nullable|integer|exists:tb_user,id",
         ];
     }
 }

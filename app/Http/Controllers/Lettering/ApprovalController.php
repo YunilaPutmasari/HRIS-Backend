@@ -7,8 +7,6 @@ use App\Http\Requests\ApprovalStoreRequest;
 use App\Http\Requests\ApprovalUpdateRequest;
 use App\Http\Responses\BaseResponse;
 use App\Models\Approval;
-use App\Models\Attendance\CheckClock;
-use App\Models\Attendance\CheckClockSetting;
 use App\Models\Org\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -65,7 +63,6 @@ class ApprovalController extends Controller
         return BaseResponse::success(
             data : $approval,
             message : 'Approval retrieved successfully',
-            code : 200,
         );
     }
 
@@ -103,6 +100,53 @@ class ApprovalController extends Controller
                 code: 500
             );
         }
+    }
+
+    public function show(Request $request, $id)
+    {
+        $user = $request->user();
+
+        $approval = Approval::with([
+                'employee',
+                'employee.position'
+            ])
+            ->find($id);
+        if (!$approval) {
+            return BaseResponse::error(
+                message: 'Approval not found',
+                code: 404
+            );
+        }
+
+        $isOwner = ($approval->id_user == $user->id);
+
+        if ($user->isAdmin()) {
+            $companies = $user->companies()->pluck('id')->toArray();
+
+            $approvalOwner = User::find($approval->id_user);
+
+            if (!$isOwner && !in_array($approvalOwner->id_workplace, $companies)) {
+                return BaseResponse::error(
+                    message: 'You do not have permission to view this approval',
+                    code: 403
+                );
+            }
+        } else {
+            if (!$isOwner) {
+                return BaseResponse::error(
+                    message: 'You do not have permission to view this approval',
+                    code: 403
+                );
+            }
+        }
+
+        $approval->document_url = $approval->document ? Storage::url($approval->document) : null;
+
+        return BaseResponse::success(
+            data: $approval,
+            message: 'Approval retrieved successfully',
+            code: 200
+        );
     }
 
     /**
@@ -154,30 +198,51 @@ class ApprovalController extends Controller
      */
     public function update(ApprovalUpdateRequest $request, $id)
     {
-        $data = $request->validated();
-
-        // user should own and be the admin of issued company id
-        $user = $request->user();
-        $companies = $user->companies()->get();
-        $companiesIds = $companies->pluck('id')->toArray();
-
-        $approval = Approval::whereIn('id_company', $companiesIds)
-            ->where('id', $id)
-            ->first();
+        $approval = Approval::find($id);
 
         if (!$approval) {
             return BaseResponse::error(
-                message: 'Check clock setting not found',
+                message: 'Approval not found',
                 code: 404
             );
         }
 
+        $user = $request->user();
+        $isOwner = ($approval->id_user == $user->id);
+
+        if (!$user->isAdmin()) {
+            if (!$isOwner) {
+                return BaseResponse::error(
+                    message: 'You do not have permission to update this approval',
+                    code: 403
+                );
+            }
+            if ($approval->status !== 'pending') {
+                return BaseResponse::error(
+                    message: 'This approval cannot be edited because it has already been processed.',
+                    code: 403
+                );
+            }
+        }
+
+        if ($user->isAdmin()) {
+            $adminCompanyIds = $user->companies()->pluck('id')->toArray();
+            $approvalOwner = User::find($approval->id_user);
+
+            if (!$isOwner && (!is_null($approvalOwner) && !in_array($approvalOwner->id_workplace, $adminCompanyIds))) {
+                return BaseResponse::error(
+                    message: 'You do not have permission to update this approval',
+                    code: 403
+                );
+            }
+        }
+
+        $data = $request->validated();
         $approval->update($data);
 
         return BaseResponse::success(
-            data: $approval,
+            data: $approval->fresh(),
             message: 'Approval updated successfully',
-            code: 200
         );
     }
 
