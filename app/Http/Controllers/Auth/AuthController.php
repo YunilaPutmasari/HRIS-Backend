@@ -183,7 +183,7 @@ class AuthController extends Controller
 
     public function me(Request $request)
     {
-        $user = auth()->user()->load('employee', 'workplace.subscription');
+        $user = auth()->user()->load('employee', 'workplace.subscription', 'employee.position', 'employee.department');
 
         if (!$user) {
             return BaseResponse::error(
@@ -192,7 +192,7 @@ class AuthController extends Controller
             );
         }
 
-        $user->load(['workplace', 'employee']);
+        // $user->load(['workplace', 'employee']);
 
         return BaseResponse::success(
             data: $user,
