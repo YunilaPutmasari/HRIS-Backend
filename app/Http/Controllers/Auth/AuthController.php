@@ -111,7 +111,7 @@ class AuthController extends Controller
     private function generateUniqueSignInCode()
     {
         do {
-            $code = 'MN' . str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+            $code = 'ky' . str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
             $exists = Employee::where('sign_in_code', $code)->exists();
         } while ($exists);
 
@@ -122,6 +122,8 @@ class AuthController extends Controller
     public function signin(SignInRequest $request)
     {
         $data = $request->validated();
+
+        // dd($data); 
 
         $user = null;
 
@@ -152,23 +154,6 @@ class AuthController extends Controller
             ], 403);
         }
 
-        $company = $user->workplace;
-        $hasSubscription = $company->subscription()
-            ->whereIn('status')->exists();
-
-        if (!$hasSubscription) {
-            $newSub = Subscription::create([
-                'id_company' => $company->id,
-                'id_package_type' => $freePlan->id,
-                'seats' => $freePlan->max_seats,
-                'starts_at' => now(),
-                'ends_at' => now()->day(28)->addMonthNoOverflow()->endOfDay(),
-                'status' => 'active',
-            ]);
-
-            $company->update(['id_subscription' => $newSub->id]);
-        }
-        
         $token = $user->createToken('access_token')->plainTextToken;
 
         return BaseResponse::success(
@@ -183,7 +168,7 @@ class AuthController extends Controller
 
     public function me(Request $request)
     {
-        $user = auth()->user()->load('employee', 'workplace.subscription', 'employee.position', 'employee.department');
+        $user = auth()->user()->load('employee', 'workplace.subscription');
 
         if (!$user) {
             return BaseResponse::error(
@@ -192,7 +177,7 @@ class AuthController extends Controller
             );
         }
 
-        // $user->load(['workplace', 'employee']);
+        $user->load(['workplace', 'employee']);
 
         return BaseResponse::success(
             data: $user,
