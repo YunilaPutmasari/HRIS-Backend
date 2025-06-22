@@ -72,7 +72,7 @@ class GenerateInvoiceOnEvent extends Command
                 'id_company' => $subscription->id_company,
                 'id_subscription' => $subscription->id,
                 'total_amount' => $totalAmount,
-                'due_datetime' => now()->addDays(7),
+                'due_datetime' => now()->addMinutes(10),
                 'status' => 'unpaid',
                 'description' => $description,
             ]);

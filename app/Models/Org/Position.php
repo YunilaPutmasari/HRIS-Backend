@@ -28,14 +28,6 @@ class Position extends Model
         'name',
         'level',
         'gaji',
-    ];
-
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
-    protected $hidden = [
         'id_department',
     ];
 

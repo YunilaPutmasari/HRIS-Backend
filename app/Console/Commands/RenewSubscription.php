@@ -88,7 +88,7 @@ class RenewSubscription extends Command
                 'trial_ends_at' => null,
 
                 'starts_at' => now(),
-                'ends_at' => now()->day(28)->addMonthNoOverflow()->endOfDay(),
+                'ends_at' => now()->addMinutes(10),
 
                 'status' => 'active',
             ]);
