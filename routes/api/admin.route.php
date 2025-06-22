@@ -118,11 +118,12 @@ Route::group([
         'as' => 'positions.',
     ], function () {
         Route::get('/', [DeptPositionsController::class, 'index'])->name('index');
-        Route::post('/', [DeptPositionsController::class, 'store']);
-        Route::get('/get/{id_position}', [DeptPositionsController::class, 'show']);
-        Route::get('/{id_department}', [DeptPositionsController::class, 'getByDepartment'])->name('storeByDepartment');
-        Route::post('/{id_department}', [DeptPositionsController::class, 'storeByDepartment'])->name('storeByDepartment');
-
+        Route::post('/', [DeptPositionsController::class, 'store'])->name('store');
+        Route::get('/by-department/{id_department}', [DeptPositionsController::class, 'getByDepartment'])->name('getByDepartment');
+        Route::post('/by-department/{id_department}', [DeptPositionsController::class, 'storeByDepartment'])->name('storeByDepartment');
+        Route::get('/{id}', [DeptPositionsController::class, 'show'])->name('show');
+        Route::put('/{id}', [DeptPositionsController::class, 'update'])->name('update');
+        Route::delete('/{id}', [DeptPositionsController::class, 'destroy'])->name('destroy');
     });
 
     Route::group([
@@ -130,9 +131,17 @@ Route::group([
         'as' => 'departments.',
     ], function () {
         Route::get('/', [DepartmentsController::class, 'index'])->name('index');
-        Route::get('/{id_department}', [DepartmentsController::class, 'getDepartment']);
-        Route::post('/', [DepartmentsController::class, 'store']);
-
+        Route::post('/', [DepartmentsController::class, 'store'])->name('store');
+        Route::get('/{id}', [DepartmentsController::class, 'show'])->name('show');
+        Route::put('/{id}', [DepartmentsController::class, 'update'])->name('update');
+        Route::delete('/{id}', [DepartmentsController::class, 'destroy'])->name('destroy');
+    });
+    
+    Route::group([
+        'prefix' => 'company',
+        'as' => 'company.',
+    ], function () {
+        Route::get('/', [DepartmentsController::class, 'getCompanyData']);
     });
 });
 
