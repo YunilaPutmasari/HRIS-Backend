@@ -7,6 +7,8 @@ use App\Models\Org\User;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Approval extends Model
 {
@@ -25,11 +27,23 @@ class Approval extends Model
         'document',
     ];
 
+    protected $appends = ['document_url'];
+
     public function user(){
         return $this->belongsTo(User::class, 'id_user');
     }
 
     public function employee(){
         return $this->hasOne(Employee::class, 'id_user', 'id_user');
+    }
+
+    public function documentUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value, $attributes) =>
+                !empty($attributes['document'])
+                    ? Storage::disk('public')->url($attributes['document'])
+                    : null,
+        );
     }
 }

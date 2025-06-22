@@ -36,21 +36,13 @@ class ApprovalController extends Controller
                     ->with([
                         'employee',
                         'employee.position'
-                    ])->get()
-                    ->map(function ($approval) {
-                        $approval->document_url = $approval->document ? Storage::url($approval->document) : null;
-                        return $approval;
-                    });
+                    ])->get();
             } else {
                 $approval = Approval::where('id_user', $user->id)
                     ->with([
                         'employee',
                         'employee.position'
-                    ])->get()
-                    ->map(function ($approval) {
-                        $approval->document_url = $approval->document ? Storage::url($approval->document) : null;
-                        return $approval;
-                    });
+                    ])->get();
             }
         } catch (\Throwable $e) {
             return response()->json([
@@ -92,12 +84,10 @@ class ApprovalController extends Controller
             return BaseResponse::success(
                 data: $users,
                 message: 'Users retrieved successfully',
-                code: 200
             );
         } catch (\Throwable $e) {
             return BaseResponse::error(
                 message: 'Error retrieving users: ' . $e->getMessage(),
-                code: 500
             );
         }
     }
@@ -139,8 +129,6 @@ class ApprovalController extends Controller
                 );
             }
         }
-
-        $approval->document_url = $approval->document ? Storage::url($approval->document) : null;
 
         return BaseResponse::success(
             data: $approval,
@@ -342,7 +330,7 @@ class ApprovalController extends Controller
 
             $companies = $user->companies()->get();
             $companyIds = $companies->pluck('id')->toArray();
-            
+
             if (empty($companyIds)) {
                 return BaseResponse::success([], 'No Company Found', 200);
             }
