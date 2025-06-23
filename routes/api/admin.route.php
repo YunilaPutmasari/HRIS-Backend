@@ -8,6 +8,7 @@ use App\Http\Controllers\Attendance\CheckClockController;
 use App\Http\Controllers\Payment\InvoiceController;
 use App\Http\Controllers\Payment\PaymentController;
 use App\Http\Controllers\Org\EmployeeController;
+use App\Http\Controllers\Org\UserController;
 use App\Http\Controllers\Org\DeptPositionsController;
 use App\Http\Controllers\Org\DepartmentsController;
 use App\Http\Controllers\Subscription\SubscriptionController;
@@ -110,6 +111,7 @@ Route::group([
             Route::get('/contract-stats', [EmployeeController::class, 'getEmployeeContractStats'])->name('getEmployeeContractStats'); //asumsiku tipeKontrak: Tetap,Kontrak,Lepas
             Route::get('/status-stats', [EmployeeController::class, 'getEmployeeStatusStats'])->name('getEmployeeStatusStats'); //asumsiku tipeKontrak: Tetap,Kontrak,Lepas
             Route::get('/recent-approvals', [ApprovalController::class, 'getRecentApprovals'])->name('getRecentApprovals');
+            Route::get('/attendance-summary', [UserController::class, 'getAttendanceSummary'])->name('getAttendanceSummary');
         });
     });
 

@@ -561,6 +561,9 @@ class EmployeeController extends Controller
         }
     }
 
+    // ===================================================================================================
+    // Break Points Untuk Controller Employee ============================================================
+    // ===================================================================================================
     public function getEmployeeContractStats(Request $request)
     {
         try {
@@ -638,9 +641,6 @@ class EmployeeController extends Controller
         return BaseResponse::success($data, 'Statistik status karyawan berhasil diambil', 200);
 
     }
-    // ===================================================================================================
-// Break Points Untuk Controller Employee ============================================================
-// ===================================================================================================
     public function getEmployeeDashboard()
     {
         try {
