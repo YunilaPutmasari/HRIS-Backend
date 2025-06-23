@@ -50,11 +50,13 @@ class LetterController extends Controller
             \Log::info('Cek format:', [$format]);
             \Log::info('Cek request:', $request->all());
             $letter = Letter::create([
-                'id_user' => $request->user()->id, // ambil dari session login
+                'id_user' => $request->id_user,             // Penerima surat
+                'id_sender' => $request->user()->id,        // Pengirim surat (user yang login)
                 'id_letter_format' => $format->id,
                 'subject' => $request->subject,
                 'body' => $body,
             ]);
+
 
 
             return response()->json([

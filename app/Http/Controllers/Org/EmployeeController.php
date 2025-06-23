@@ -439,7 +439,7 @@ class EmployeeController extends Controller
                 'address' => 'nullable|string',
                 'id_position' => 'nullable|uuid',
                 'employment_status' => 'in:active,inactive,resign',
-                'tipe_kontrak' => 'in:Tetap,Kontrak,Lepas',
+                'tipe_kontrak' => 'in:Tetap,Kontrak,Magang',
 
                 'cabang' => 'nullable|string',
                 'nik' => 'nullable|string',

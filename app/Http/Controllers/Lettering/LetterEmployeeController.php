@@ -11,9 +11,17 @@ class LetterEmployeeController extends Controller
 {
     public function index(): JsonResponse
     {
-        // Ambil surat + user langsung dari relasi User
-        $letters = Letter::with(['user', 'format'])->get();
+        $user = auth()->user();
 
+        if (!$user) {
+            return response()->json([
+                'meta' => ['success' => false, 'message' => 'User tidak terautentikasi.'],
+            ], 401);
+        }
+
+        $letters = Letter::with(['user', 'format'])
+            ->where('id_user', $user->id)
+            ->get();
 
         $data = $letters->map(fn($item) => [
             'id' => $item->id,
@@ -27,7 +35,7 @@ class LetterEmployeeController extends Controller
             'format' => [
                 'name' => $item->format?->name ?? "Tidak ditemukan",
             ],
-
+            'created_at' => $item->created_at->format('Y-m-d H:i:s'), // waktu kirim surat
         ]);
 
         return response()->json([
@@ -35,15 +43,18 @@ class LetterEmployeeController extends Controller
             'data' => $data,
         ]);
     }
+
     public function downloadPdf($id)
     {
         $letter = Letter::with(['user', 'format'])->findOrFail($id);
+
+
 
         $pdf = Pdf::loadView('pdf.letter', [
             'letter' => $letter
         ]);
 
         return $pdf->download("Surat-{$letter->subject}.pdf");
-
     }
+
 }
