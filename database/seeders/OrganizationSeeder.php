@@ -122,9 +122,10 @@ class OrganizationSeeder extends Seeder
                 for ($i = 1; $i <= 3; $i++) {
 
                     $user_aux = User::factory()->create([
-                        'email' => strtolower(str_replace(' ', '', $position)) . $i . '@cmlabs.com',
+                        'email' => strtolower(str_replace(' ', '', $position->name)) . $i . '@cmlabs.com',
                         'password' => bcrypt('password'),
                         'is_admin' => false,
+                        'id_workplace' => $company->id,
                     ]);
 
                     Employee::factory()->create([
