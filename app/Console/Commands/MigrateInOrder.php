@@ -67,7 +67,7 @@ class MigrateInOrder extends Command
             'subscription/2025_05_13_081936_tb_subscription.php',
             'subscription/2025_06_14_184654_tb_pending_change.php',
             'subscription/2025_06_15_132931_tb_daily_usage_records.php',
-            
+
             // payment migrations
             'payment/2025_05_13_081937_tb_invoice.php',
             'payment/2025_05_13_081938_tb_payment.php',

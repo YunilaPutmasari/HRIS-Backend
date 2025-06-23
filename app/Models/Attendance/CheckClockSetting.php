@@ -22,7 +22,10 @@ class CheckClockSetting extends Model
     protected $fillable = [
         'name',
         'id_company',
-        'type'
+        'type',
+        'location_lat',
+        'location_lng',
+        'radius',
     ];
 
     public function checkClockSettingTime()

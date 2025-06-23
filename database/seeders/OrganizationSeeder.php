@@ -31,7 +31,6 @@ class OrganizationSeeder extends Seeder
 
         $supreme_manager_user = User::factory()->create([
             'email' => 'manager@cmlabs.com',
-            'phone_number' => '+6281234567890',
             'password' => bcrypt('password'),
             'is_admin' => true,
         ]);
@@ -56,7 +55,11 @@ class OrganizationSeeder extends Seeder
             'name' => 'Default Check Clock Setting',
             'id_company' => $company->id,
             'type' => 'WFO',
+            'location_lat' => -7.954535659194481,
+            'location_lng' => 112.63222512418814,
+            'radius' => 300,
         ]);
+
 
         $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
         foreach ($days as $day) {
@@ -110,11 +113,11 @@ class OrganizationSeeder extends Seeder
             ]);
 
             foreach ($positions as $position => $level) {
-                $positionModel = $departmentModel->positions()->create([
+                $position = $departmentModel->positions()->create([
                     'name' => $position,
                     'level' => $level,
+                    'gaji' => 5000000 * $level,
                 ]);
-
 
                 for ($i = 1; $i <= 3; $i++) {
 
@@ -129,9 +132,9 @@ class OrganizationSeeder extends Seeder
                         'employment_status' => 'active',
                     ]);
 
-                    Approval::factory()->create([
-                        'id_user' => $user_aux->id_user,
-                    ]);
+                    // Approval::factory()->create([
+                    //     'id_user' => $user_aux->id_user,
+                    // ]);
                 }
             }
         }
