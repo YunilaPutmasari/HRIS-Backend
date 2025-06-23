@@ -16,8 +16,9 @@ class CheckClockSeeder extends Seeder
 {
     public function run(): void
     {
+        // CheckClock::truncate();
         // Ganti ID atau nama sesuai kebutuhan
-        $company = Company::where('name', 'Anonim Corp2')->first(); // atau ->find($id)
+        $company = Company::where('name', 'Anonim Corp')->first(); // atau ->find($id)
 
         if (!$company) {
             echo "Company tidak ditemukan.\n";

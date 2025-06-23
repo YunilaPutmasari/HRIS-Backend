@@ -15,7 +15,9 @@ class ApprovalSeeder extends Seeder
      */
     public function run(): void
     {   
-        $companyName = 'Anonim Corp2';
+        Approval::truncate();
+        
+        $companyName = 'Anonim Corp';
         $company = Company::where('name', $companyName)->first();
         
         if (!$company) {

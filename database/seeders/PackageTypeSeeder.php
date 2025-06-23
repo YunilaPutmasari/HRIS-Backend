@@ -13,6 +13,8 @@ class PackageTypeSeeder extends Seeder
      */
     public function run(): void
     {
+        PackageType::truncate();
+
         PackageType::create([
             'id' => \Str::uuid(),
             'name' => 'Free Plan',

@@ -641,28 +641,86 @@ class EmployeeController extends Controller
         return BaseResponse::success($data, 'Statistik status karyawan berhasil diambil', 200);
 
     }
+
     public function getEmployeeDashboard()
     {
         try {
             $user = Auth::user();
+
+            // Ambil data employee beserta relasi penting
             $employee = Employee::where('id_user', $user->id)
-                ->with(['user', 'position'])
+                ->with(['user', 'position', 'department', 'documents'])
                 ->first();
 
             if (!$employee) {
                 return BaseResponse::error(null, 'Employee data not found', 404);
             }
 
-            $data = [
-                'employee' => $employee,
-                'attendance_today' => $this->getTodayAttendance($employee->id),
-                'payroll_summary' => $this->getPayrollSummary($employee->id),
+            // Hitung masa kerja
+            $startDate = \Carbon\Carbon::parse($employee->start_date);
+            $now = \Carbon\Carbon::now();
+            $masaKerja = $startDate->diffForHumans($now, ['syntax' => \Carbon\CarbonInterface::DIFF_RELATIVE_AUTO, 'parts' => 2]);
+
+            // Cek apakah masih aktif
+            $isActive = $employee->employment_status === 'active';
+            $contractStatus = $isActive ? 'Aktif' : 'Tidak Aktif';
+
+            // Format tanggal efektif
+            $tanggalEfektif = $employee->tanggal_efektif
+                ? \Carbon\Carbon::parse($employee->tanggal_efektif)->format('d F Y')
+                : '-';
+
+            // Dokumen yang dimiliki karyawan
+            $dokumenList = $employee->documents->map(function ($doc) {
+                return [
+                    'id' => $doc->id,
+                    'name' => $doc->name,
+                    'type' => $doc->type,
+                    'path' => asset('storage/' . $doc->path),
+                    'uploaded_at' => \Carbon\Carbon::parse($doc->created_at)->format('d F Y H:i'),
+                ];
+            });
+
+            // Data absensi hari ini (masih dummy)
+            $attendanceToday = $this->getTodayAttendance($employee->id);
+
+            // Ringkasan payroll bulan ini (masih dummy)
+            $payrollSummary = $this->getPayrollSummary($employee->id);
+
+            // Data untuk tampilan dashboard
+            $dashboardData = [
+                'employee' => [
+                    'id' => $employee->id,
+                    'avatar' => $employee->avatar ? asset('storage/'.$employee->avatar) : null,
+                    'first_name' => $employee->first_name,
+                    'last_name' => $employee->last_name,
+                    'full_name' => $employee->first_name . ' ' . $employee->last_name,
+                    'nik' => $employee->nik,
+                    'jenis_kelamin' => $employee->jenis_kelamin,
+                    'tempat_lahir' => $employee->tempat_lahir,
+                    'tanggal_lahir' => \Carbon\Carbon::parse($employee->tanggal_lahir)->format('d F Y'),
+                    'pendidikan' => $employee->pendidikan,
+                    'address' => $employee->address,
+                    'cabang' => $employee->cabang,
+                    'tipe_kontrak' => $employee->tipe_kontrak,
+                    'status_kepegawaian' => $employee->employment_status,
+                    'tanggal_efektif' => $tanggalEfektif,
+                    'masa_kerja' => $masaKerja,
+                    'status_kontrak' => $contractStatus,
+                    'bank' => $employee->bank,
+                    'no_rek' => $employee->no_rek,
+                    'position' => $employee->position?->name ?? '-',
+                    'department' => $employee->department?->name ?? '-',
+                ],
+                'dokumen' => $dokumenList,
+                'absensi_hari_ini' => $attendanceToday,
+                'gaji_bulan_ini' => $payrollSummary,
                 'last_updated' => now()->format('d F Y H:i'),
             ];
 
-            return BaseResponse::success($data, 'Employee dashboard data retrieved successfully', 200);
+            return BaseResponse::success($dashboardData, 'Employee dashboard data retrieved successfully', 200);
         } catch (\Exception $e) {
-            return BaseResponse::error(null, 'Failed to retrieve employee dashboard data', 500);
+            return BaseResponse::error(null, 'Failed to retrieve employee dashboard data: ' . $e->getMessage(), 500);
         }
     }
 

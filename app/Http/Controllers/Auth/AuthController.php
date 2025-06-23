@@ -7,6 +7,8 @@ use App\Http\Requests\SignInRequest;
 use App\Http\Requests\SignUpRequest;
 use App\Http\Responses\BaseResponse;
 use App\Models\Org\Company;
+use App\Models\Subscription\Subscription;
+use App\Models\Subscription\PackageType;
 use App\Models\Org\User;
 use App\Http\Controllers\Controller;
 use App\Models\Org\Employee;
@@ -153,8 +155,8 @@ class AuthController extends Controller
         }
 
         $company = $user->workplace;
-        $hasSubscription = $company->subscription()
-            ->whereIn('status')->exists();
+        $hasSubscription = $company->subscription()->exists();
+        $freePlan = PackageType::where('is_free',true)->first();
 
         if (!$hasSubscription) {
             $newSub = Subscription::create([
@@ -162,7 +164,7 @@ class AuthController extends Controller
                 'id_package_type' => $freePlan->id,
                 'seats' => $freePlan->max_seats,
                 'starts_at' => now(),
-                'ends_at' => now()->day(28)->addMonthNoOverflow()->endOfDay(),
+                'ends_at' => now()->addMinutes(10),
                 'status' => 'active',
             ]);
 
