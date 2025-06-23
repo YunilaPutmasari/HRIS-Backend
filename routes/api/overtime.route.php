@@ -13,8 +13,8 @@ Route::group([
 });
 
 Route::group([
-    'prefix' => 'overtime',
-    'as' => 'overtime.',
+    'prefix' => 'overtimes',
+    'as' => 'overtimes.',
     'middleware' => 'auth:sanctum'
 ], function () {
     Route::apiResource('/', OvertimeController::class);

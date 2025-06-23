@@ -8,7 +8,7 @@ use App\Http\Requests\OvertimeUpdateRequest;
 use App\Http\Responses\BaseResponse;
 use App\Models\Overtime\Overtime;
 use Carbon\Carbon;
-use Request;
+use Illuminate\Http\Request;
 
 class OvertimeController extends Controller
 {
@@ -32,7 +32,8 @@ class OvertimeController extends Controller
 
             return BaseResponse::success($overtimes, 'Overtime records retrieved successfully');
         } catch (\Throwable $e) {
-            return BaseResponse::error(null, 'Failed to retrieve overtime records: ', $e->getMessage());
+            $errorMessage = 'Failed to retrieve overtime records: ' . $e->getMessage();
+            return BaseResponse::error(null, $errorMessage, 500);
         }
     }
 
