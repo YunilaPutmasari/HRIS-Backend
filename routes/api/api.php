@@ -49,3 +49,4 @@ require __DIR__ . '/attendance.route.php';
 // require __DIR__ . '/position.route.php';
 require __DIR__ . '/approval.route.php';
 require __DIR__ . '/employee.route.php';
+require __DIR__ . '/overtime.route.php';
