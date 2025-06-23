@@ -8,6 +8,7 @@ use App\Http\Requests\CheckClockSettingCompleteCreateRequest;
 use App\Http\Requests\CheckClockSettingCompleteUpdateRequest;
 use App\Http\Requests\CheckClockSettingUpdateRequest;
 use App\Models\Attendance\CheckClockSetting;
+use App\Models\Org\User;
 use App\Http\Responses\BaseResponse;
 use Illuminate\Http\Request;
 
@@ -141,6 +142,12 @@ class CheckClockSettingController extends Controller
             ]);
         }
 
+        // update users with this check clock setting
+        if (isset($data['user_ids']) && is_array($data['user_ids'])) {
+            User::whereIn('id', $data['user_ids'])
+                ->update(['id_check_clock_setting' => $checkClockSetting->id]);
+        }
+
         $checkClockSetting->load('checkClockSettingTime');
 
         return BaseResponse::success(
@@ -235,6 +242,12 @@ class CheckClockSettingController extends Controller
                 'break_start' => $time['break_start'],
                 'break_end' => $time['break_end'],
             ]);
+        }
+
+        // update users with this check clock setting
+        if (isset($data['user_ids']) && is_array($data['user_ids'])) {
+            User::whereIn('id', $data['user_ids'])
+                ->update(['id_check_clock_setting' => $checkClockSetting->id]);
         }
 
         $checkClockSetting->load('checkClockSettingTime');

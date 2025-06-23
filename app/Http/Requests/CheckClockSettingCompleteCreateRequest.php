@@ -21,6 +21,8 @@ class CheckClockSettingCompleteCreateRequest extends BaseRequest
             'check_clock_setting_time.*.clock_out' => 'required|date_format:H:i',
             'check_clock_setting_time.*.break_start' => 'required|date_format:H:i',
             'check_clock_setting_time.*.break_end' => 'required|date_format:H:i',
+            'user_ids' => 'nullable|array',
+            'user_ids.*' => 'uuid',
         ];
     }
 }
