@@ -16,6 +16,9 @@ return new class extends Migration {
             $table->uuid('id_company');
             $table->string('name');
             $table->enum('type', ['WFA', 'WFO', 'Hybrid'])->default('WFO');
+            $table->double('location_lat')->nullable();
+            $table->double('location_lng')->nullable();
+            $table->integer('radius')->nullable();
             $table->timestamps();
             $table->softDeletes();
 

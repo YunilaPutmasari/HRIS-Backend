@@ -9,6 +9,7 @@ use App\Http\Resources\EmployeeResource;
 use App\Http\Controllers\org\EmployeeController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Payment\XenditWebhookController;
+use App\Http\Controllers\EmployeeDashboardController;
 
 
 
@@ -19,7 +20,7 @@ Route::get('/user', function (Request $request) {
 Route::group([
     'prefix' => 'user',
     'as' => 'user.',
-    'middleware' => 'auth::sanctum'
+    'middleware' => 'auth:sanctum'
 ], function () {
 
     // Employee dashboard data
@@ -37,6 +38,8 @@ Route::group([
 Route::get('', function (Request $request) {
     return UserResource::collection(User::all());
 });
+
+Route::middleware('auth:sanctum')->get('/employee/dashboard', [EmployeeDashboardController::class, 'index']);
 
 
 Route::post('/xendit/webhook/invoice', [XenditWebhookController::class, 'handle']);

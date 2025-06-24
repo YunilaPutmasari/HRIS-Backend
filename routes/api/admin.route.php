@@ -33,12 +33,12 @@ Route::group([
             Route::get('/', [CheckClockSettingController::class, 'index'])->name('index');
             Route::get('/{id_ck_setting}', [CheckClockSettingController::class, 'show'])->name('show');
 
-            Route::post('/new', [CheckClockSettingController::class, 'new'])->name('new');
+            // Route::post('/new', [CheckClockSettingController::class, 'new'])->name('new');
             Route::post('/complete-new', [CheckClockSettingController::class, 'completeNew'])->name('complete-new');
 
-            Route::put('/update/{id_ck_setting}', [CheckClockSettingController::class, 'update'])->name('update');
+            // Route::put('/update/{id_ck_setting}', [CheckClockSettingController::class, 'update'])->name('update');
             Route::put('/complete-update/{id_ck_setting}', [CheckClockSettingController::class, 'completeUpdate'])->name('complete-update');
-            Route::put('/{id_ck_setting}/update/{id_ck_setting_time}', [CheckClockSettingTimeController::class, 'update'])->name('update');
+            // Route::put('/{id_ck_setting}/update/{id_ck_setting_time}', [CheckClockSettingTimeController::class, 'update'])->name('update');
 
             Route::delete('/delete/{id_ck_setting}', [CheckClockSettingController::class, 'delete'])->name('delete');
             Route::delete('/{id_ck_setting}/delete/{id_ck_setting_time}', [CheckClockSettingTimeController::class, 'delete'])->name('delete');
@@ -139,7 +139,7 @@ Route::group([
         Route::put('/{id}', [DepartmentsController::class, 'update'])->name('update');
         Route::delete('/{id}', [DepartmentsController::class, 'destroy'])->name('destroy');
     });
-    
+
     Route::group([
         'prefix' => 'company',
         'as' => 'company.',
@@ -156,12 +156,12 @@ Route::group([
     Route::post('/subscribe', [SubscriptionController::class, 'subscribe']);
     Route::post('/request-change', [SubscriptionController::class, 'requestChange']);
     Route::post('/cancel', [SubscriptionController::class, 'cancelSubscription']);
-    Route::get('/',[SubscriptionController::class,'getAllSubscription']);
-    Route::get('/active',[SubscriptionController::class,'getActiveSubscription']);
-    Route::get('/current',[SubscriptionController::class,'getCurrentSubscription']);
-    Route::get('/invoices',[SubscriptionController::class,'getCompanyInvoices']);
-    Route::get('/packageTypes',[SubscriptionController::class,'getAllPackageTypes']);
-    Route::get('/invoices/{invoice_id}',[SubscriptionController::class,'getInvoiceDetail']);
-    Route::get('/{subscription_id}',[SubscriptionController::class,'getUsageBySubscription']);
+    Route::get('/', [SubscriptionController::class, 'getAllSubscription']);
+    Route::get('/active', [SubscriptionController::class, 'getActiveSubscription']);
+    Route::get('/current', [SubscriptionController::class, 'getCurrentSubscription']);
+    Route::get('/invoices', [SubscriptionController::class, 'getCompanyInvoices']);
+    Route::get('/packageTypes', [SubscriptionController::class, 'getAllPackageTypes']);
+    Route::get('/invoices/{invoice_id}', [SubscriptionController::class, 'getInvoiceDetail']);
+    Route::get('/{subscription_id}', [SubscriptionController::class, 'getUsageBySubscription']);
 });
 
