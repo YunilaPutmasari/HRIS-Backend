@@ -40,12 +40,16 @@ class AnonimOrganizationSeeder extends Seeder
         }
         
         $this->call([
+            // seeder package subscription
             PackageTypeSeeder::class,
+            // seeder organization Anonim Corp
             OrganizationSeeder2::class,
             EmployeeSeeder2::class,
             DepartmentSeeder3::class,
             PositionSeeder4::class,
             ApprovalSeeder::class,
+            // seeder checkclock
+            CheckClockSettingSeeder::class,
             CheckClockSeeder::class,
         ]);
     }

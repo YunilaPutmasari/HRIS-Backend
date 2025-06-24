@@ -25,26 +25,49 @@ class CheckClockSeeder extends Seeder
             return;
         }
 
-        $setting = CheckClockSetting::first();
-        $settingTime = CheckClockSettingTime::first();
+        // Ambil check_clock_setting milik perusahaan ini
+        $checkClockSetting = CheckClockSetting::where('id_company', $company->id)->first();
 
-        if (!$setting || !$settingTime) {
-            echo "CheckClockSetting atau SettingTime belum ada.\n";
+        if (!$checkClockSetting) {
+            echo "CheckClockSetting tidak ditemukan untuk perusahaan ini.\n";
             return;
         }
 
+        // Ambil semua jadwal harian (Senin - Jumat)
+        $checkClockSettingTimes = CheckClockSettingTime::where('id_ck_setting', $checkClockSetting->id)
+            ->whereIn('day', ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])
+            ->get();
+        
+        if ($checkClockSettingTimes->isEmpty()) {
+            echo "Jadwal waktu kerja belum dibuat untuk setting ini.\n";
+            return;
+        }        
+
         // Loop semua user dari company ini
         foreach ($company->users as $user) {
-            CheckClock::create([
-                'id' => Str::uuid(),
-                'id_user' => $user->id,
-                'id_ck_setting' => $setting->id,
-                'id_ck_setting_time' => $settingTime->id,
-                'clock_in' => Carbon::parse('08:00:00')->addMinutes(rand(0,45)),
-                'break_start' => Carbon::parse('12:00:00'),
-                'break_end' => Carbon::parse('13:00:00'),
-                'clock_out' => Carbon::parse('17:00:00'),
-            ]);
+            for($i = 0; $i < 20; $i++) {
+                $randomSettingTime = $checkClockSettingTimes->random();
+
+                $clockIn = Carbon::parse($randomSettingTime->clock_in)->addMinutes(rand(0, 45));
+                $breakStart = Carbon::parse($randomSettingTime->break_start);
+                $breakEnd = Carbon::parse($randomSettingTime->break_end);
+                $clockOut = Carbon::parse($randomSettingTime->clock_out);
+
+                $status = rand(1, 10) === 1 ? 'late' : 'on-time';
+                
+                CheckClock::create([
+                    'id' => Str::uuid(),
+                    'id_user' => $user->id,
+                    'id_ck_setting' => $checkClockSetting->id,
+                    'id_ck_setting_time' => $randomSettingTime->id,
+                    'clock_in' => $clockIn->toTimeString(),
+                    'break_start' => $breakStart->toTimeString(),
+                    'break_end' => $breakEnd->toTimeString(),
+                    'clock_out' => $clockOut->toTimeString(),
+                    'status' => $status
+                ]);
+                echo "Seeder CheckClock ke '{$i}'.\n";
+            }
         }
 
         echo "Seeder CheckClock untuk user di perusahaan '{$company->name}' berhasil dijalankan.\n";
