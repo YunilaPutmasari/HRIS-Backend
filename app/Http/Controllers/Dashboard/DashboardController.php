@@ -342,22 +342,16 @@ class DashboardController extends Controller
                 ELSE 6 END")
             ->get();
 
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'user' => $user,
-                    'total_work_hours' => round($totalWorkHours, 2),
-                    'attendance_stats' => $stats,
-                    'schedule_this_week' => $scheduleThisWeek,
-                    'daily_attendance' => $this->generateDailyAttendanceChart($checkClocks),
-                    'last_updated' => now()->format('Y-m-d H:i:s'),
-                ],
-            ]);
+            return BaseResponse::success([
+                'user' => $user,
+                'total_work_hours' => round($totalWorkHours, 2),
+                'attendance_stats' => $stats,
+                'schedule_this_week' => $scheduleThisWeek,
+                'daily_attendance' => $this->generateDailyAttendanceChart($checkClocks),
+                'last_updated' => now()->format('Y-m-d H:i:s'),
+            ], 200);
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to retrieve dashboard data: ' . $e->getMessage(),
-            ], 500);
+            return BaseResponse::error(null, 'Failed to retrieve dashboard data: ' . $e->getMessage(), 500);
         }
     }
 
