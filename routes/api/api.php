@@ -39,7 +39,25 @@ Route::get('', function (Request $request) {
     return UserResource::collection(User::all());
 });
 
-Route::middleware('auth:sanctum')->get('/employee/dashboard', [EmployeeDashboardController::class, 'index']);
+// Route::middleware('auth:sanctum')->get('/employee/dashboard', [EmployeeDashboardController::class, 'index']);
+
+Route::middleware(['auth:sanctum', 'manager.admin'])->group(function () {
+    Route::get('/manager/dashboard', [ManagerDashboardController::class, 'index']);
+    Route::get('/manager/employee', [EmployeeController::class, 'index']);
+    Route::get('/manager/attendance', [AttendanceController::class, 'index']);
+    Route::get('/manager/approval', [ApprovalController::class, 'index']);
+    Route::get('/manager/lettering', [LetteringController::class, 'index']);
+    Route::get('/manager/jadwal', [ScheduleController::class, 'index']);
+    Route::get('/manager/settings', [SettingController::class, 'index']);
+});
+
+Route::middleware(['auth:sanctum', 'employee.only'])->group(function () {
+    Route::get('/employee/dashboard', [EmployeeDashboardController::class, 'index']);
+    Route::get('/employee/attendance', [AttendanceController::class, 'index']);
+    Route::get('/employee/approval', [ApprovalController::class, 'index']);
+    Route::get('/employee/overtime', [OvertimeController::class, 'index']);
+    Route::get('/employee/lettering', [LetteringController::class, 'index']);
+});
 
 
 Route::post('/xendit/webhook/invoice', [XenditWebhookController::class, 'handle']);
