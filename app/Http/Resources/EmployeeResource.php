@@ -23,6 +23,7 @@ class EmployeeResource extends JsonResource
             'pendidikan' => $this->pendidikan ?? '',
             'email' => $this->user?->email ?? '',
             'phone_number' => $this->user?->phone_number ?? '',
+
             'start_date' => $this->start_date,
             'end_date' => $this->end_date,
             'tenure' => $this->tenure,
@@ -38,6 +39,7 @@ class EmployeeResource extends JsonResource
             'bank' => $this->bank ?? '',
             'no_rek' => $this->no_rek ?? '',
             'avatar' => $this->avatar ? asset('storage/' . $this->avatar) : null,
+
             // 'dokumen' => $this->dokumen ? asset('storage/' . $this->dokumen) : null,
             'dokumen' => $this->documents?->map(function ($dok) {
                 return [
@@ -58,6 +60,9 @@ class EmployeeResource extends JsonResource
             'user' => [
                 'email' => $this->user->email ?? null,
                 'phone_number' => $this->user->phone_number ?? null,
+
+                'id_check_clock_setting' => $this->user?->id_check_clock_setting ?? null,
+                'jadwal_type' => $this->user?->checkClockSetting?->type ?? '-',
             ],
 
 

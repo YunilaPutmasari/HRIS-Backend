@@ -404,7 +404,7 @@ class EmployeeController extends Controller
                 $query->where('id_workplace', $user->workplace->id);
             })
                 ->where('id', $employeeId)
-                ->with(['user', 'position', 'documents', 'company', 'department'])
+                ->with(['user.checkClockSetting', 'user', 'position', 'documents', 'company', 'department'])
                 ->first();
 
             // Jika employee tidak ditemukan
@@ -440,7 +440,6 @@ class EmployeeController extends Controller
                 'id_position' => 'nullable|uuid',
                 'employment_status' => 'in:active,inactive,resign',
                 'tipe_kontrak' => 'in:Tetap,Kontrak,Magang',
-
                 'cabang' => 'nullable|string',
                 'nik' => 'nullable|string',
                 'tempat_lahir' => 'nullable|string',
@@ -462,7 +461,6 @@ class EmployeeController extends Controller
                 $query->where('id_workplace', $user->workplace->id);
             })
                 ->where('id', $employeeId)
-
                 ->with('user')
                 ->first();
 
@@ -478,7 +476,6 @@ class EmployeeController extends Controller
                 'id_position',
                 'employment_status',
                 'tipe_kontrak',
-
                 'cabang',
                 'nik',
                 'tempat_lahir',

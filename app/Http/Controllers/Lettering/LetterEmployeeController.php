@@ -13,15 +13,20 @@ class LetterEmployeeController extends Controller
     {
         $user = auth()->user();
 
+        \Log::info('User Login:', ['id' => $user?->id, 'email' => $user?->email]);
+
         if (!$user) {
             return response()->json([
                 'meta' => ['success' => false, 'message' => 'User tidak terautentikasi.'],
             ], 401);
         }
 
-        $letters = Letter::with(['user', 'format'])
-            ->where('id_user', $user->id)
+        // Cek apakah surat dengan ID tersebut memang ada
+        $letters = \App\Models\Letter::with(['user', 'format'])
+            ->where('id_user', $user->id) // ← ini seharusnya cocok
             ->get();
+
+        \Log::info('Surat ditemukan:', ['jumlah' => $letters->count()]);
 
         $data = $letters->map(fn($item) => [
             'id' => $item->id,
@@ -35,7 +40,7 @@ class LetterEmployeeController extends Controller
             'format' => [
                 'name' => $item->format?->name ?? "Tidak ditemukan",
             ],
-            'created_at' => $item->created_at->format('Y-m-d H:i:s'), // waktu kirim surat
+            'created_at' => $item->created_at->format('Y-m-d H:i:s'),
         ]);
 
         return response()->json([
@@ -43,6 +48,7 @@ class LetterEmployeeController extends Controller
             'data' => $data,
         ]);
     }
+
 
     public function downloadPdf($id)
     {
