@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Models\Org\Company;
 
 class DepartmentSeeder3 extends Seeder
 {
@@ -12,15 +13,22 @@ class DepartmentSeeder3 extends Seeder
      * Run the database seeds.
      */
     public function run(): void
-    {
-        $companyId = '0197779a-ac44-70dd-8ee3-8742759568b4'; // Ganti dengan ID company sesuai kebutuhan
+    {   
+        $companyName = 'Anonim Corp';
+        $company = Company::where('name',$companyName)->first();
+        if (!$company) {
+            $this->command->error("Company dengan nama '{$companyName}' tidak ditemukan.");
+            return;
+        }
+
+        $companyId = $company->id;
 
         $departments = [
             ['name' => 'IT', 'location' => 'Jakarta'],
             ['name' => 'HR', 'location' => 'Jakarta'],
             ['name' => 'Finance', 'location' => 'Jakarta'],
             ['name' => 'Marketing', 'location' => 'Jakarta'],
-            ['name' => 'Sales', 'location' => 'Bandung'],
+            ['name' => 'Sales', 'location' => 'Jakarta'],
         ];
 
         foreach ($departments as $dept) {

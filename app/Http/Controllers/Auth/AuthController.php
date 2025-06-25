@@ -7,6 +7,8 @@ use App\Http\Requests\SignInRequest;
 use App\Http\Requests\SignUpRequest;
 use App\Http\Responses\BaseResponse;
 use App\Models\Org\Company;
+use App\Models\Subscription\Subscription;
+use App\Models\Subscription\PackageType;
 use App\Models\Org\User;
 use App\Http\Controllers\Controller;
 use App\Models\Org\Employee;

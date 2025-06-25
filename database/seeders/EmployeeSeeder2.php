@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Org\User;
 use App\Models\Org\Employee;
+use App\Models\Org\Company;
 use Illuminate\Support\Str;
 
 class EmployeeSeeder2 extends Seeder
@@ -17,10 +18,19 @@ class EmployeeSeeder2 extends Seeder
      */
     public function run(): void
     {
-        $companyId = '0197779a-ac44-70dd-8ee3-8742759568b4';
+        $companyName = 'Anonim Corp';
+        $company = Company::where('name',$companyName)->first();
+        
+        if (!$company) {
+            $this->command->error("Company dengan nama '{$companyName}' tidak ditemukan.");
+            return;
+        }
+
+        $companyId = $company->id;
+
         $password = Hash::make('password');
 
-        for ($i = 7; $i <= 20; $i++) {
+        for ($i = 2; $i <= 20; $i++) {
             $user = User::create([
                 'id' => (string) Str::uuid(),
                 'email' => "employee{$i}@example.com",
