@@ -7,9 +7,16 @@ use App\Http\Requests\ApprovalStoreRequest;
 use App\Http\Requests\ApprovalUpdateRequest;
 use App\Http\Responses\BaseResponse;
 use App\Models\Approval;
+use App\Models\Attendance\CheckClock;
+use App\Models\Attendance\CheckClockSetting;
+use App\Models\Attendance\CheckClockSettingTime;
 use App\Models\Org\User;
+use Carbon\CarbonPeriod;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Log;
 
 class ApprovalController extends Controller
 {
@@ -36,21 +43,13 @@ class ApprovalController extends Controller
                     ->with([
                         'employee',
                         'employee.position'
-                    ])->get()
-                    ->map(function ($approval) {
-                        $approval->document_url = $approval->document ? Storage::url($approval->document) : null;
-                        return $approval;
-                    });
+                    ])->get();
             } else {
                 $approval = Approval::where('id_user', $user->id)
                     ->with([
                         'employee',
                         'employee.position'
-                    ])->get()
-                    ->map(function ($approval) {
-                        $approval->document_url = $approval->document ? Storage::url($approval->document) : null;
-                        return $approval;
-                    });
+                    ])->get();
             }
         } catch (\Throwable $e) {
             return response()->json([
@@ -92,12 +91,10 @@ class ApprovalController extends Controller
             return BaseResponse::success(
                 data: $users,
                 message: 'Users retrieved successfully',
-                code: 200
             );
         } catch (\Throwable $e) {
             return BaseResponse::error(
                 message: 'Error retrieving users: ' . $e->getMessage(),
-                code: 500
             );
         }
     }
@@ -140,8 +137,6 @@ class ApprovalController extends Controller
             }
         }
 
-        $approval->document_url = $approval->document ? Storage::url($approval->document) : null;
-
         return BaseResponse::success(
             data: $approval,
             message: 'Approval retrieved successfully',
@@ -155,42 +150,51 @@ class ApprovalController extends Controller
     public function store(ApprovalStoreRequest $request)
     {   // user should own and be the admin of issued company id
         $user = $request->user();
-        $companies = $user->companies()->get();
-        $companyIds = $companies->pluck('id')->toArray();
-
         $data = $request->validated();
 
         if ($request->hasFile('document')) {
-            $file = $request->file('document');
-            $filePatth = $file->store('documents', 'public');
-            $data['document'] = $filePatth;
+            $filePath = $request->file('document')->store('documents', 'public');
+            $data['document'] = $filePath;
         }
 
-        if ($user->isAdmin()) {
-            $data['id_user'] = $request->input('id_user');
-            $data['status'] = 'approved';
-            $data['approved_by'] = $user->id;
-
-
-            return BaseResponse::success(
-                data: [
-                    'approval' => Approval::create($data),
-                ],
-                message: 'Approval created and CheckClock created successfully',
-                code: 201
-            );
-        } else {
+        if (!$user->isAdmin()) {
             $data['id_user'] = $user->id;
             $data['status'] = 'pending';
+
+            $approval = Approval::create($data);
+
+            return BaseResponse::success(
+                data: $approval,
+                message: 'Approval created successfully',
+                code: 201
+            );
         }
 
-        $approval = Approval::create($data);
+        try {
+            $approval = DB::transaction(function () use ($data, $user, $request) {
+                $data['id_user'] = $request->input('id_user');
+                $data['status'] = 'approved';
+                $data['approved_by'] = $user->id;
 
-        return BaseResponse::success(
-            data: $approval,
-            message: 'Approval created successfully',
-            code: 201
-        );
+                $newApproval = Approval::create($data);
+
+                $this->createCheckClockFromApproval($newApproval);
+
+                return $newApproval;
+            });
+
+            return BaseResponse::success(
+                data: $approval,
+                message: 'Pengajuan berhasil dibuat dan langsung disetujui. CheckClock telah dibuat.',
+                code: 201
+            );
+        } catch (Exception $e) {
+            Log::error("Gagal membuat dan menyetujui approval: " . $e->getMessage());
+            return BaseResponse::error(
+                message: 'Gagal membuat pengajuan: ' . $e->getMessage(),
+                code: 500
+            );
+        }
     }
 
     /**
@@ -247,36 +251,96 @@ class ApprovalController extends Controller
     }
 
     public function approve(Request $request, $id){
-        $user = $request->user();
-        $companies = $user->companies()->get();
-        $companyIds = $companies->pluck('id')->toArray();
+        try {
+            return DB::transaction(function () use ($request, $id) {
+                $adminUser = $request->user();
 
-        $userIds = User::whereIn('id_workplace', $companyIds)
-            ->pluck('id')
-            ->toArray();
+                $approval = Approval::with('user')->findOrFail($id);
 
-        $approval = Approval::whereIn('id_user', $userIds)
-            ->where('id', $id)
-            ->first();
+                // Bagian Otorisasi
+                if (!$adminUser->isAdmin()) {
+                    return BaseResponse::error(
+                        message: 'Hanya admin yang dapat menyetujui pengajuan.',
+                        code: 403
+                    );
+                }
+                if ($approval->status !== 'pending') {
+                    return BaseResponse::error(
+                        message: 'Pengajuan ini sudah diproses.',
+                        code: 422,
+                    );
+                }
+                if (!$adminUser->companies()->where('id', $approval->user->id_workplace)->exists()) {
+                    return BaseResponse::error(message: 'Anda tidak memiliki wewenang atas karyawan ini.', code: 403);
+                }
 
-        if (!$approval) {
+                // Update status approval
+                $approval->status = 'approved';
+                $approval->approved_by = $adminUser->id;
+                $approval->save();
+
+                $this->createCheckClockFromApproval($approval);
+
+                return BaseResponse::success(
+                    data: $approval->fresh(), // Gunakan fresh() untuk mendapatkan data terbaru dari DB
+                    message: 'Pengajuan berhasil disetujui dan CheckClock telah dibuat.'
+                );
+            });
+        } catch (Exception $e) {
+            // Jika terjadi error di mana pun di dalam 'try', catat dan kembalikan response error.
+            Log::error("Gagal menyetujui approval ID: " . $id . " - " . $e->getMessage());
             return BaseResponse::error(
-                message: 'Approval not found',
-                code: 404
+                message: 'Terjadi kesalahan saat memproses persetujuan: ' . $e->getMessage(),
+                code: 500
             );
         }
+    }
 
-        $approval->status = 'approved';
-        $approval->approved_by = $user->id;
-        $approval->save();
+    private function createCheckClockFromApproval(Approval $approval): void
+    {
+        $approval->loadMissing('user');
+        $employeeUser = $approval->user;
 
-        return BaseResponse::success(
-            data: [
-                'approval' => $approval,
-            ],
-            message: 'Approval approved and CheckClock created successfully',
-            code: 200
-        );
+        if (!$employeeUser || !$employeeUser->id_workplace) {
+            Log::warning("User atau workplace ID tidak ditemukan untuk approval ID: " . $approval->id);
+            return;
+        }
+
+        // Cari pengaturan check-clock yang paling relevan untuk perusahaan karyawan.
+        // Asumsi mengambil yang pertama adalah perilaku yang diinginkan.
+        $checkClockSetting = CheckClockSetting::where('id_company', $employeeUser->id_workplace)->first();
+        if (!$checkClockSetting) {
+            Log::warning("CheckClockSetting tidak ditemukan untuk perusahaan ID: " . $employeeUser->id_workplace);
+            return;
+        }
+
+        $period = CarbonPeriod::create($approval->start_date, $approval->end_date);
+
+        foreach ($period as $date) {
+            $dayName = $date->format('l');
+
+            $dailySchedule = CheckClockSettingTime::where('id_ck_setting', $checkClockSetting->id)
+                ->where('day', $dayName)
+                ->first();
+            if (!$dailySchedule) {
+                Log::info("Tidak ada jadwal kerja untuk karyawan {$employeeUser->id} pada hari {$dayName} ({$date->toDateString()}). CheckClock tidak dibuat.");
+                continue;
+            }
+
+            $clockInTime = $date->copy()->setTimeFromTimeString($dailySchedule->clock_in);
+            $clockOutTime = $date->copy()->setTimeFromTimeString($dailySchedule->clock_out);
+
+            CheckClock::create([
+                'id_user' => $approval->id_user,
+                'id_ck_setting' => $checkClockSetting->id,
+                'id_ck_setting_time' => $dailySchedule->id,
+                'clock_in' => $clockInTime,
+                'clock_out' => $clockOutTime,
+                'status' => strtolower($approval->request_type),
+                'created_at' => $date,
+                'updated_at' => $date,
+            ]);
+        }
     }
 
     public function reject(Request $request, $id){
@@ -343,7 +407,7 @@ class ApprovalController extends Controller
 
             $companies = $user->companies()->get();
             $companyIds = $companies->pluck('id')->toArray();
-            
+
             if (empty($companyIds)) {
                 return BaseResponse::success([], 'No Company Found', 200);
             }
@@ -377,7 +441,7 @@ class ApprovalController extends Controller
                 'data' => $approvals
             ], 'Recent approvals berhasil diambil', 200);
         } catch (\Throwable $e) {
-            \Log::error('Error fetching recent approvals: ' . $e->getMessage());
+            Log::error('Error fetching recent approvals: ' . $e->getMessage());
 
             return BaseResponse::error(null, 'Terjadi kesalahan server', 500);
         }

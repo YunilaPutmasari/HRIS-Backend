@@ -32,6 +32,8 @@ class CheckClock extends Model
         'location_lat',
         'location_lng',
         'radius',
+        'created_at',
+        'updated_at',
     ];
 
     public function user()
