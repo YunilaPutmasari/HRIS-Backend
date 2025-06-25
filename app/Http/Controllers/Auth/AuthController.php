@@ -154,16 +154,41 @@ class AuthController extends Controller
             ], 403);
         }
 
+        // $company = $user->workplace;
+        // $hasSubscription = $company->subscription()->exists();
+        // $freePlan = PackageType::where('is_free',true)->first();
+
+        // if (!$hasSubscription) {
+        //     $newSub = Subscription::create([
+        //         'id_company' => $company->id,
+        //         'id_package_type' => $freePlan->id,
+        //         'seats' => $freePlan->max_seats,
+        //         'starts_at' => now(),
+        //         'ends_at' => now()->addMinutes(10),
+        //         'status' => 'active',
+        //     ]);
+
+        //     $company->update(['id_subscription' => $newSub->id]);
+        // }
+
         $token = $user->createToken('access_token')->plainTextToken;
 
-        return BaseResponse::success(
-            data: [
-                'user' => $user,
-                'token' => $token
-            ],
-            message: 'User signed in successfully',
-            code: 200
-        );
+        // ======================
+    // ⬇️ Tambahkan role ke response user
+    // ======================
+    $userData = $user->toArray();
+    $userData['role'] = $user->is_admin ? 'admin' : 'employee';
+    
+    return BaseResponse::success(
+        data: [
+            'user' => $userData,
+            'token' => $token
+        ],
+        message: 'User signed in successfully',
+        code: 200
+    );
+    
+
     }
 
     public function me(Request $request)
@@ -186,11 +211,6 @@ class AuthController extends Controller
         );
     }
 
-    // public function redirectToGoogle()
-    // {
-    //     return Socialite::driver('google')->stateless()->redirect();
-    // }
-
     //autth id_karyawan
     public function redirectToGoogle(Request $request)
 {
@@ -202,16 +222,6 @@ class AuthController extends Controller
         ->with(['state' => $loginMethod])
         ->redirect();
 }
-
-//     public function redirectToGoogle(Request $request)
-// {
-//     $loginMethod = $request->query('login_method');
-
-//     // Simpan login_method ke dalam session sementara
-//     session(['login_method' => $loginMethod]);
-
-//     return Socialite::driver('google')->stateless()->redirect();
-// }
 
 
     public function redirectToGoogleCallback()
@@ -256,12 +266,7 @@ class AuthController extends Controller
             //auth id_karyawan
             $loginMethod = request()->get('state'); // Ambil dari parameter callback dari Google
 
-            // Misal: cek role manager atau employee
-            $role = 'employee'; // default
-
-            if ($user->is_admin) {
-                $role = 'manager';
-            }
+            $role = $user->is_admin ? 'admin' : 'employee';
 
             // 4. Redirect ke FE
             return BaseResponse::redirect(config('app.frontend_url') . '/auth/google/callback?' . http_build_query([
