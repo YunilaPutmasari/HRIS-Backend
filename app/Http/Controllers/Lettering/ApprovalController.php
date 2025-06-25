@@ -11,6 +11,7 @@ use App\Models\Attendance\CheckClock;
 use App\Models\Attendance\CheckClockSetting;
 use App\Models\Attendance\CheckClockSettingTime;
 use App\Models\Org\User;
+use Carbon\CarbonPeriod;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -149,42 +150,51 @@ class ApprovalController extends Controller
     public function store(ApprovalStoreRequest $request)
     {   // user should own and be the admin of issued company id
         $user = $request->user();
-        $companies = $user->companies()->get();
-        $companyIds = $companies->pluck('id')->toArray();
-
         $data = $request->validated();
 
         if ($request->hasFile('document')) {
-            $file = $request->file('document');
-            $filePatth = $file->store('documents', 'public');
-            $data['document'] = $filePatth;
+            $filePath = $request->file('document')->store('documents', 'public');
+            $data['document'] = $filePath;
         }
 
-        if ($user->isAdmin()) {
-            $data['id_user'] = $request->input('id_user');
-            $data['status'] = 'approved';
-            $data['approved_by'] = $user->id;
-
-
-            return BaseResponse::success(
-                data: [
-                    'approval' => Approval::create($data),
-                ],
-                message: 'Approval created and CheckClock created successfully',
-                code: 201
-            );
-        } else {
+        if (!$user->isAdmin()) {
             $data['id_user'] = $user->id;
             $data['status'] = 'pending';
+
+            $approval = Approval::create($data);
+
+            return BaseResponse::success(
+                data: $approval,
+                message: 'Approval created successfully',
+                code: 201
+            );
         }
 
-        $approval = Approval::create($data);
+        try {
+            $approval = DB::transaction(function () use ($data, $user, $request) {
+                $data['id_user'] = $request->input('id_user');
+                $data['status'] = 'approved';
+                $data['approved_by'] = $user->id;
 
-        return BaseResponse::success(
-            data: $approval,
-            message: 'Approval created successfully',
-            code: 201
-        );
+                $newApproval = Approval::create($data);
+
+                $this->createCheckClockFromApproval($newApproval);
+
+                return $newApproval;
+            });
+
+            return BaseResponse::success(
+                data: $approval,
+                message: 'Pengajuan berhasil dibuat dan langsung disetujui. CheckClock telah dibuat.',
+                code: 201
+            );
+        } catch (Exception $e) {
+            Log::error("Gagal membuat dan menyetujui approval: " . $e->getMessage());
+            return BaseResponse::error(
+                message: 'Gagal membuat pengajuan: ' . $e->getMessage(),
+                code: 500
+            );
+        }
     }
 
     /**
@@ -245,27 +255,26 @@ class ApprovalController extends Controller
             return DB::transaction(function () use ($request, $id) {
                 $adminUser = $request->user();
 
-                $approval = Approval::findOrFail($id);
+                $approval = Approval::with('user')->findOrFail($id);
 
+                // Bagian Otorisasi
                 if (!$adminUser->isAdmin()) {
                     return BaseResponse::error(
                         message: 'Hanya admin yang dapat menyetujui pengajuan.',
                         code: 403
                     );
                 }
-
                 if ($approval->status !== 'pending') {
                     return BaseResponse::error(
                         message: 'Pengajuan ini sudah diproses.',
                         code: 422,
                     );
                 }
-
-                $employeeUser = $approval->user;
-                if (!$adminUser->companies()->where('id', $employeeUser->id_workplace)->exists()) {
+                if (!$adminUser->companies()->where('id', $approval->user->id_workplace)->exists()) {
                     return BaseResponse::error(message: 'Anda tidak memiliki wewenang atas karyawan ini.', code: 403);
                 }
 
+                // Update status approval
                 $approval->status = 'approved';
                 $approval->approved_by = $adminUser->id;
                 $approval->save();
@@ -289,6 +298,7 @@ class ApprovalController extends Controller
 
     private function createCheckClockFromApproval(Approval $approval): void
     {
+        $approval->loadMissing('user');
         $employeeUser = $approval->user;
 
         if (!$employeeUser || !$employeeUser->id_workplace) {
@@ -298,35 +308,39 @@ class ApprovalController extends Controller
 
         // Cari pengaturan check-clock yang paling relevan untuk perusahaan karyawan.
         // Asumsi mengambil yang pertama adalah perilaku yang diinginkan.
-        $checkClockSetting = CheckClockSetting::where('id_company', $employeeUser->id_workplace)
-            ->orderBy('created_at', 'asc')
-            ->first();
-
+        $checkClockSetting = CheckClockSetting::where('id_company', $employeeUser->id_workplace)->first();
         if (!$checkClockSetting) {
             Log::warning("CheckClockSetting tidak ditemukan untuk perusahaan ID: " . $employeeUser->id_workplace);
             return;
         }
 
-        // Logika ini mungkin perlu disesuaikan. Saat ini, ia mengambil setting time pertama yang ada.
-        // Untuk izin/sakit, mungkin tidak memerlukan id_ck_setting_time spesifik.
-        $checkClockSettingTime = CheckClockSettingTime::where('id_ck_setting', $checkClockSetting->id)
-            ->orderBy('created_at', 'asc')
-            ->first();
+        $period = CarbonPeriod::create($approval->start_date, $approval->end_date);
 
-        // Tetap lanjutkan meskipun setting time spesifik tidak ada,
-        // karena untuk izin/sakit, yang penting adalah clock_in/out nya.
-        if (!$checkClockSettingTime) {
-            Log::info("CheckClockSettingTime tidak ditemukan untuk setting ID: " . $checkClockSetting->id . ". CheckClock tetap dibuat.");
+        foreach ($period as $date) {
+            $dayName = $date->format('l');
+
+            $dailySchedule = CheckClockSettingTime::where('id_ck_setting', $checkClockSetting->id)
+                ->where('day', $dayName)
+                ->first();
+            if (!$dailySchedule) {
+                Log::info("Tidak ada jadwal kerja untuk karyawan {$employeeUser->id} pada hari {$dayName} ({$date->toDateString()}). CheckClock tidak dibuat.");
+                continue;
+            }
+
+            $clockInTime = $date->copy()->setTimeFromTimeString($dailySchedule->clock_in);
+            $clockOutTime = $date->copy()->setTimeFromTimeString($dailySchedule->clock_out);
+
+            CheckClock::create([
+                'id_user' => $approval->id_user,
+                'id_ck_setting' => $checkClockSetting->id,
+                'id_ck_setting_time' => $dailySchedule->id,
+                'clock_in' => $clockInTime,
+                'clock_out' => $clockOutTime,
+                'status' => strtolower($approval->request_type),
+                'created_at' => $date,
+                'updated_at' => $date,
+            ]);
         }
-
-        CheckClock::create([
-            'id_user' => $approval->id_user,
-            'id_ck_setting' => $checkClockSetting->id,
-            'id_ck_setting_time' => $checkClockSettingTime ? $checkClockSettingTime->id : null, // Simpan null jika tidak ada
-            'clock_in' => $approval->start_date,
-            'clock_out' => $approval->end_date,
-            'status' => strtolower($approval->request_type), // Contoh: 'sick', 'permit'
-        ]);
     }
 
     public function reject(Request $request, $id){
