@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Org\Employee;
 use App\Models\Org\Document;
 use App\Models\Org\Company;
+use App\Models\Org\Position;
 use App\Models\Org\User;
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreEmployeeRequest;
@@ -279,62 +280,95 @@ class EmployeeController extends Controller
         return BaseResponse::success(['message' => 'Employee deleted successfully']);
     }
 
-    public function import(ImportEmployeeRequest $request)
+    public function import(Request $request)
     {
-        $employees = $request->input('id');
+        $employees = $request->input('employees');
 
-        if (empty($employees)) {
-            return BaseResponse::error('No data to import', 400);
+        if (empty($employees) || !is_array($employees)) {
+            return response()->json([
+                'meta' => ['success' => false, 'message' => 'Data tidak valid', 'code' => 400],
+                'data' => null
+            ], 400);
         }
-        \Log::info('Import employees:', $employees);
 
         try {
+            $imported = [];
+
             foreach ($employees as $emp) {
-                if (empty($emp['first_name']) && empty($emp['last_name']) && !empty($emp['nama'])) {
-                    $nameParts = explode(' ', $emp['nama'], 2);
+                // Format nama
+                if ((empty($emp['first_name']) || empty($emp['last_name'])) && !empty($emp['nama'])) {
+                    $nameParts = explode(' ', trim($emp['nama']), 2);
                     $emp['first_name'] = $nameParts[0];
                     $emp['last_name'] = $nameParts[1] ?? '';
                 }
-
-                if (empty($emp['address'])) {
-                    $emp['address'] = 'Tidak Diketahui';
+                if (!empty($emp['jabatan'])) {
+                    $position = Position::firstOrCreate(['name' => $emp['jabatan']]);
+                    $emp['id_position'] = $position->id;
+                } else {
+                    $emp['id_position'] = null; // ⬅️ tambahkan ini biar tetap bisa disimpan meskipun kosong
                 }
 
-                if (empty($emp['first_name']) || empty($emp['last_name']) || empty($emp['address'])) {
-                    \Log::warning('Skipping employee, data tidak lengkap', $emp);
-                    continue;
+                $email = strtolower($emp['email'] ?? $emp['Email'] ?? 'user_' . uniqid() . '@example.com');
+
+                $phone = $emp['phone_number'] ?? '0000000000';
+
+                // Cari user dengan email yg sama
+                $user = null;
+                if (!isset($emp['id_user']) || !User::find($emp['id_user'])) {
+                    $currentUser = Auth::user();
+                    $workplaceId = $currentUser->workplace->id ?? null;
+
+                    $user = User::firstOrCreate(
+                        ['email' => $email],
+                        [
+                            'id' => Str::uuid(),
+                            'password' => bcrypt('password123'),
+                            'phone_number' => $phone,
+                            'id_workplace' => $workplaceId,
+                        ]
+                    );
+
+                    $emp['id_user'] = $user->id;
+                } else {
+                    $user = User::find($emp['id_user']);
+
                 }
 
-                Employee::updateOrCreate(
-                    ['id' => $emp['id'] ?? null],
+                $employee = Employee::updateOrCreate(
+                    ['id' => $emp['id'] ?? Str::uuid()],
                     [
-                        'id_user' => $emp['id_user'] ?? null,
+                        'id_user' => $emp['id_user'],
                         'first_name' => $emp['first_name'],
                         'last_name' => $emp['last_name'],
-                        'address' => $emp['address'],
+                        'address' => $emp['address'] ?? 'Tidak Diketahui',
                         'jenis_kelamin' => $emp['jenis_kelamin'] ?? null,
-                        'phone_number' => $emp['phone_number'] ?? null,
+                        'phone_number' => $phone,
                         'cabang' => $emp['cabang'] ?? null,
                         'jabatan' => $emp['jabatan'] ?? null,
                         'department' => $emp['department'] ?? null,
-                        'employment_status' => $emp['employment_status'] ?? 'active',
-                        'email' => $emp['email'] ?? null,
+                        'employment_status' => $emp['status'] ?? 'active',
+                        'email' => $email,
+                        'id_position' => $emp['id_position'], // ✅ tambahkan ini
                     ]
                 );
+
+
+
+                $imported[] = $employee->load(['user', 'position']);
             }
 
-            $allEmployees = Employee::with('user')->get();
-
-            return BaseResponse::success([
-                'message' => 'Import berhasil',
-                'data' => $allEmployees
+            return response()->json([
+                'meta' => ['success' => true, 'message' => 'Import berhasil', 'code' => 200],
+                'data' => $imported
             ]);
         } catch (\Exception $e) {
-            \Log::error("Import Employee gagal: " . $e->getMessage());
-            return BaseResponse::error('Gagal import data', 500, ['exception' => $e->getMessage()]);
+            \Log::error("Import Gagal", ['error' => $e->getMessage()]);
+            return response()->json([
+                'meta' => ['success' => false, 'message' => 'Gagal import data', 'code' => 500],
+                'data' => ['exception' => $e->getMessage()]
+            ], 500);
         }
     }
-
 
     public function deleteEmployeeDocument($userId, $documentId)
     {
@@ -438,6 +472,7 @@ class EmployeeController extends Controller
                 'last_name' => 'required|string|max:255',
                 'address' => 'nullable|string',
                 'id_position' => 'nullable|uuid',
+                'id_department' => 'nullable|uuid',
                 'employment_status' => 'in:active,inactive,resign',
                 'tipe_kontrak' => 'in:Tetap,Kontrak,Magang',
                 'cabang' => 'nullable|string',
@@ -474,6 +509,7 @@ class EmployeeController extends Controller
                 'last_name',
                 'address',
                 'id_position',
+                'id_department',
                 'employment_status',
                 'tipe_kontrak',
                 'cabang',
