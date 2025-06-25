@@ -19,25 +19,25 @@ class PositionSeeder4 extends Seeder
         // Daftar posisi berdasarkan nama departemen
         $positionData = [
             'IT' => [
-                ['name' => 'Software Engineer', 'level' => 2],
-                ['name' => 'System Analyst', 'level' => 3],
-                ['name' => 'IT Support', 'level' => 1],
+                ['name' => 'Software Engineer', 'level' => 2, 'gaji' => 5400000],
+                ['name' => 'System Analyst', 'level' => 3, 'gaji' => 9000000],
+                ['name' => 'IT Support', 'level' => 1, 'gaji' => 4800000],
             ],
             'HR' => [
-                ['name' => 'HR Specialist', 'level' => 2],
-                ['name' => 'Recruitment Officer', 'level' => 1],
+                ['name' => 'HR Specialist', 'level' => 2, 'gaji' => 5400000],
+                ['name' => 'Recruitment Officer', 'level' => 1, 'gaji' => 3800000],
             ],
             'Finance' => [
-                ['name' => 'Accountant', 'level' => 2],
-                ['name' => 'Finance Staff', 'level' => 1],
+                ['name' => 'Accountant', 'level' => 2, 'gaji' => 5400000],
+                ['name' => 'Finance Staff', 'level' => 1, 'gaji' => 4800000],
             ],
             'Marketing' => [
-                ['name' => 'Marketing Manager', 'level' => 3],
-                ['name' => 'Content Creator', 'level' => 1],
+                ['name' => 'Marketing Manager', 'level' => 3, 'gaji' => 9000000],
+                ['name' => 'Content Creator', 'level' => 1, 'gaji' => 4800000],
             ],
             'Sales' => [
-                ['name' => 'Sales Manager', 'level' => 3],
-                ['name' => 'Sales Executive', 'level' => 1],
+                ['name' => 'Sales Manager', 'level' => 3, 'gaji' => 9000000],
+                ['name' => 'Sales Executive', 'level' => 1, 'gaji' => 4800000],
             ],
         ];
 
@@ -50,6 +50,7 @@ class PositionSeeder4 extends Seeder
                     'id' => (string) Str::uuid(),
                     'name' => $position['name'],
                     'level' => $position['level'],
+                    'gaji' => $position['gaji'],
                     'id_department' => $department->id,
                     'created_at' => now(),
                     'updated_at' => now(),

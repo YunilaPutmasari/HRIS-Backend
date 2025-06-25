@@ -54,11 +54,6 @@ class Company extends Model
         return $this->belongsTo(User::class, 'id_manager');
     }
 
-    // public function employees()
-    // {
-    //     return $this->hasMany(User::class, 'id_company');
-    // }
-
     public function departments()
     {
         return $this->hasMany(Department::class, 'id_company');

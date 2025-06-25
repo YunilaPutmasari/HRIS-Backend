@@ -183,7 +183,7 @@ class SubscriptionController extends Controller
         
         // Buat subscription (fase develop buat 1 menit dan 5 menit)
         $trialEndDate = now()->addMinutes(1); //ganti ke addDays(14) nanti, sekarang untuk uji coba dlu aja
-        $endsAt = $hasUsedTrial ? now()->addMinutes(5) : $trialEndDate;
+        $endsAt = $hasUsedTrial ? now()->addMinutes(10) : $trialEndDate;
 
         $subscription = Subscription::create([
             'id' => \Str::uuid(),
@@ -248,7 +248,7 @@ class SubscriptionController extends Controller
             return BaseResponse::error(null, 'Langganan tidak aktif', 403);
         }
 
-        
+        // Ambil karyawan dan seats untuk subs baru
         $totalEmployees = $company->employees()->count();
         $currentSeats = $subscription->seats;
         $currentPackageTypeId = $subscription->id_package_type;
@@ -256,13 +256,11 @@ class SubscriptionController extends Controller
         $newSeats = $validated['new_seats'];
         $newPackageTypeId = $validated['id_new_package_type'] ?? $currentPackageTypeId;
         $newPackageType = PackageType::findOrFail($newPackageTypeId);
+        
         Log::info("ID Package Type", ['id' => $newPackageTypeId]);
+        
         if ($newSeats > $newPackageType->max_seats) {
-            return BaseResponse::error(
-                null,
-                "Jumlah seat tidak boleh melebihi batas paket (maksimal: {$newPackageType->max_seats})",
-                400
-            );
+            return BaseResponse::error(null,"Jumlah seat tidak boleh melebihi batas paket (maksimal: {$newPackageType->max_seats})", 400);
         }
         
         if ($newSeats < $totalEmployees) {
@@ -286,8 +284,9 @@ class SubscriptionController extends Controller
             }
         }
 
-        // Aturan dari free ke paid dan sebaliknya
-        if($subscription->packageType->is_free && $newPackageType->price_per_seat > 0){
+        // ATURAN DARI FREE KE PAID PLAN & ATURAN JIKA TIDAK ADA DAILY USAGE
+        $hasUsage = DailyUsageRecord::where('id_subscription', $subscription->id)->exists();
+        if($subscription->packageType->is_free && $newPackageType->price_per_seat > 0 || !$hasUsage){
             $subscription->update([
                 'status' => 'expired',
                 'ends_at' => now(),
@@ -347,7 +346,7 @@ class SubscriptionController extends Controller
     protected function createNewSubscription(Subscription $oldSub, string $newPackageTypeId, int $newSeats)
     {
         $now = Carbon::now();
-        $endsAt = now()->day(28)->addMonthNoOverflow()->endOfDay();
+        $endsAt = now()->addMinutes(10);
 
         $newSubscription = Subscription::create([
             'id_company' => $oldSub->id_company,
@@ -434,7 +433,7 @@ class SubscriptionController extends Controller
                 'trial_ends_at' => null,
     
                 'starts_at' => now(),
-                'ends_at' => now()->day(28)->addMonthNoOverflow()->endOfDay(),
+                'ends_at' => now()->addMinutes(5),
     
                 'status' => 'active',
             ]);

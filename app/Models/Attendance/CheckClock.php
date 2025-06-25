@@ -29,6 +29,9 @@ class CheckClock extends Model
         'clock_out',
         'break_start',
         'break_end',
+        'location_lat',
+        'location_lng',
+        'radius',
     ];
 
     public function user()

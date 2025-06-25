@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Org\Company;
+use App\Models\Org\User;
 
 
 class CheckClockSetting extends Model
@@ -15,6 +17,7 @@ class CheckClockSetting extends Model
 
     protected $with = [
         'checkClockSettingTime',
+        'users',
     ];
 
     use HasFactory, HasUuids, SoftDeletes;
@@ -22,7 +25,10 @@ class CheckClockSetting extends Model
     protected $fillable = [
         'name',
         'id_company',
-        'type'
+        'type',
+        'location_lat',
+        'location_lng',
+        'radius',
     ];
 
     public function checkClockSettingTime()
@@ -33,5 +39,10 @@ class CheckClockSetting extends Model
     public function company()
     {
         return $this->belongsTo(Company::class, 'id_company');
+    }
+
+    public function users()
+    {
+        return $this->hasMany(User::class, 'id_check_clock_setting');
     }
 }

@@ -382,6 +382,7 @@ class ApprovalController extends Controller
             message: 'Admin status retrieved successfully',
         );
     }
+
     public function getRecentApprovals(Request $request)
     {
         try {
@@ -411,12 +412,11 @@ class ApprovalController extends Controller
                     'employee.position'
                 ])
                 ->latest()
-                ->take(5)
                 ->get()
                 ->map(function ($approval) {
                     return [
                         'id' => $approval->id,
-                        'employee_name' => $approval->employee->first_name . ' ' . $approval->employee->last_name,
+                        'employee_name' => $approval->employee ? $approval->employee->first_name . ' ' . $approval->employee->last_name : 'Tidak diketahui',
                         'type' => $approval->request_type,
                         'status' => $approval->status,
                         'created_at' => $approval->created_at

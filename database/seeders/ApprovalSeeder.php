@@ -6,6 +6,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Approval;
 use App\Models\Org\User;
+use App\Models\Org\Company;
 
 class ApprovalSeeder extends Seeder
 {
@@ -13,8 +14,19 @@ class ApprovalSeeder extends Seeder
      * Run the database seeds.
      */
     public function run(): void
-    {
-        $companyId = '01975f52-b27c-72eb-a539-ecff21c032f7';
+    {   
+        Approval::truncate();
+        
+        $companyName = 'Anonim Corp';
+        $company = Company::where('name', $companyName)->first();
+        
+        if (!$company) {
+            $this->command->error("Perusahaan dengan nama '{$companyName}' tidak ditemukan.");
+            return;
+        }
+
+        $companyId = $company->id;
+        
         $users = User::where('id_workplace',$companyId)->get();
 
         if($users->isEmpty()){

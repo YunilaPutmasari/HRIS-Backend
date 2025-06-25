@@ -24,7 +24,7 @@ class CheckTrialStatus extends Command
                 'is_trial' => false,
                 'status' => 'active', // atau pending_payment
                 'starts_at' => now(),
-                'ends_at' => now()->day(28)->addMonthNoOverflow()->endOfDay(),
+                'ends_at' => now()->addMinutes(10),
             ]);
 
             // Log atau notifikasi opsional

@@ -121,25 +121,25 @@ class EmployeeController extends Controller
                 return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
             }
 
-            // // Cek apakah perusahaan memiliki langganan aktif
-            // $subscription = $user->workplace->subscription;
-            // if (!$subscription) {
-            //     return BaseResponse::error(null, 'Perusahaan tidak memiliki langganan aktif.', 403);
-            // }
+            // Cek apakah perusahaan memiliki langganan aktif
+            $subscription = $user->workplace->subscription;
+            if (!$subscription) {
+                return BaseResponse::error(null, 'Perusahaan tidak memiliki langganan aktif.', 403);
+            }
 
-            // // Hitung jumlah karyawan aktif
-            // $activeEmployees = Employee::whereHas('user', function ($query) use ($user) {
-            //     $query->where('id_workplace', $user->workplace->id);
-            // })->where('employment_status', 'active')->count();
+            // Hitung jumlah karyawan aktif
+            $activeEmployees = Employee::whereHas('user', function ($query) use ($user) {
+                $query->where('id_workplace', $user->workplace->id);
+            })->where('employment_status', 'active')->count();
 
-            // // Cek apakah sudah mencapai batas langganan
-            // if ($activeEmployees >= $subscription->seats) {
-            //     return BaseResponse::error([
-            //         'current_seats' => $activeEmployees,
-            //         'max_seats' => $subscription->seats,
-            //         'subscription_id' => $subscription->id
-            //     ], 'Jumlah karyawan telah mencapai batas maksimum. Silakan upgrade langganan Anda.', 403);
-            // }
+            // Cek apakah sudah mencapai batas langganan
+            if ($activeEmployees >= $subscription->seats) {
+                return BaseResponse::error([
+                    'current_seats' => $activeEmployees,
+                    'max_seats' => $subscription->seats,
+                    'subscription_id' => $subscription->id
+                ], 'Jumlah karyawan telah mencapai batas maksimum. Silakan upgrade langganan Anda.', 403);
+            }
 
             // Validasi request (sudah otomatis via StoreEmployeeRequest)
             $validated = $request->validated();
@@ -267,32 +267,6 @@ class EmployeeController extends Controller
         }
         return BaseResponse::success(new EmployeeResource($employee->load('position', 'documents')));
     }
-
-    // public function update(UpdateEmployeeRequest $request, $id)
-    // {
-    //     $employee = Employee::find($id);
-    //     if (!$employee) {
-    //         return BaseResponse::error('Employee not found', 404);
-    //     }
-
-    //     Log::info('Validated data:', $request->validated());
-
-    //     $data = $request->validated();
-    //     unset($data['avatar']);
-
-    //     $employee->fill($data);
-
-    //     if ($request->hasFile('avatar')) {
-    //         $employee->avatar = $request->file('avatar')->store('avatars', 'public');
-    //     }
-
-    //     $employee->save();
-
-    //     return BaseResponse::success([
-    //         'message' => 'Data berhasil diperbarui.',
-    //         'data' => $employee->load('position', 'documents', 'department')
-    //     ]);
-    // }
 
     public function destroy($id)
     {
@@ -587,6 +561,9 @@ class EmployeeController extends Controller
         }
     }
 
+    // ===================================================================================================
+    // Break Points Untuk Controller Employee ============================================================
+    // ===================================================================================================
     public function getEmployeeContractStats(Request $request)
     {
         try {
@@ -664,31 +641,86 @@ class EmployeeController extends Controller
         return BaseResponse::success($data, 'Statistik status karyawan berhasil diambil', 200);
 
     }
-    // ===================================================================================================
-// Break Points Untuk Controller Employee ============================================================
-// ===================================================================================================
+
     public function getEmployeeDashboard()
     {
         try {
             $user = Auth::user();
+
+            // Ambil data employee beserta relasi penting
             $employee = Employee::where('id_user', $user->id)
-                ->with(['user', 'position'])
+                ->with(['user', 'position', 'department', 'documents'])
                 ->first();
 
             if (!$employee) {
                 return BaseResponse::error(null, 'Employee data not found', 404);
             }
 
-            $data = [
-                'employee' => $employee,
-                'attendance_today' => $this->getTodayAttendance($employee->id),
-                'payroll_summary' => $this->getPayrollSummary($employee->id),
+            // Hitung masa kerja
+            $startDate = \Carbon\Carbon::parse($employee->start_date);
+            $now = \Carbon\Carbon::now();
+            $masaKerja = $startDate->diffForHumans($now, ['syntax' => \Carbon\CarbonInterface::DIFF_RELATIVE_AUTO, 'parts' => 2]);
+
+            // Cek apakah masih aktif
+            $isActive = $employee->employment_status === 'active';
+            $contractStatus = $isActive ? 'Aktif' : 'Tidak Aktif';
+
+            // Format tanggal efektif
+            $tanggalEfektif = $employee->tanggal_efektif
+                ? \Carbon\Carbon::parse($employee->tanggal_efektif)->format('d F Y')
+                : '-';
+
+            // Dokumen yang dimiliki karyawan
+            $dokumenList = $employee->documents->map(function ($doc) {
+                return [
+                    'id' => $doc->id,
+                    'name' => $doc->name,
+                    'type' => $doc->type,
+                    'path' => asset('storage/' . $doc->path),
+                    'uploaded_at' => \Carbon\Carbon::parse($doc->created_at)->format('d F Y H:i'),
+                ];
+            });
+
+            // Data absensi hari ini (masih dummy)
+            $attendanceToday = $this->getTodayAttendance($employee->id);
+
+            // Ringkasan payroll bulan ini (masih dummy)
+            $payrollSummary = $this->getPayrollSummary($employee->id);
+
+            // Data untuk tampilan dashboard
+            $dashboardData = [
+                'employee' => [
+                    'id' => $employee->id,
+                    'avatar' => $employee->avatar ? asset('storage/'.$employee->avatar) : null,
+                    'first_name' => $employee->first_name,
+                    'last_name' => $employee->last_name,
+                    'full_name' => $employee->first_name . ' ' . $employee->last_name,
+                    'nik' => $employee->nik,
+                    'jenis_kelamin' => $employee->jenis_kelamin,
+                    'tempat_lahir' => $employee->tempat_lahir,
+                    'tanggal_lahir' => \Carbon\Carbon::parse($employee->tanggal_lahir)->format('d F Y'),
+                    'pendidikan' => $employee->pendidikan,
+                    'address' => $employee->address,
+                    'cabang' => $employee->cabang,
+                    'tipe_kontrak' => $employee->tipe_kontrak,
+                    'status_kepegawaian' => $employee->employment_status,
+                    'tanggal_efektif' => $tanggalEfektif,
+                    'masa_kerja' => $masaKerja,
+                    'status_kontrak' => $contractStatus,
+                    'bank' => $employee->bank,
+                    'no_rek' => $employee->no_rek,
+                    'position' => $employee->position?->name ?? '-',
+                    'department' => $employee->department?->name ?? '-',
+                ],
+                'dokumen' => $dokumenList,
+                'absensi_hari_ini' => $attendanceToday,
+                'gaji_bulan_ini' => $payrollSummary,
                 'last_updated' => now()->format('d F Y H:i'),
             ];
 
-            return BaseResponse::success($data, 'Employee dashboard data retrieved successfully', 200);
+            return BaseResponse::success($dashboardData, 'Employee dashboard data retrieved successfully', 200);
         } catch (\Exception $e) {
-            return BaseResponse::error(null, 'Failed to retrieve employee dashboard data', 500);
+            return BaseResponse::error(null, 'Failed to retrieve employee dashboard data: ' . $e->getMessage(), 500);
         }
     }
 

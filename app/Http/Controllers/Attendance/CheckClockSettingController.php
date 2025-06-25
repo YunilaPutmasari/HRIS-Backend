@@ -8,6 +8,7 @@ use App\Http\Requests\CheckClockSettingCompleteCreateRequest;
 use App\Http\Requests\CheckClockSettingCompleteUpdateRequest;
 use App\Http\Requests\CheckClockSettingUpdateRequest;
 use App\Models\Attendance\CheckClockSetting;
+use App\Models\Org\User;
 use App\Http\Responses\BaseResponse;
 use Illuminate\Http\Request;
 
@@ -109,12 +110,26 @@ class CheckClockSettingController extends Controller
             );
         }
 
+        // check if location_lat and location_lng are provided
+        $location_lat = null;
+        $location_lng = null;
+        $radius = null;
+
+        if (isset($data['location_lat']) && isset($data['location_lng']) && isset($data['radius'])) {
+            $location_lat = $data['location_lat'];
+            $location_lng = $data['location_lng'];
+            $radius = $data['radius'];
+        }
+
         $checkClockSetting = CheckClockSetting::create([
             'name' => $data['name'],
             // NOTE: Due to lack of context (likely because it hasn't been implemented yet) in frontend user auth, hence id_company become unrelevant (no source to take).
             // 'id_company' => $data['id_company'],
             'id_company' => $company->id,
             'type' => $data['type'],
+            'location_lat' => $location_lat,
+            'location_lng' => $location_lng,
+            'radius' => $radius,
         ]);
 
         foreach ($data['check_clock_setting_time'] as $time) {
@@ -123,8 +138,14 @@ class CheckClockSettingController extends Controller
                 'clock_in' => $time['clock_in'],
                 'clock_out' => $time['clock_out'],
                 'break_start' => $time['break_start'],
-                'break_end' => $time['break_end'],
+                'break_end' => $time['break_end']
             ]);
+        }
+
+        // update users with this check clock setting
+        if (isset($data['user_ids']) && is_array($data['user_ids'])) {
+            User::whereIn('id', $data['user_ids'])
+                ->update(['id_check_clock_setting' => $checkClockSetting->id]);
         }
 
         $checkClockSetting->load('checkClockSettingTime');
@@ -180,6 +201,17 @@ class CheckClockSettingController extends Controller
             );
         }
 
+        // check if location_lat and location_lng are provided
+        $location_lat = null;
+        $location_lng = null;
+        $radius = null;
+
+        if (isset($data['location_lat']) && isset($data['location_lng']) && isset($data['radius'])) {
+            $location_lat = $data['location_lat'];
+            $location_lng = $data['location_lng'];
+            $radius = $data['radius'];
+        }
+
         $checkClockSetting = CheckClockSetting::where('id', $id_ck_setting)
             ->where('id_company', $company->id)
             ->first();
@@ -194,6 +226,9 @@ class CheckClockSettingController extends Controller
         $checkClockSetting->update([
             'name' => $data['name'],
             'type' => $data['type'],
+            'location_lat' => $location_lat,
+            'location_lng' => $location_lng,
+            'radius' => $radius,
         ]);
 
         // Clear existing check clock setting times
@@ -207,6 +242,12 @@ class CheckClockSettingController extends Controller
                 'break_start' => $time['break_start'],
                 'break_end' => $time['break_end'],
             ]);
+        }
+
+        // update users with this check clock setting
+        if (isset($data['user_ids']) && is_array($data['user_ids'])) {
+            User::whereIn('id', $data['user_ids'])
+                ->update(['id_check_clock_setting' => $checkClockSetting->id]);
         }
 
         $checkClockSetting->load('checkClockSettingTime');

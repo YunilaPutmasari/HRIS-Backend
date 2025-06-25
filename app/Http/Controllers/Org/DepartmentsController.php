@@ -122,6 +122,11 @@ class DepartmentsController extends Controller
                 return BaseResponse::error(null, 'Departemen tidak ditemukan atau bukan bagian dari perusahaan Anda.', 404);
             }
 
+            // Prevent deletion if department has related positions
+            if ($department->positions()->count() > 0) {
+                return BaseResponse::error(null, 'Tidak dapat menghapus departemen yang masih memiliki posisi.', 400);
+            }
+
             $department->delete();
 
             return BaseResponse::success(null, 'Departemen berhasil dihapus.', 200);
@@ -131,7 +136,7 @@ class DepartmentsController extends Controller
         }
     }
 
-    public function getDepartment($idDepartment)
+    public function show($id)
     {
         try {
             $user = Auth::user();
@@ -140,24 +145,57 @@ class DepartmentsController extends Controller
                 return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
             }
 
-            // Validasi bahwa department milik perusahaan user
-            $department = Department::where('id', $idDepartment)
-                ->whereHas('company', function ($q) use ($user) {
-                    $q->where('id', $user->workplace->id);
-                })
+            $department = Department::where('id', $id)
+                ->where('id_company', $user->workplace->id)
                 ->first();
 
             if (!$department) {
                 return BaseResponse::error(null, 'Departemen tidak ditemukan atau bukan bagian dari perusahaan Anda.', 404);
             }
 
-            // Ambil semua position yang terkait dengan department ini
-            $positions = Position::where('id_department', $idDepartment)->get();
-
-            return BaseResponse::success($positions, 'Daftar posisi berhasil diambil.', 200);
+            return BaseResponse::success($department, 'Detail departemen berhasil diambil.', 200);
 
         } catch (\Exception $e) {
-            return BaseResponse::error($e->getMessage(), 'Gagal mengambil daftar posisi.', 500);
-        }        
+            return BaseResponse::error(null, 'Gagal mengambil detail departemen.', 500);
+        }
+    }
+
+    // COMPANY
+    public function getCompanyData()
+    {
+        $user = Auth::user();
+        if (!$user || !$user->isAdmin()) {
+            return BaseResponse::error(null, 'Akses ditolak', 403);
+        }
+
+        $company = $user->workplace;
+        if (!$company) {
+            return BaseResponse::error(null, 'User tidak memiliki workplace', 422);
+        }
+
+        // Hanya ambil field penting saja dari employees
+        $companyData = Company::with([
+            'employees' => function ($query) {
+                $query->select('id_user') // sesuaikan kolom yang dibutuhkan
+                      ->where('employment_status', 'active');
+            }
+        ])->find($company->id);
+
+        if (!$companyData) {
+            return BaseResponse::error(null, 'Perusahaan tidak ditemukan', 404);
+        }
+
+        // Hitung jumlah karyawan aktif
+        $employeesCount = $companyData->employees->count();
+
+        // Format response
+        $responseData = [
+            'id' => $companyData->id,
+            'name' => $companyData->name,
+            'address' => $companyData->address,
+            'employees_count' => $employeesCount,
+        ];
+
+        return BaseResponse::success($responseData, 'Data perusahaan berhasil diambil');
     }
 }

@@ -24,14 +24,36 @@ class DeptPositionsController extends Controller
                 return BaseResponse::error(null, 'User tidak terkait dengan perusahaan manapun.', 403);
             }
 
+            $company = $user->workplace;
+            if (!$company) {
+                return BaseResponse::error(null, 'User tidak memiliki workplace', 403);
+            }
+
+            // Ambil semua department milik perusahaan ini
+            $departmentIds = Department::where('id_company', $company->id)
+                ->pluck('id');
+
+            if ($departmentIds->isEmpty()) {
+                return BaseResponse::success([], 'Perusahaan belum memiliki department');
+            }
+            
             // Ambil semua department yang terkait dengan perusahaan user
-            $positionQuery = Position::whereHas('department', function ($query) use ($user) {
-                $query->where('id_company', $user->workplace->id);
+            $positions = Position::whereIn('id_department', $departmentIds)
+            ->with(['department:id,name']) // Load hanya field penting dari department
+            ->get();
+
+            // Format response untuk FE
+            $formatted = $positions->map(function ($position) {
+                return [
+                    'id' => $position->id,
+                    'name' => $position->name,
+                    'level' => $position->level,
+                    'gaji' => $position->gaji,
+                    'department' => optional($position->department)->only(['id', 'name']),
+                ];
             });
 
-            $positions = $positionQuery->with(['department'])->get();
-
-            return BaseResponse::success($positions, 'Daftar posisi berhasil diambil.', 200);
+            return BaseResponse::success($formatted, 'Daftar posisi berhasil diambil.', 200);
 
         } catch (\Exception $e) {
             return BaseResponse::error(null, 'Gagal mengambil daftar posisi.', 500);
