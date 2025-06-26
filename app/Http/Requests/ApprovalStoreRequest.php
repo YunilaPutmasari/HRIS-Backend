@@ -25,9 +25,15 @@ class ApprovalStoreRequest extends FormRequest
             "id_user" => "required|exists:tb_user,id",
             "request_type" => "required|in:overtime,permit,leave,sick",
             "start_date" => "required|date_format:Y-m-d H:i",
-            "end_date" => "required|date_format:Y-m-d H:i",
+            "end_date" => "required|date_format:Y-m-d H:i|after_or_equal:start_date",
             "reason" => "required|string|max:255",
             "document" => "nullable|file|mimes:pdf,jpg,jpeg,png", // Maksimal 2MB
+        ];
+    }
+
+    public function messages() {
+        return [
+            'end_date.after_or_equal' => "End date must be after start date",
         ];
     }
 }

@@ -21,6 +21,7 @@ return new class extends Migration {
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->uuid('approved_by')->nullable();
             $table->dateTime('approval_date')->nullable();
+            $table->string('document')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
